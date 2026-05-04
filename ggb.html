@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>柱·锥·台·球 — 空间几何探索</title>
+<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #f2f4f8;
+    font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── 左侧图层面板 ── */
+.layer-panel {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 12px 14px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    min-width: 120px;
+}
+.layer-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 2px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+.layer-title:active { cursor: grabbing; }
+.layer-title .drag-hint {
+    display: none;
+    font-size: 10px;
+    color: #bbb;
+    font-weight: 400;
+    letter-spacing: 0;
+    margin-top: 2px;
+}
+.layer-panel.dragging .drag-hint { display: block; }
+.layer-panel.dragging {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    opacity: 0.92;
+}
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 2px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.layer-item:hover { background: #f0f4ff; }
+.layer-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #1a73e8;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.layer-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.layer-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ── GGB 容器 ── */
+#ggb-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+#ggb-element {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── 底部参数面板 ── */
+.bottom-bar {
+    background: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-height: 60px;
+    box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.param-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.param-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+}
+.param-slider {
+    width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+.param-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1a73e8;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+.param-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a73e8;
+    min-width: 28px;
+    text-align: center;
+}
+.param-divider {
+    width: 1px;
+    height: 24px;
+    background: #e0e0e0;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 600px) {
+    .layer-panel { top: 8px; left: 8px; padding: 10px 12px; min-width: 105px; }
+    .layer-title { font-size: 12px; }
+    .layer-label { font-size: 13px; }
+    .bottom-bar { padding: 8px 12px; gap: 14px; }
+    .param-slider { width: 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 图层面板 -->
+<div class="layer-panel">
+    <div class="layer-title" id="layerTitle">图 层<div class="drag-hint">拖动中…</div></div>
+    <label class="layer-item">
+        <input type="checkbox" id="chk-cylinder" onchange="toggleLayer('cylinder', this.checked)">
+        <span class="layer-dot" style="background:#1a73e8"></span>
+        <span class="layer-label">圆柱</span>
+    </label>
+    <label class="layer-item">
+        <input type="checkbox" id="chk-cone" onchange="toggleLayer('cone', this.checked)">
+        <span class="layer-dot" style="background:#e9573f"></span>
+        <span class="layer-label">圆锥</span>
+    </label>
+    <label class="layer-item">
+        <input type="checkbox" id="chk-frustum" onchange="toggleLayer('frustum', this.checked)">
+        <span class="layer-dot" style="background:#2e86c1"></span>
+        <span class="layer-label">圆台</span>
+    </label>
+    <label class="layer-item">
+        <input type="checkbox" id="chk-sphere" onchange="toggleLayer('sphere', this.checked)">
+        <span class="layer-dot" style="background:#0f9d58"></span>
+        <span class="layer-label">球</span>
+    </label>
+</div>
+
+<!-- GGB 3D视图 -->
+<div id="ggb-container">
+    <div id="ggb-element"></div>
+</div>
+
+<!-- 底部参数栏 -->
+<div class="bottom-bar">
+    <div class="param-group" id="pg-r1">
+        <span class="param-label">r</span>
+        <input type="range" class="param-slider" id="sld-r1" min="0.4" max="2.4" step="0.1" value="1.6"
+               oninput="onSliderChange()">
+        <span class="param-val" id="val-r1">1.6</span>
+    </div>
+    <div class="param-divider" id="div-r2"></div>
+    <div class="param-group" id="pg-r2" style="display:none">
+        <span class="param-label" id="lbl-r2">h</span>
+        <input type="range" class="param-slider" id="sld-r2" min="0.4" max="3.0" step="0.1" value="2.4"
+               oninput="onSliderChange()">
+        <span class="param-val" id="val-r2">2.4</span>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  GeoGebra API
+// ============================================================
+let ggb = null;
+let activeLayer = 'cylinder'; // 当前编辑的图层
+
+// 每个图层的对象名列表，用于显式删除
+const layerObjects = {
+    cylinder: [],
+    cone: [],
+    frustum: [],
+    sphere: []
+};
+
+// 图层颜色
+const LAYER_COLOR = {
+    cylinder: { r: 26, g: 115, b: 232 },
+    cone:     { r: 233, g: 87, b: 63 },
+    frustum:  { r: 46, g: 134, b: 193 },
+    sphere:   { r: 15, g: 157, b: 88 }
+};
+
+// 参数值
+const params = {
+    cylinder: { r: 1.6, h: 2.4 },
+    cone:     { r: 1.8, h: 2.8 },
+    frustum:  { r1: 0.8, r2: 1.8, h: 2.0 },
+    sphere:   { R: 2.0 }
+};
+
+// ============================================================
+//  初始化
+// ============================================================
+function ggbOnInit(api) {
+    ggb = api;
+    ggb.enableRightClick(false);
+    ggb.evalCommand('ShowAxes(false)');
+    ggb.evalCommand('ShowGrid(false)');
+    ggb.setPerspective('T');
+
+    // 默认显示圆柱
+    buildLayer('cylinder');
+    document.getElementById('chk-cylinder').checked = true;
+    updateSliders();
+}
+
+const appletParams = {
+    "appName": "3D",
+    "width": 800,
+    "height": 600,
+    "showToolBar": false,
+    "showMenuBar": false,
+    "showAlgebraInput": false,
+    "enableLabelDrags": false,
+    "enableShiftDragZoom": true,
+    "showResetIcon": false,
+    "showFullscreenButton": false,
+    "appletOnLoad": ggbOnInit
+};
+
+window.addEventListener('load', function() {
+    const applet = new GGBApplet(appletParams, true);
+    applet.inject('ggb-element');
+});
+
+// ============================================================
+//  图层开关
+// ============================================================
+function toggleLayer(name, visible) {
+    const objs = layerObjects[name];
+    if (visible) {
+        if (objs.length === 0) {
+            buildLayer(name);
+        } else {
+            objs.forEach(n => ggb.setVisible(n, true));
+        }
+        // 切换到该图层的参数
+        activeLayer = name;
+        updateSliders();
+    } else {
+        objs.forEach(n => ggb.setVisible(n, false));
+    }
+}
+
+// ============================================================
+//  构建图层（只创建，不删除）
+// ============================================================
+function buildLayer(name) {
+    // 先清除该图层已有对象
+    deleteLayerObjects(name);
+
+    switch (name) {
+        case 'cylinder': buildCylinder(); break;
+        case 'cone':     buildCone(); break;
+        case 'frustum':  buildFrustum(); break;
+        case 'sphere':   buildSphere(); break;
+    }
+}
+
+function deleteLayerObjects(name) {
+    layerObjects[name].forEach(n => {
+        try { ggb.deleteObject(n); } catch(e) {}
+    });
+    layerObjects[name] = [];
+}
+
+// 辅助：创建对象并记录名字
+function cmd(name, expr) {
+    ggb.evalCommand(expr);
+    if (name) layerObjects[getLayerForObj(name)].push(name);
+}
+
+// 辅助：判断对象属于哪个图层（根据前缀）
+function getLayerForObj(name) {
+    if (name.endsWith('Cyl')) return 'cylinder';
+    if (name.endsWith('Cone')) return 'cone';
+    if (name.endsWith('Frus')) return 'frustum';
+    if (name.endsWith('Sph')) return 'sphere';
+    // fallback
+    return activeLayer;
+}
+
+// ============================================================
+//  圆柱
+// ============================================================
+function buildCylinder() {
+    const p = params.cylinder;
+    cmd('rCyl', `rCyl = ${p.r}`);
+    cmd('hCyl', `hCyl = ${p.h}`);
+
+    cmd('botCyl', `botCyl = Circle((0,0,0), rCyl)`);
+    ggb.evalCommand('SetFilling(botCyl, 0.6)');
+    ggb.setColor('botCyl', 26, 115, 232);
+
+    cmd('topCyl', `topCyl = Circle((0,0,hCyl), rCyl)`);
+    ggb.evalCommand('SetFilling(topCyl, 0.6)');
+    ggb.setColor('topCyl', 26, 115, 232);
+
+    cmd('sideCyl', `sideCyl = Surface(rCyl*cos(u), rCyl*sin(u), v, u, 0, 2π, v, 0, hCyl)`);
+    ggb.setColor('sideCyl', 26, 115, 232);
+    ggb.evalCommand('SetFilling(sideCyl, 0.3)');
+
+    cmd('genCyl', `genCyl = Segment((rCyl,0,0), (rCyl,0,hCyl))`);
+    ggb.setColor('genCyl', 255, 110, 64);
+    ggb.evalCommand('SetLineThickness(genCyl, 2)');
+
+    cmd('axisCyl', `axisCyl = Segment((0,0,0), (0,0,hCyl))`);
+    ggb.evalCommand('SetLineStyle(axisCyl, 1)');
+    ggb.setColor('axisCyl', 170, 170, 170);
+
+    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
+}
+
+// ============================================================
+//  圆锥
+// ============================================================
+function buildCone() {
+    const p = params.cone;
+    cmd('rCone', `rCone = ${p.r}`);
+    cmd('hCone', `hCone = ${p.h}`);
+
+    cmd('botCone', `botCone = Circle((0,0,0), rCone)`);
+    ggb.evalCommand('SetFilling(botCone, 0.6)');
+    ggb.setColor('botCone', 233, 87, 63);
+
+    cmd('sideCone', `sideCone = Surface(rCone*(1-v/hCone)*cos(u), rCone*(1-v/hCone)*sin(u), v, u, 0, 2π, v, 0, hCone)`);
+    ggb.setColor('sideCone', 233, 87, 63);
+    ggb.evalCommand('SetFilling(sideCone, 0.3)');
+
+    cmd('genCone', `genCone = Segment((rCone,0,0), (0,0,hCone))`);
+    ggb.setColor('genCone', 255, 110, 64);
+    ggb.evalCommand('SetLineThickness(genCone, 2)');
+
+    cmd('axisCone', `axisCone = Segment((0,0,0), (0,0,hCone))`);
+    ggb.evalCommand('SetLineStyle(axisCone, 1)');
+    ggb.setColor('axisCone', 170, 170, 170);
+
+    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
+}
+
+// ============================================================
+//  圆台
+// ============================================================
+function buildFrustum() {
+    const p = params.frustum;
+    cmd('r1Frus', `r1Frus = ${p.r1}`);
+    cmd('r2Frus', `r2Frus = ${p.r2}`);
+    cmd('hFrus', `hFrus = ${p.h}`);
+
+    cmd('botFrus', `botFrus = Circle((0,0,0), r2Frus)`);
+    ggb.evalCommand('SetFilling(botFrus, 0.6)');
+    ggb.setColor('botFrus', 46, 134, 193);
+
+    cmd('topFrus', `topFrus = Circle((0,0,hFrus), r1Frus)`);
+    ggb.evalCommand('SetFilling(topFrus, 0.6)');
+    ggb.setColor('topFrus', 46, 134, 193);
+
+    cmd('sideFrus', `sideFrus = Surface((r2Frus + (r1Frus-r2Frus)*v/hFrus)*cos(u), (r2Frus + (r1Frus-r2Frus)*v/hFrus)*sin(u), v, u, 0, 2π, v, 0, hFrus)`);
+    ggb.setColor('sideFrus', 46, 134, 193);
+    ggb.evalCommand('SetFilling(sideFrus, 0.3)');
+
+    cmd('genFrus', `genFrus = Segment((r2Frus,0,0), (r1Frus,0,hFrus))`);
+    ggb.setColor('genFrus', 255, 110, 64);
+    ggb.evalCommand('SetLineThickness(genFrus, 2)');
+
+    cmd('axisFrus', `axisFrus = Segment((0,0,0), (0,0,hFrus))`);
+    ggb.evalCommand('SetLineStyle(axisFrus, 1)');
+    ggb.setColor('axisFrus', 170, 170, 170);
+
+    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
+}
+
+// ============================================================
+//  球
+// ============================================================
+function buildSphere() {
+    const p = params.sphere;
+    cmd('rSph', `rSph = ${p.R}`);
+
+    cmd('sphereSph', `sphereSph = Sphere((0,0,0), rSph)`);
+    ggb.evalCommand('SetFilling(sphereSph, 0.15)');
+    ggb.setColor('sphereSph', 15, 157, 88);
+
+    cmd('greatCircleSph', `greatCircleSph = Circle((0,0,0), rSph, Vector((0,1,0)))`);
+    ggb.setColor('greatCircleSph', 255, 110, 64);
+    ggb.evalCommand('SetLineThickness(greatCircleSph, 2)');
+    ggb.evalCommand('SetFilling(greatCircleSph, 0)');
+
+    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
+}
+
+// ============================================================
+//  滑条同步
+// ============================================================
+function updateSliders() {
+    const pg_r1 = document.getElementById('pg-r1');
+    const pg_r2 = document.getElementById('pg-r2');
+    const div_r2 = document.getElementById('div-r2');
+    const lbl_r2 = document.getElementById('lbl-r2');
+    const sld_r1 = document.getElementById('sld-r1');
+    const sld_r2 = document.getElementById('sld-r2');
+
+    if (activeLayer === 'sphere') {
+        pg_r1.style.display = 'flex';
+        pg_r2.style.display = 'none';
+        div_r2.style.display = 'none';
+        document.querySelector('#pg-r1 .param-label').textContent = 'R';
+        sld_r1.min = 0.8; sld_r1.max = 2.8; sld_r1.step = 0.1;
+        sld_r1.value = params.sphere.R;
+        document.getElementById('val-r1').textContent = params.sphere.R.toFixed(1);
+    } else if (activeLayer === 'frustum') {
+        pg_r1.style.display = 'flex';
+        pg_r2.style.display = 'flex';
+        div_r2.style.display = 'block';
+        document.querySelector('#pg-r1 .param-label').textContent = 'r₁';
+        lbl_r2.textContent = 'r₂';
+        sld_r1.min = 0.2; sld_r1.max = 1.8; sld_r1.step = 0.1;
+        sld_r1.value = params.frustum.r1;
+        sld_r2.min = 0.6; sld_r2.max = 2.4; sld_r2.step = 0.1;
+        sld_r2.value = params.frustum.r2;
+        document.getElementById('val-r1').textContent = params.frustum.r1.toFixed(1);
+        document.getElementById('val-r2').textContent = params.frustum.r2.toFixed(1);
+    } else {
+        const p = params[activeLayer];
+        pg_r1.style.display = 'flex';
+        pg_r2.style.display = 'flex';
+        div_r2.style.display = 'block';
+        document.querySelector('#pg-r1 .param-label').textContent = 'r';
+        lbl_r2.textContent = 'h';
+        sld_r1.min = 0.4; sld_r1.max = 2.4; sld_r1.step = 0.1;
+        sld_r1.value = p.r;
+        sld_r2.min = 0.4; sld_r2.max = 3.0; sld_r2.step = 0.1;
+        sld_r2.value = p.h;
+        document.getElementById('val-r1').textContent = p.r.toFixed(1);
+        document.getElementById('val-r2').textContent = p.h.toFixed(1);
+    }
+}
+
+function onSliderChange() {
+    const v1 = parseFloat(document.getElementById('sld-r1').value);
+    const v2 = parseFloat(document.getElementById('sld-r2').value);
+
+    if (activeLayer === 'sphere') {
+        params.sphere.R = v1;
+        document.getElementById('val-r1').textContent = v1.toFixed(1);
+        deleteLayerObjects('sphere');
+        buildSphere();
+    } else if (activeLayer === 'frustum') {
+        params.frustum.r1 = v1;
+        params.frustum.r2 = v2;
+        document.getElementById('val-r1').textContent = v1.toFixed(1);
+        document.getElementById('val-r2').textContent = v2.toFixed(1);
+        deleteLayerObjects('frustum');
+        buildFrustum();
+    } else {
+        params[activeLayer].r = v1;
+        params[activeLayer].h = v2;
+        document.getElementById('val-r1').textContent = v1.toFixed(1);
+        document.getElementById('val-r2').textContent = v2.toFixed(1);
+        deleteLayerObjects(activeLayer);
+        buildLayer(activeLayer);
+    }
+}
+
+// 点击图层项时切换 activeLayer（不切换可见性）
+document.querySelectorAll('.layer-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+        if (e.target.type === 'checkbox') return; // checkbox 自己处理
+        const name = this.querySelector('input').id.replace('chk-', '');
+        activeLayer = name;
+        updateSliders();
+    });
+});
+
+// ============================================================
+//  拖动图层面板
+// ============================================================
+(function() {
+    const panel = document.querySelector('.layer-panel');
+    const title = document.getElementById('layerTitle');
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    let longPressTimer = null;
+    const LONG_PRESS_MS = 300;
+
+    function getPos(e) {
+        const t = e.touches ? e.touches[0] : e;
+        return { x: t.clientX, y: t.clientY };
+    }
+
+    function onStart(e) {
+        const pos = getPos(e);
+        startX = pos.x;
+        startY = pos.y;
+        const rect = panel.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+
+        // 长按才触发拖动，避免误触 checkbox
+        longPressTimer = setTimeout(() => {
+            isDragging = true;
+            panel.classList.add('dragging');
+            e.preventDefault();
+        }, LONG_PRESS_MS);
+    }
+
+    function onMove(e) {
+        if (!isDragging) {
+            // 如果移动超过 8px 且还没触发长按，取消长按
+            if (longPressTimer) {
+                const pos = getPos(e);
+                if (Math.abs(pos.x - startX) > 8 || Math.abs(pos.y - startY) > 8) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }
+            return;
+        }
+        e.preventDefault();
+        const pos = getPos(e);
+        let newLeft = startLeft + (pos.x - startX);
+        let newTop = startTop + (pos.y - startY);
+
+        // 边界限制
+        const pw = panel.offsetWidth;
+        const ph = panel.offsetHeight;
+        newLeft = Math.max(0, Math.min(window.innerWidth - pw, newLeft));
+        newTop = Math.max(0, Math.min(window.innerHeight - ph, newTop));
+
+        panel.style.left = newLeft + 'px';
+        panel.style.top = newTop + 'px';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+    }
+
+    function onEnd() {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        if (isDragging) {
+            isDragging = false;
+            panel.classList.remove('dragging');
+        }
+    }
+
+    // Mouse events
+    title.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+
+    // Touch events
+    title.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+})();
+</script>
+</body>
+</html>
