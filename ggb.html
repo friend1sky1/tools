@@ -1,14 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>柱·锥·台·球 — 空间几何探索</title>
+<title>柱·锥·台·球 — 数学探索</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎋</text></svg>">
 <script src="https://www.geogebra.org/apps/deployggb.js"></script>
 <style>
+/* ══════════════════════════════════════════
+   柱锥台球 — 竹林小轩风格 · 全屏沉浸
+   ══════════════════════════════════════════ */
+
+:root {
+    --bamboo:      #5B8C5A;
+    --bamboo-dark: #2D4A32;
+    --bamboo-mist: #F0F5EE;
+    --bamboo-light:#D6E5D2;
+    --wood-gold:   #C5A96A;
+    --text-primary:#2D3A2E;
+    --text-secondary:#6B7D6C;
+    --text-muted:  #9AAB9B;
+    --white:       #FFFFFF;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: #f2f4f8;
+    background: var(--bamboo-mist);
     font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     height: 100vh;
     display: flex;
@@ -17,14 +34,54 @@ body {
     -webkit-user-select: none;
 }
 
+/* ── 顶部导航栏 ── */
+.top-bar {
+    height: 48px;
+    background: rgba(240,245,238,0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(91,140,90,0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+    z-index: 30;
+    gap: 12px;
+}
+.top-bar a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: var(--bamboo-dark);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.top-bar a:hover { background: rgba(91,140,90,0.08); }
+.top-bar .back-arrow {
+    font-size: 16px;
+    line-height: 1;
+}
+.top-bar .page-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--bamboo-dark);
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+}
+
 /* ── 左侧图层面板 ── */
 .layer-panel {
     position: fixed;
-    top: 12px;
+    top: 64px;
     left: 12px;
-    background: rgba(255,255,255,0.95);
+    background: rgba(255,255,255,0.92);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 12px rgba(45,74,50,0.08);
+    border: 1px solid rgba(91,140,90,0.1);
     padding: 12px 14px;
     z-index: 20;
     display: flex;
@@ -37,10 +94,10 @@ body {
 .layer-title {
     font-size: 13px;
     font-weight: 600;
-    color: #888;
+    color: var(--text-muted);
     letter-spacing: 2px;
     text-align: center;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(91,140,90,0.1);
     padding-bottom: 6px;
     cursor: grab;
     user-select: none;
@@ -58,7 +115,7 @@ body {
 }
 .layer-panel.dragging .drag-hint { display: block; }
 .layer-panel.dragging {
-    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    box-shadow: 0 4px 20px rgba(45,74,50,0.15);
     opacity: 0.92;
 }
 .layer-item {
@@ -66,15 +123,15 @@ body {
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    padding: 4px 2px;
-    border-radius: 6px;
+    padding: 5px 6px;
+    border-radius: 8px;
     transition: background 0.15s;
 }
-.layer-item:hover { background: #f0f4ff; }
+.layer-item:hover { background: rgba(91,140,90,0.06); }
 .layer-item input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #1a73e8;
+    accent-color: var(--bamboo);
     cursor: pointer;
     flex-shrink: 0;
 }
@@ -87,7 +144,7 @@ body {
 .layer-label {
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
 }
 
 /* ── GGB 容器 ── */
@@ -103,14 +160,17 @@ body {
 
 /* ── 底部参数面板 ── */
 .bottom-bar {
-    background: #fff;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 10px 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    min-height: 60px;
-    box-shadow: 0 -1px 4px rgba(0,0,0,0.04);
+    min-height: 52px;
+    box-shadow: 0 -1px 4px rgba(45,74,50,0.04);
+    border-top: 1px solid rgba(91,140,90,0.08);
     gap: 20px;
     flex-wrap: wrap;
 }
@@ -122,7 +182,7 @@ body {
 .param-label {
     font-size: 13px;
     font-weight: 600;
-    color: #555;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 .param-slider {
@@ -130,7 +190,7 @@ body {
     height: 4px;
     -webkit-appearance: none;
     appearance: none;
-    background: #ddd;
+    background: var(--bamboo-light);
     border-radius: 2px;
     outline: none;
     cursor: pointer;
@@ -140,57 +200,67 @@ body {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #1a73e8;
+    background: var(--bamboo);
     border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 4px rgba(45,74,50,0.25);
     cursor: pointer;
 }
 .param-val {
     font-size: 13px;
     font-weight: 700;
-    color: #1a73e8;
+    color: var(--bamboo);
     min-width: 28px;
     text-align: center;
 }
 .param-divider {
     width: 1px;
     height: 24px;
-    background: #e0e0e0;
+    background: rgba(91,140,90,0.15);
 }
 
 /* ── 响应式 ── */
 @media (max-width: 600px) {
-    .layer-panel { top: 8px; left: 8px; padding: 10px 12px; min-width: 105px; }
+    .layer-panel { top: 60px; left: 8px; padding: 10px 12px; min-width: 105px; }
     .layer-title { font-size: 12px; }
     .layer-label { font-size: 13px; }
     .bottom-bar { padding: 8px 12px; gap: 14px; }
     .param-slider { width: 60px; }
+    .top-bar { padding: 0 10px; }
 }
 </style>
 </head>
 <body>
+
+<!-- 顶部导航 -->
+<div class="top-bar">
+    <a href="index.html">
+        <span class="back-arrow">←</span>
+        <span>返回</span>
+    </a>
+    <span class="page-title">柱 · 锥 · 台 · 球</span>
+</div>
 
 <!-- 图层面板 -->
 <div class="layer-panel">
     <div class="layer-title" id="layerTitle">图 层<div class="drag-hint">拖动中…</div></div>
     <label class="layer-item">
         <input type="checkbox" id="chk-cylinder" onchange="toggleLayer('cylinder', this.checked)">
-        <span class="layer-dot" style="background:#1a73e8"></span>
+        <span class="layer-dot" style="background:#5B8C5A"></span>
         <span class="layer-label">圆柱</span>
     </label>
     <label class="layer-item">
         <input type="checkbox" id="chk-cone" onchange="toggleLayer('cone', this.checked)">
-        <span class="layer-dot" style="background:#e9573f"></span>
+        <span class="layer-dot" style="background:#C5A96A"></span>
         <span class="layer-label">圆锥</span>
     </label>
     <label class="layer-item">
         <input type="checkbox" id="chk-frustum" onchange="toggleLayer('frustum', this.checked)">
-        <span class="layer-dot" style="background:#2e86c1"></span>
+        <span class="layer-dot" style="background:#7BA87A"></span>
         <span class="layer-label">圆台</span>
     </label>
     <label class="layer-item">
         <input type="checkbox" id="chk-sphere" onchange="toggleLayer('sphere', this.checked)">
-        <span class="layer-dot" style="background:#0f9d58"></span>
+        <span class="layer-dot" style="background:#2D4A32"></span>
         <span class="layer-label">球</span>
     </label>
 </div>
@@ -232,12 +302,12 @@ const layerObjects = {
     sphere: []
 };
 
-// 图层颜色
+// 图层颜色（竹林色系）
 const LAYER_COLOR = {
-    cylinder: { r: 26, g: 115, b: 232 },
-    cone:     { r: 233, g: 87, b: 63 },
-    frustum:  { r: 46, g: 134, b: 193 },
-    sphere:   { r: 15, g: 157, b: 88 }
+    cylinder: { r: 91,  g: 140, b: 90  },  // --bamboo
+    cone:     { r: 197, g: 169, b: 106 },  // --wood-gold
+    frustum:  { r: 123, g: 168, b: 122 },  // --bamboo-light (brighter)
+    sphere:   { r: 45,  g: 74,  b: 50  }   // --bamboo-dark
 };
 
 // 参数值
@@ -345,23 +415,24 @@ function getLayerForObj(name) {
 // ============================================================
 function buildCylinder() {
     const p = params.cylinder;
+    const c = LAYER_COLOR.cylinder;
     cmd('rCyl', `rCyl = ${p.r}`);
     cmd('hCyl', `hCyl = ${p.h}`);
 
     cmd('botCyl', `botCyl = Circle((0,0,0), rCyl)`);
     ggb.evalCommand('SetFilling(botCyl, 0.6)');
-    ggb.setColor('botCyl', 26, 115, 232);
+    ggb.setColor('botCyl', c.r, c.g, c.b);
 
     cmd('topCyl', `topCyl = Circle((0,0,hCyl), rCyl)`);
     ggb.evalCommand('SetFilling(topCyl, 0.6)');
-    ggb.setColor('topCyl', 26, 115, 232);
+    ggb.setColor('topCyl', c.r, c.g, c.b);
 
     cmd('sideCyl', `sideCyl = Surface(rCyl*cos(u), rCyl*sin(u), v, u, 0, 2π, v, 0, hCyl)`);
-    ggb.setColor('sideCyl', 26, 115, 232);
+    ggb.setColor('sideCyl', c.r, c.g, c.b);
     ggb.evalCommand('SetFilling(sideCyl, 0.3)');
 
     cmd('genCyl', `genCyl = Segment((rCyl,0,0), (rCyl,0,hCyl))`);
-    ggb.setColor('genCyl', 255, 110, 64);
+    ggb.setColor('genCyl', 197, 169, 106);
     ggb.evalCommand('SetLineThickness(genCyl, 2)');
 
     cmd('axisCyl', `axisCyl = Segment((0,0,0), (0,0,hCyl))`);
@@ -376,19 +447,20 @@ function buildCylinder() {
 // ============================================================
 function buildCone() {
     const p = params.cone;
+    const c = LAYER_COLOR.cone;
     cmd('rCone', `rCone = ${p.r}`);
     cmd('hCone', `hCone = ${p.h}`);
 
     cmd('botCone', `botCone = Circle((0,0,0), rCone)`);
     ggb.evalCommand('SetFilling(botCone, 0.6)');
-    ggb.setColor('botCone', 233, 87, 63);
+    ggb.setColor('botCone', c.r, c.g, c.b);
 
     cmd('sideCone', `sideCone = Surface(rCone*(1-v/hCone)*cos(u), rCone*(1-v/hCone)*sin(u), v, u, 0, 2π, v, 0, hCone)`);
-    ggb.setColor('sideCone', 233, 87, 63);
+    ggb.setColor('sideCone', c.r, c.g, c.b);
     ggb.evalCommand('SetFilling(sideCone, 0.3)');
 
     cmd('genCone', `genCone = Segment((rCone,0,0), (0,0,hCone))`);
-    ggb.setColor('genCone', 255, 110, 64);
+    ggb.setColor('genCone', 91, 140, 90);
     ggb.evalCommand('SetLineThickness(genCone, 2)');
 
     cmd('axisCone', `axisCone = Segment((0,0,0), (0,0,hCone))`);
@@ -403,24 +475,25 @@ function buildCone() {
 // ============================================================
 function buildFrustum() {
     const p = params.frustum;
+    const c = LAYER_COLOR.frustum;
     cmd('r1Frus', `r1Frus = ${p.r1}`);
     cmd('r2Frus', `r2Frus = ${p.r2}`);
     cmd('hFrus', `hFrus = ${p.h}`);
 
     cmd('botFrus', `botFrus = Circle((0,0,0), r2Frus)`);
     ggb.evalCommand('SetFilling(botFrus, 0.6)');
-    ggb.setColor('botFrus', 46, 134, 193);
+    ggb.setColor('botFrus', c.r, c.g, c.b);
 
     cmd('topFrus', `topFrus = Circle((0,0,hFrus), r1Frus)`);
     ggb.evalCommand('SetFilling(topFrus, 0.6)');
-    ggb.setColor('topFrus', 46, 134, 193);
+    ggb.setColor('topFrus', c.r, c.g, c.b);
 
     cmd('sideFrus', `sideFrus = Surface((r2Frus + (r1Frus-r2Frus)*v/hFrus)*cos(u), (r2Frus + (r1Frus-r2Frus)*v/hFrus)*sin(u), v, u, 0, 2π, v, 0, hFrus)`);
-    ggb.setColor('sideFrus', 46, 134, 193);
+    ggb.setColor('sideFrus', c.r, c.g, c.b);
     ggb.evalCommand('SetFilling(sideFrus, 0.3)');
 
     cmd('genFrus', `genFrus = Segment((r2Frus,0,0), (r1Frus,0,hFrus))`);
-    ggb.setColor('genFrus', 255, 110, 64);
+    ggb.setColor('genFrus', 197, 169, 106);
     ggb.evalCommand('SetLineThickness(genFrus, 2)');
 
     cmd('axisFrus', `axisFrus = Segment((0,0,0), (0,0,hFrus))`);
@@ -435,14 +508,15 @@ function buildFrustum() {
 // ============================================================
 function buildSphere() {
     const p = params.sphere;
+    const c = LAYER_COLOR.sphere;
     cmd('rSph', `rSph = ${p.R}`);
 
     cmd('sphereSph', `sphereSph = Sphere((0,0,0), rSph)`);
     ggb.evalCommand('SetFilling(sphereSph, 0.15)');
-    ggb.setColor('sphereSph', 15, 157, 88);
+    ggb.setColor('sphereSph', c.r, c.g, c.b);
 
     cmd('greatCircleSph', `greatCircleSph = Circle((0,0,0), rSph, Vector((0,1,0)))`);
-    ggb.setColor('greatCircleSph', 255, 110, 64);
+    ggb.setColor('greatCircleSph', 197, 169, 106);
     ggb.evalCommand('SetLineThickness(greatCircleSph, 2)');
     ggb.evalCommand('SetFilling(greatCircleSph, 0)');
 
