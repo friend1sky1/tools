@@ -474,15 +474,26 @@ function drawWave() {
 }
 
 function drawTrail(ctx, trail, key, ox, cy, amp, ww, color) {
+  if (trail.length < 2) return;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2.5;
   ctx.globalAlpha = 0.35;
   ctx.beginPath();
-  for (let i = 0; i < trail.length; i++) {
-    const x = ox + (trail[i].deg / 360) * ww;
-    const y = cy - trail[i][key] * amp;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  // Convert trail to screen coords
+  const pts = trail.map(t => ({
+    x: ox + (t.deg / 360) * ww,
+    y: cy - t[key] * amp
+  }));
+  // Smooth curve using quadratic Bezier through midpoints
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
   }
+  // Last segment
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last.x, last.y);
   ctx.stroke();
   ctx.globalAlpha = 1;
 }
