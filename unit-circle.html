@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 三角函数单位圆</title>
+<style>
+:root {
+  --bamboo: #5B8C5A;
+  --bamboo-dark: #2D4A32;
+  --bamboo-mist: #F0F5EE;
+  --bamboo-light: #D6E5D2;
+  --wood-gold: #C5A96A;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  background: var(--bamboo-mist);
+  color: var(--bamboo-dark);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 6px 10px 8px;
+}
+
+/* Title - compact */
+.title-bar {
+  text-align: center;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+.title-bar h1 {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+.title-bar .sub {
+  font-size: 0.65rem;
+  color: #7a9a7a;
+}
+
+/* Canvas containers - fixed proportions */
+.circle-wrap {
+  flex-shrink: 0;
+  height: 38vh;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px solid var(--bamboo-light);
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+.wave-wrap {
+  flex-shrink: 0;
+  height: 22vh;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px solid var(--bamboo-light);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.circle-wrap canvas, .wave-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Controls - always visible */
+.controls {
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--bamboo-light);
+  padding: 10px 14px 8px;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.slider-row label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--bamboo-dark);
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bamboo-light);
+  border-radius: 4px;
+  outline: none;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bamboo);
+  cursor: pointer;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+.angle-display {
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 52px;
+  text-align: right;
+  color: var(--bamboo-dark);
+}
+.btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1.5px solid var(--bamboo);
+  background: #fff;
+  color: var(--bamboo);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.96); }
+.btn.active { background: var(--bamboo); color: #fff; }
+.btn-gold { border-color: var(--wood-gold); color: var(--wood-gold); }
+.btn-gold.active { background: var(--wood-gold); color: #fff; }
+.btn-play { border-color: var(--bamboo-dark); color: var(--bamboo-dark); font-size: 0.9rem; }
+.btn-play.active { background: var(--bamboo-dark); color: #fff; }
+
+/* Info bar */
+.info-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.72rem;
+  padding: 5px 0 2px;
+}
+.info-item { display: flex; align-items: center; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="title-bar">
+    <h1>🎋 青竹数苑</h1>
+    <div class="sub">拖动滑块或点击播放，观察三角函数的生成</div>
+  </div>
+
+  <div class="circle-wrap"><canvas id="circleCanvas"></canvas></div>
+  <div class="wave-wrap"><canvas id="waveCanvas"></canvas></div>
+
+  <div class="controls">
+    <div class="slider-row">
+      <label>θ</label>
+      <input type="range" id="angleSlider" min="0" max="360" value="0" step="0.5">
+      <span class="angle-display" id="angleValue">0°</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-play" id="playBtn">▶ 播放</button>
+      <button class="btn active" id="sinBtn">sin</button>
+      <button class="btn btn-gold active" id="cosBtn">cos</button>
+    </div>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-item">
+      <span class="dot" style="background:var(--bamboo)"></span>
+      <span>sinθ = <strong id="sinVal">0.00</strong></span>
+    </div>
+    <div class="info-item">
+      <span class="dot" style="background:var(--wood-gold)"></span>
+      <span>cosθ = <strong id="cosVal">1.00</strong></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SIN_COLOR = '#5B8C5A';
+const COS_COLOR = '#C5A96A';
+const AXIS_COLOR = '#2D4A32';
+const LIGHT = '#e8f0e8';
+
+let angleDeg = 0;
+let playing = false;
+let animId = null;
+let showSin = true;
+let showCos = true;
+let waveTrail = [];
+
+const slider = document.getElementById('angleSlider');
+const angleValue = document.getElementById('angleValue');
+const sinValEl = document.getElementById('sinVal');
+const cosValEl = document.getElementById('cosVal');
+const playBtn = document.getElementById('playBtn');
+const sinBtn = document.getElementById('sinBtn');
+const cosBtn = document.getElementById('cosBtn');
+const circleCanvas = document.getElementById('circleCanvas');
+const waveCanvas = document.getElementById('waveCanvas');
+const cCtx = circleCanvas.getContext('2d');
+const wCtx = waveCanvas.getContext('2d');
+
+function setupCanvas(canvas, ctx) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: rect.width, h: rect.height };
+}
+
+let cSize, wSize;
+
+function resizeAll() {
+  cSize = setupCanvas(circleCanvas, cCtx);
+  wSize = setupCanvas(waveCanvas, wCtx);
+}
+
+// === Draw unit circle ===
+function drawCircle() {
+  const { w, h } = cSize;
+  const cx = w / 2, cy = h / 2;
+  const r = Math.min(w, h) * 0.32;
+  const rad = angleDeg * Math.PI / 180;
+  const px = cx + r * Math.cos(rad);
+  const py = cy - r * Math.sin(rad);
+
+  cCtx.clearRect(0, 0, w, h);
+
+  // Grid dots
+  cCtx.fillStyle = LIGHT;
+  for (let i = 8; i < w; i += 14) {
+    for (let j = 8; j < h; j += 14) {
+      cCtx.beginPath();
+      cCtx.arc(i, j, 0.7, 0, Math.PI * 2);
+      cCtx.fill();
+    }
+  }
+
+  // Axes
+  cCtx.strokeStyle = AXIS_COLOR;
+  cCtx.lineWidth = 1;
+  cCtx.globalAlpha = 0.2;
+  cCtx.beginPath();
+  cCtx.moveTo(cx - r - 16, cy);
+  cCtx.lineTo(cx + r + 16, cy);
+  cCtx.stroke();
+  cCtx.beginPath();
+  cCtx.moveTo(cx, cy - r - 16);
+  cCtx.lineTo(cx, cy + r + 16);
+  cCtx.stroke();
+  cCtx.globalAlpha = 1;
+
+  // Axis labels
+  cCtx.fillStyle = AXIS_COLOR;
+  cCtx.font = '10px sans-serif';
+  cCtx.globalAlpha = 0.45;
+  cCtx.textAlign = 'left';
+  cCtx.fillText('x', cx + r + 10, cy - 4);
+  cCtx.textAlign = 'center';
+  cCtx.fillText('y', cx + 8, cy - r - 6);
+  cCtx.globalAlpha = 1;
+
+  // Unit circle
+  cCtx.strokeStyle = AXIS_COLOR;
+  cCtx.lineWidth = 1.8;
+  cCtx.beginPath();
+  cCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  cCtx.stroke();
+
+  // Filled right triangle
+  if (showSin || showCos) {
+    cCtx.globalAlpha = 0.07;
+    cCtx.fillStyle = SIN_COLOR;
+    cCtx.beginPath();
+    cCtx.moveTo(cx, cy);
+    cCtx.lineTo(px, cy);
+    cCtx.lineTo(px, py);
+    cCtx.closePath();
+    cCtx.fill();
+    cCtx.globalAlpha = 1;
+  }
+
+  // Cos projection (horizontal)
+  if (showCos) {
+    cCtx.strokeStyle = COS_COLOR;
+    cCtx.lineWidth = 1.8;
+    cCtx.globalAlpha = 0.65;
+    cCtx.beginPath();
+    cCtx.moveTo(cx, cy);
+    cCtx.lineTo(px, cy);
+    cCtx.stroke();
+    const dir = px > cx ? 1 : -1;
+    cCtx.beginPath();
+    cCtx.moveTo(px, cy);
+    cCtx.lineTo(px - dir * 5, cy - 3.5);
+    cCtx.lineTo(px - dir * 5, cy + 3.5);
+    cCtx.closePath();
+    cCtx.fillStyle = COS_COLOR;
+    cCtx.fill();
+    cCtx.globalAlpha = 1;
+  }
+
+  // Sin projection (vertical)
+  if (showSin) {
+    cCtx.strokeStyle = SIN_COLOR;
+    cCtx.lineWidth = 1.8;
+    cCtx.globalAlpha = 0.65;
+    cCtx.beginPath();
+    cCtx.moveTo(px, cy);
+    cCtx.lineTo(px, py);
+    cCtx.stroke();
+    const dir = py < cy ? -1 : 1;
+    cCtx.beginPath();
+    cCtx.moveTo(px, py);
+    cCtx.lineTo(px - 3.5, py - dir * 5);
+    cCtx.lineTo(px + 3.5, py - dir * 5);
+    cCtx.closePath();
+    cCtx.fillStyle = SIN_COLOR;
+    cCtx.fill();
+    cCtx.globalAlpha = 1;
+  }
+
+  // Radius
+  cCtx.strokeStyle = AXIS_COLOR;
+  cCtx.lineWidth = 2;
+  cCtx.beginPath();
+  cCtx.moveTo(cx, cy);
+  cCtx.lineTo(px, py);
+  cCtx.stroke();
+
+  // Angle arc
+  if (angleDeg > 1) {
+    cCtx.strokeStyle = AXIS_COLOR;
+    cCtx.lineWidth = 1.5;
+    cCtx.globalAlpha = 0.45;
+    cCtx.beginPath();
+    cCtx.arc(cx, cy, 22, 0, -rad, true);
+    cCtx.stroke();
+    cCtx.globalAlpha = 1;
+    const halfA = rad / 2;
+    const lr = 34;
+    cCtx.fillStyle = AXIS_COLOR;
+    cCtx.font = 'bold 12px sans-serif';
+    cCtx.textAlign = 'center';
+    cCtx.textBaseline = 'middle';
+    cCtx.fillText('θ', cx + lr * Math.cos(halfA), cy - lr * Math.sin(halfA));
+  }
+
+  // Point P
+  cCtx.fillStyle = SIN_COLOR;
+  cCtx.beginPath();
+  cCtx.arc(px, py, 5, 0, Math.PI * 2);
+  cCtx.fill();
+  cCtx.strokeStyle = '#fff';
+  cCtx.lineWidth = 2;
+  cCtx.stroke();
+
+  cCtx.fillStyle = AXIS_COLOR;
+  cCtx.font = 'bold 11px sans-serif';
+  cCtx.textAlign = 'left';
+  cCtx.textBaseline = 'bottom';
+  cCtx.fillText('P', px + 6, py - 4);
+}
+
+// === Draw wave ===
+function drawWave() {
+  const { w, h } = wSize;
+  const lx = 24;
+  const cy = h / 2;
+  const amp = h * 0.36;
+  const waveW = w - 40;
+  const endX = w - 8;
+
+  wCtx.clearRect(0, 0, w, h);
+
+  // Grid dots
+  wCtx.fillStyle = LIGHT;
+  for (let i = 8; i < w; i += 14) {
+    for (let j = 8; j < h; j += 14) {
+      wCtx.beginPath();
+      wCtx.arc(i, j, 0.7, 0, Math.PI * 2);
+      wCtx.fill();
+    }
+  }
+
+  // Axes
+  wCtx.strokeStyle = AXIS_COLOR;
+  wCtx.lineWidth = 1;
+  wCtx.globalAlpha = 0.2;
+  wCtx.beginPath();
+  wCtx.moveTo(lx - 4, cy);
+  wCtx.lineTo(endX, cy);
+  wCtx.stroke();
+  wCtx.beginPath();
+  wCtx.moveTo(lx, 6);
+  wCtx.lineTo(lx, h - 6);
+  wCtx.stroke();
+  wCtx.globalAlpha = 1;
+
+  // Labels
+  wCtx.fillStyle = AXIS_COLOR;
+  wCtx.font = '9px sans-serif';
+  wCtx.globalAlpha = 0.45;
+  wCtx.textAlign = 'right';
+  wCtx.fillText('1', lx - 4, cy - amp + 3);
+  wCtx.fillText('-1', lx - 4, cy + amp + 3);
+  wCtx.textAlign = 'center';
+  wCtx.fillText('0°', lx, cy + 12);
+  wCtx.fillText('90°', lx + waveW * 0.25, cy + 12);
+  wCtx.fillText('180°', lx + waveW * 0.5, cy + 12);
+  wCtx.fillText('270°', lx + waveW * 0.75, cy + 12);
+  wCtx.fillText('360°', endX - 2, cy + 12);
+  wCtx.globalAlpha = 1;
+
+  // Trails
+  if (waveTrail.length > 1) {
+    if (showSin) drawTrail(wCtx, waveTrail, 'sin', lx, cy, amp, waveW, SIN_COLOR);
+    if (showCos) drawTrail(wCtx, waveTrail, 'cos', lx, cy, amp, waveW, COS_COLOR);
+  }
+
+  // Current dots
+  const curX = lx + (angleDeg / 360) * waveW;
+
+  if (showSin) {
+    const sinY = cy - Math.sin(angleDeg * Math.PI / 180) * amp;
+    wCtx.fillStyle = SIN_COLOR;
+    wCtx.beginPath();
+    wCtx.arc(curX, sinY, 4, 0, Math.PI * 2);
+    wCtx.fill();
+    wCtx.strokeStyle = '#fff';
+    wCtx.lineWidth = 1.5;
+    wCtx.stroke();
+  }
+  if (showCos) {
+    const cosY = cy - Math.cos(angleDeg * Math.PI / 180) * amp;
+    wCtx.fillStyle = COS_COLOR;
+    wCtx.beginPath();
+    wCtx.arc(curX, cosY, 4, 0, Math.PI * 2);
+    wCtx.fill();
+    wCtx.strokeStyle = '#fff';
+    wCtx.lineWidth = 1.5;
+    wCtx.stroke();
+  }
+
+  // Vertical guide
+  wCtx.strokeStyle = AXIS_COLOR;
+  wCtx.lineWidth = 1;
+  wCtx.globalAlpha = 0.12;
+  wCtx.setLineDash([2, 3]);
+  wCtx.beginPath();
+  wCtx.moveTo(curX, 6);
+  wCtx.lineTo(curX, h - 6);
+  wCtx.stroke();
+  wCtx.setLineDash([]);
+  wCtx.globalAlpha = 1;
+}
+
+function drawTrail(ctx, trail, key, ox, cy, amp, ww, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  for (let i = 0; i < trail.length; i++) {
+    const x = ox + (trail[i].deg / 360) * ww;
+    const y = cy - trail[i][key] * amp;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+// === Update ===
+function update() {
+  const rad = angleDeg * Math.PI / 180;
+  const s = Math.sin(rad), c = Math.cos(rad);
+  angleValue.textContent = angleDeg.toFixed(0) + '°';
+  sinValEl.textContent = s.toFixed(2);
+  cosValEl.textContent = c.toFixed(2);
+  waveTrail.push({ deg: angleDeg, sin: s, cos: c });
+  if (waveTrail.length > 600) waveTrail.shift();
+  drawCircle();
+  drawWave();
+}
+
+// === Events ===
+slider.addEventListener('input', function() {
+  angleDeg = parseFloat(this.value);
+  update();
+});
+
+playBtn.addEventListener('click', function() {
+  playing = !playing;
+  playBtn.textContent = playing ? '⏸ 暂停' : '▶ 播放';
+  playBtn.classList.toggle('active', playing);
+  if (playing) { waveTrail = []; animate(); }
+  else { cancelAnimationFrame(animId); }
+});
+
+function animate() {
+  if (!playing) return;
+  angleDeg = (angleDeg + 0.6) % 360;
+  slider.value = angleDeg;
+  update();
+  animId = requestAnimationFrame(animate);
+}
+
+sinBtn.addEventListener('click', function() {
+  showSin = !showSin;
+  sinBtn.classList.toggle('active', showSin);
+  update();
+});
+
+cosBtn.addEventListener('click', function() {
+  showCos = !showCos;
+  cosBtn.classList.toggle('active', showCos);
+  update();
+});
+
+// === Init ===
+window.addEventListener('resize', () => { resizeAll(); update(); });
+resizeAll();
+update();
+</script>
+</body>
+</html>
