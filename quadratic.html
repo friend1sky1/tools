@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 二次函数</title>
+<style>
+:root {
+  --bamboo: #5B8C5A;
+  --bamboo-dark: #2D4A32;
+  --bamboo-mist: #F0F5EE;
+  --bamboo-light: #D6E5D2;
+  --wood-gold: #C5A96A;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  background: var(--bamboo-mist);
+  color: var(--bamboo-dark);
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 6px 10px 8px;
+}
+.title-bar { text-align: center; flex-shrink: 0; padding-bottom: 3px; }
+.title-bar h1 { font-size: 1rem; font-weight: 700; letter-spacing: 2px; line-height: 1.2; }
+.title-bar .sub { font-size: 0.65rem; color: #7a9a7a; }
+
+/* Canvas */
+.graph-wrap {
+  flex-shrink: 0;
+  height: 36vh;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px solid var(--bamboo-light);
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+.graph-wrap canvas { width: 100%; height: 100%; display: block; }
+
+/* Formula */
+.formula-bar {
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--bamboo-light);
+  padding: 6px 14px;
+  margin-bottom: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.formula-row {
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.formula-row .label {
+  font-size: 0.7rem;
+  color: #7a9a7a;
+  min-width: 36px;
+}
+.formula-row .eq {
+  font-family: "Courier New", monospace;
+  color: var(--bamboo-dark);
+  font-size: 0.8rem;
+}
+.formula-row .eq .hl { color: var(--bamboo); font-weight: 700; }
+
+/* Sliders */
+.controls {
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--bamboo-light);
+  padding: 6px 14px 4px;
+  margin-bottom: 3px;
+}
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.slider-group:last-child { margin-bottom: 0; }
+.slider-group .param {
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 16px;
+  color: var(--bamboo-dark);
+}
+.slider-group input[type="range"] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bamboo-light);
+  border-radius: 3px;
+  outline: none;
+}
+.slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bamboo);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.slider-group .val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 38px;
+  text-align: right;
+  color: var(--bamboo-dark);
+}
+
+/* Range inputs */
+.range-bar {
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--bamboo-light);
+  padding: 6px 14px;
+  margin-bottom: 3px;
+}
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #7a9a7a;
+  margin-bottom: 2px;
+}
+.range-row:last-child { margin-bottom: 0; }
+.range-row label { font-weight: 600; min-width: 14px; }
+.range-row input[type="number"] {
+  width: 44px;
+  padding: 2px 4px;
+  border: 1px solid var(--bamboo-light);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--bamboo-dark);
+  background: var(--bamboo-mist);
+}
+.range-row input[type="number"]:focus { outline: none; border-color: var(--bamboo); }
+.apply-btn {
+  padding: 2px 10px;
+  border: 1px solid var(--bamboo);
+  background: #fff;
+  color: var(--bamboo);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* Checkboxes + info */
+.bottom-row {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+.toggle-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--bamboo-light);
+  background: #fff;
+  color: #7a9a7a;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: all 0.15s;
+}
+.pill.on { background: var(--bamboo); color: #fff; border-color: var(--bamboo); }
+.pill input { display: none; }
+.info-text {
+  font-size: 0.68rem;
+  color: #7a9a7a;
+  padding: 1px 0;
+  line-height: 1.3;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="title-bar">
+    <h1>🎋 青竹数苑</h1>
+    <div class="sub">拖动滑块，探索二次函数 y = a(x−h)² + k</div>
+  </div>
+
+  <div class="graph-wrap"><canvas id="graph"></canvas></div>
+
+  <div class="formula-bar">
+    <div class="formula-row">
+      <span class="label">一般式</span>
+      <span class="eq" id="generalForm">y = x²</span>
+    </div>
+    <div class="formula-row">
+      <span class="label">顶点式</span>
+      <span class="eq" id="vertexForm">y = x²</span>
+    </div>
+  </div>
+
+  <!-- a, b, c sliders -->
+  <div class="controls">
+    <div class="slider-group">
+      <span class="param">a</span>
+      <input type="range" id="sliderA" min="-5" max="5" value="1" step="0.1">
+      <span class="val" id="valA">1.0</span>
+    </div>
+    <div class="slider-group">
+      <span class="param">b</span>
+      <input type="range" id="sliderB" min="-10" max="10" value="0" step="0.1">
+      <span class="val" id="valB">0.0</span>
+    </div>
+    <div class="slider-group">
+      <span class="param">c</span>
+      <input type="range" id="sliderC" min="-10" max="10" value="0" step="0.1">
+      <span class="val" id="valC">0.0</span>
+    </div>
+  </div>
+
+  <!-- h, k sliders -->
+  <div class="controls">
+    <div class="slider-group">
+      <span class="param">h</span>
+      <input type="range" id="sliderH" min="-10" max="10" value="0" step="0.1">
+      <span class="val" id="valH">0.0</span>
+    </div>
+    <div class="slider-group">
+      <span class="param">k</span>
+      <input type="range" id="sliderK" min="-10" max="10" value="0" step="0.1">
+      <span class="val" id="valK">0.0</span>
+    </div>
+  </div>
+
+  <!-- Range: x and y on separate rows -->
+  <div class="range-bar">
+    <div class="range-row">
+      <label>x</label>
+      [<input type="number" id="xMin" value="-10">,
+      <input type="number" id="xMax" value="10">]
+      <button class="apply-btn" id="applyRange">应用</button>
+    </div>
+    <div class="range-row">
+      <label>y</label>
+      [<input type="number" id="yMin" value="-10">,
+      <input type="number" id="yMax" value="10">]
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="toggle-pills">
+      <label class="pill on" id="pillVertex"><input type="checkbox" checked>顶点</label>
+      <label class="pill on" id="pillAxis"><input type="checkbox" checked>对称轴</label>
+      <label class="pill on" id="pillXInt"><input type="checkbox" checked>x轴交点</label>
+      <label class="pill" id="pillYInt"><input type="checkbox">y轴交点</label>
+    </div>
+  </div>
+  <div class="info-text" id="infoText"></div>
+</div>
+
+<script>
+const SIN_COLOR = '#5B8C5A';
+const COS_COLOR = '#C5A96A';
+const AXIS_COLOR = '#2D4A32';
+const LIGHT = '#e8f0e8';
+
+// State
+let a = 1, b = 0, c = 0;
+let xMin = -10, xMax = 10, yMin = -10, yMax = 10;
+let showVertex = true, showAxis = true, showXInt = true, showYInt = false;
+// Flag to prevent feedback loops
+let updatingFromHK = false;
+let updatingFromABC = false;
+
+// Elements
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+const sliderA = document.getElementById('sliderA');
+const sliderB = document.getElementById('sliderB');
+const sliderC = document.getElementById('sliderC');
+const sliderH = document.getElementById('sliderH');
+const sliderK = document.getElementById('sliderK');
+const valA = document.getElementById('valA');
+const valB = document.getElementById('valB');
+const valC = document.getElementById('valC');
+const valH = document.getElementById('valH');
+const valK = document.getElementById('valK');
+const generalForm = document.getElementById('generalForm');
+const vertexForm = document.getElementById('vertexForm');
+const infoText = document.getElementById('infoText');
+const pillVertex = document.getElementById('pillVertex');
+const pillAxis = document.getElementById('pillAxis');
+const pillXInt = document.getElementById('pillXInt');
+const pillYInt = document.getElementById('pillYInt');
+
+// Canvas setup
+let cW, cH;
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cW = rect.width;
+  cH = rect.height;
+}
+
+// Math ↔ Screen
+function toScreen(mx, my) {
+  const sx = (mx - xMin) / (xMax - xMin) * cW;
+  const sy = (yMax - my) / (yMax - yMin) * cH;
+  return [sx, sy];
+}
+function toMath(sx, sy) {
+  const mx = xMin + (sx / cW) * (xMax - xMin);
+  const my = yMax - (sy / cH) * (yMax - yMin);
+  return [mx, my];
+}
+
+function f(x) { return a * x * x + b * x + c; }
+
+function getVertex() {
+  if (a === 0) return null;
+  return { x: -b / (2 * a), y: c - b * b / (4 * a) };
+}
+
+function getXIntercepts() {
+  if (a === 0) {
+    if (b === 0) return [];
+    return [{ x: -c / b, y: 0 }];
+  }
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return [];
+  if (disc === 0) return [{ x: -b / (2 * a), y: 0 }];
+  const sd = Math.sqrt(disc);
+  return [
+    { x: (-b - sd) / (2 * a), y: 0 },
+    { x: (-b + sd) / (2 * a), y: 0 }
+  ];
+}
+
+function fmt(n, d) {
+  if (d === undefined) d = 1;
+  const s = n.toFixed(d);
+  return s.replace(/\.?0+$/, '') || '0';
+}
+
+// === Sync h,k from a,b,c ===
+function syncHKfromABC() {
+  if (updatingFromHK) return;
+  updatingFromABC = true;
+  const vtx = getVertex();
+  if (vtx && a !== 0) {
+    const h = vtx.x;
+    const k = vtx.y;
+    // Clamp to slider range
+    const hClamped = Math.max(-10, Math.min(10, h));
+    const kClamped = Math.max(-10, Math.min(10, k));
+    sliderH.value = hClamped;
+    sliderK.value = kClamped;
+    valH.textContent = fmt(hClamped);
+    valK.textContent = fmt(kClamped);
+  }
+  updatingFromABC = false;
+}
+
+// === Sync a,b,c from h,k (a stays fixed) ===
+function syncABCfromHK() {
+  if (updatingFromABC) return;
+  updatingFromHK = true;
+  const h = parseFloat(sliderH.value);
+  const k = parseFloat(sliderK.value);
+  // b = -2*a*h, c = k + a*h²
+  const newB = -2 * a * h;
+  const newC = k + a * h * h;
+  // Clamp to slider range
+  const bClamped = Math.max(-10, Math.min(10, newB));
+  const cClamped = Math.max(-10, Math.min(10, newC));
+  b = bClamped;
+  c = cClamped;
+  sliderB.value = bClamped;
+  sliderC.value = cClamped;
+  valB.textContent = fmt(bClamped);
+  valC.textContent = fmt(cClamped);
+  updatingFromHK = false;
+}
+
+// Draw
+function draw() {
+  ctx.clearRect(0, 0, cW, cH);
+
+  // Grid dots
+  ctx.fillStyle = LIGHT;
+  for (let i = 8; i < cW; i += 12) {
+    for (let j = 8; j < cH; j += 12) {
+      ctx.beginPath();
+      ctx.arc(i, j, 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Grid lines
+  ctx.strokeStyle = AXIS_COLOR;
+  ctx.lineWidth = 0.5;
+  ctx.globalAlpha = 0.08;
+  for (let x = Math.ceil(xMin); x <= xMax; x++) {
+    const [sx] = toScreen(x, 0);
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, cH); ctx.stroke();
+  }
+  for (let y = Math.ceil(yMin); y <= yMax; y++) {
+    const [, sy] = toScreen(0, y);
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(cW, sy); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Axes
+  ctx.strokeStyle = AXIS_COLOR;
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.4;
+  const [axX] = toScreen(0, 0);
+  const [, axY] = toScreen(0, 0);
+  if (axY > 0 && axY < cH) { ctx.beginPath(); ctx.moveTo(0, axY); ctx.lineTo(cW, axY); ctx.stroke(); }
+  if (axX > 0 && axX < cW) { ctx.beginPath(); ctx.moveTo(axX, 0); ctx.lineTo(axX, cH); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+
+  // Axis labels
+  ctx.fillStyle = AXIS_COLOR;
+  ctx.font = '10px sans-serif';
+  ctx.globalAlpha = 0.4;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let x = Math.ceil(xMin); x <= xMax; x++) {
+    if (x === 0) continue;
+    const [sx] = toScreen(x, 0);
+    ctx.fillText(x, sx, Math.min(Math.max(axY + 4, 4), cH - 14));
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let y = Math.ceil(yMin); y <= yMax; y++) {
+    if (y === 0) continue;
+    const [, sy] = toScreen(0, y);
+    ctx.fillText(y, Math.max(axX - 4, 20), sy);
+  }
+  ctx.globalAlpha = 1;
+
+  // Origin
+  if (axX > 0 && axX < cW && axY > 0 && axY < cH) {
+    ctx.fillStyle = AXIS_COLOR; ctx.globalAlpha = 0.4;
+    ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('O', axX - 4, axY + 4);
+    ctx.globalAlpha = 1;
+  }
+
+  // Parabola
+  if (a !== 0) {
+    ctx.strokeStyle = SIN_COLOR; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= cW; px += 1) {
+      const [mx] = toMath(px, 0);
+      const my = f(mx);
+      const [, sy] = toScreen(mx, my);
+      if (sy >= -100 && sy <= cH + 100) {
+        if (!started) { ctx.moveTo(px, sy); started = true; }
+        else ctx.lineTo(px, sy);
+      }
+    }
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = SIN_COLOR; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const [sx1] = toScreen(xMin, 0); const [, sy1] = toScreen(0, b * xMin + c);
+    const [sx2] = toScreen(xMax, 0); const [, sy2] = toScreen(0, b * xMax + c);
+    ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2);
+    ctx.stroke();
+  }
+
+  // Vertex
+  const vtx = getVertex();
+  if (showVertex && vtx) {
+    const [vx, vy] = toScreen(vtx.x, vtx.y);
+    if (vx > -20 && vx < cW + 20 && vy > -20 && vy < cH + 20) {
+      ctx.setLineDash([3, 3]); ctx.strokeStyle = COS_COLOR; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(toScreen(0, 0)[0], vy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, toScreen(0, 0)[1]); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.fillStyle = COS_COLOR; ctx.beginPath(); ctx.arc(vx, vy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = AXIS_COLOR; ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(`V(${fmt(vtx.x)}, ${fmt(vtx.y)})`, vx + 8, vy - 4);
+    }
+  }
+
+  // Axis of symmetry
+  if (showAxis && vtx) {
+    const [ax] = toScreen(vtx.x, 0);
+    ctx.strokeStyle = COS_COLOR; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.35;
+    ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax, cH); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = COS_COLOR; ctx.font = '10px sans-serif'; ctx.globalAlpha = 0.7;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(`x=${fmt(vtx.x)}`, ax + 4, 6);
+    ctx.globalAlpha = 1;
+  }
+
+  // X intercepts
+  if (showXInt) {
+    for (const pt of getXIntercepts()) {
+      const [ix, iy] = toScreen(pt.x, pt.y);
+      if (ix > -20 && ix < cW + 20) {
+        ctx.fillStyle = '#e07050'; ctx.beginPath(); ctx.arc(ix, iy, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = AXIS_COLOR; ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(`(${fmt(pt.x)}, 0)`, ix, iy + 8);
+      }
+    }
+  }
+
+  // Y intercept
+  if (showYInt) {
+    const [ix, iy] = toScreen(0, c);
+    if (iy > -20 && iy < cH + 20) {
+      ctx.fillStyle = '#7060c0'; ctx.beginPath(); ctx.arc(ix, iy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = AXIS_COLOR; ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(`(0, ${fmt(c)})`, ix + 8, iy);
+    }
+  }
+}
+
+// Update formulas and info
+function updateInfo() {
+  // General form
+  let gen = 'y = ';
+  if (a !== 0) {
+    if (a === 1) gen += 'x²';
+    else if (a === -1) gen += '−x²';
+    else gen += fmt(a) + 'x²';
+  }
+  if (b !== 0) {
+    if (a !== 0) gen += ' ';
+    if (b > 0 && a !== 0) gen += '+ ';
+    else if (b < 0) gen += '− ';
+    if (Math.abs(b) === 1) gen += 'x';
+    else gen += fmt(Math.abs(b)) + 'x';
+  }
+  if (c !== 0) {
+    if (a !== 0 || b !== 0) gen += ' ';
+    if (c > 0) gen += '+ ' + fmt(c);
+    else gen += '− ' + fmt(Math.abs(c));
+  }
+  if (a === 0 && b === 0) gen += fmt(c);
+  generalForm.innerHTML = gen;
+
+  // Vertex form
+  const vtx = getVertex();
+  if (vtx && a !== 0) {
+    let vf = '';
+    if (a === 1) vf += '';
+    else if (a === -1) vf += '−';
+    else vf += fmt(a);
+    const h = vtx.x;
+    const sign = h >= 0 ? '−' : '+';
+    if (Math.abs(h) === 0) vf += 'x²';
+    else vf += `(x ${sign} ${fmt(Math.abs(h))})²`;
+    const k = vtx.y;
+    if (k >= 0) vf += ' + ' + fmt(k);
+    else vf += ' − ' + fmt(Math.abs(k));
+    vertexForm.innerHTML = 'y = ' + vf;
+  } else {
+    vertexForm.innerHTML = a === 0 ? '(非二次函数)' : 'y = 0';
+  }
+
+  // Info text
+  let info = '';
+  if (a !== 0) {
+    const vtx = getVertex();
+    if (vtx) info += `顶点(${fmt(vtx.x)}, ${fmt(vtx.y)})  `;
+    info += `对称轴 x=${fmt(vtx.x)}  `;
+    info += a > 0 ? '开口向上' : '开口向下';
+    const disc = b * b - 4 * a * c;
+    info += `  △=${fmt(disc, 0)}`;
+    const xints = getXIntercepts();
+    if (xints.length === 0) info += '  无x轴交点';
+    else if (xints.length === 1) info += `  x轴交点(${fmt(xints[0].x)}, 0)`;
+    else info += `  x轴交点(${fmt(xints[0].x)}, 0)和(${fmt(xints[1].x)}, 0)`;
+  } else if (b !== 0) {
+    info += `一次函数  与y轴交点(0, ${fmt(c)})`;
+  } else {
+    info += `常数函数  y = ${fmt(c)}`;
+  }
+  infoText.textContent = info;
+}
+
+function update() {
+  draw();
+  updateInfo();
+}
+
+// === Slider events: a/b/c → sync h/k ===
+sliderA.addEventListener('input', function() {
+  a = parseFloat(this.value);
+  valA.textContent = fmt(a);
+  syncHKfromABC();
+  update();
+});
+sliderB.addEventListener('input', function() {
+  b = parseFloat(this.value);
+  valB.textContent = fmt(b);
+  syncHKfromABC();
+  update();
+});
+sliderC.addEventListener('input', function() {
+  c = parseFloat(this.value);
+  valC.textContent = fmt(c);
+  syncHKfromABC();
+  update();
+});
+
+// === Slider events: h/k → sync b/c ===
+sliderH.addEventListener('input', function() {
+  valH.textContent = fmt(parseFloat(this.value));
+  syncABCfromHK();
+  update();
+});
+sliderK.addEventListener('input', function() {
+  valK.textContent = fmt(parseFloat(this.value));
+  syncABCfromHK();
+  update();
+});
+
+// Toggle pills
+function setupPill(pillEl, getter, setter) {
+  function sync() { pillEl.classList.toggle('on', getter()); }
+  pillEl.addEventListener('click', function(e) {
+    e.preventDefault(); setter(!getter()); sync(); update();
+  });
+  sync();
+}
+setupPill(pillVertex, () => showVertex, v => showVertex = v);
+setupPill(pillAxis, () => showAxis, v => showAxis = v);
+setupPill(pillXInt, () => showXInt, v => showXInt = v);
+setupPill(pillYInt, () => showYInt, v => showYInt = v);
+
+// Range
+document.getElementById('applyRange').addEventListener('click', function() {
+  const xn = parseFloat(document.getElementById('xMin').value);
+  const xx = parseFloat(document.getElementById('xMax').value);
+  const yn = parseFloat(document.getElementById('yMin').value);
+  const yx = parseFloat(document.getElementById('yMax').value);
+  if (xn < xx && yn < yx) { xMin = xn; xMax = xx; yMin = yn; yMax = yx; update(); }
+});
+
+// Init
+window.addEventListener('resize', () => { resizeCanvas(); update(); });
+resizeCanvas();
+update();
+</script>
+</body>
+</html>
