@@ -483,13 +483,15 @@ function draw() {
   // Parabola
   if (a !== 0) {
     ctx.strokeStyle = SIN_COLOR; ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
     let started = false;
-    for (let px = 0; px <= cW; px += 1) {
+    const step = 0.5; // sub-pixel sampling for smoother curves
+    for (let px = -100; px <= cW + 100; px += step) {
       const [mx] = toMath(px, 0);
       const my = f(mx);
       const [, sy] = toScreen(mx, my);
-      if (sy >= -100 && sy <= cH + 100) {
+      if (sy >= -200 && sy <= cH + 200) {
         if (!started) { ctx.moveTo(px, sy); started = true; }
         else ctx.lineTo(px, sy);
       }
