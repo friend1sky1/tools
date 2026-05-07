@@ -1,81 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 140">
   <defs>
-    <!-- Cylinder gradient: left dark, right light -->
-    <linearGradient id="cyl" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#5B8C5A"/>
-      <stop offset="100%" stop-color="#7DAF7C"/>
+    <linearGradient id="cyl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8BBF8B"/>
+      <stop offset="100%" stop-color="#A8D4A8"/>
     </linearGradient>
-    <!-- Cone gradient: warm amber -->
-    <linearGradient id="cone" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#B8934A"/>
-      <stop offset="100%" stop-color="#D4B06A"/>
+    <linearGradient id="cone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#A0C8A0"/>
+      <stop offset="100%" stop-color="#C4D8A0"/>
     </linearGradient>
-    <!-- Frustum gradient: muted sage -->
-    <linearGradient id="frust" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#6E9B6E"/>
-      <stop offset="100%" stop-color="#95BF95"/>
+    <linearGradient id="frust" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C4D0A0"/>
+      <stop offset="100%" stop-color="#D8C890"/>
     </linearGradient>
-    <!-- Sphere gradient: warm terracotta -->
-    <linearGradient id="sph" x1="0.3" y1="0.2" x2="0.8" y2="0.9">
-      <stop offset="0%" stop-color="#E0C090"/>
-      <stop offset="100%" stop-color="#C09060"/>
+    <linearGradient id="sph" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D8C090"/>
+      <stop offset="100%" stop-color="#E8C8A0"/>
     </linearGradient>
-    <!-- Subtle shadow -->
     <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="rgba(45,74,50,0.12)"/>
+      <stop offset="0%" stop-color="rgba(45,74,50,0.10)"/>
       <stop offset="100%" stop-color="rgba(45,74,50,0)"/>
     </radialGradient>
   </defs>
 
-  <!-- ═══ Cylinder ═══ -->
-  <g transform="translate(50, 100)">
-    <!-- Shadow -->
-    <ellipse cx="0" cy="48" rx="24" ry="5" fill="url(#shadow)"/>
-    <!-- Body -->
-    <rect x="-22" y="-38" width="44" height="76" fill="url(#cyl)"/>
-    <!-- Top face -->
-    <ellipse cx="0" cy="-38" rx="22" ry="9" fill="#7DAF7C"/>
-    <!-- Top highlight -->
-    <ellipse cx="-4" cy="-40" rx="10" ry="4" fill="#95CC95" opacity="0.5"/>
-    <!-- Bottom face (darker) -->
-    <ellipse cx="0" cy="38" rx="22" ry="9" fill="#4A7A4A"/>
+  <!-- Cylinder -->
+  <g transform="translate(48, 65)">
+    <ellipse cx="0" cy="32" rx="16" ry="4" fill="url(#shadow)"/>
+    <rect x="-15" y="-26" width="30" height="52" fill="url(#cyl)" rx="1"/>
+    <ellipse cx="0" cy="-26" rx="15" ry="6" fill="#B0D8B0"/>
+    <ellipse cx="-3" cy="-27" rx="7" ry="2.5" fill="#C8E8C8" opacity="0.6"/>
+    <ellipse cx="0" cy="26" rx="15" ry="6" fill="#78A878"/>
   </g>
 
-  <!-- ═══ Cone ═══ -->
-  <g transform="translate(140, 100)">
-    <!-- Shadow -->
-    <ellipse cx="0" cy="48" rx="28" ry="5" fill="url(#shadow)"/>
-    <!-- Body -->
-    <polygon points="0,-48 -28,38 28,38" fill="url(#cone)"/>
-    <!-- Highlight stripe -->
-    <polygon points="0,-48 -6,38 6,38" fill="#D4C080" opacity="0.3"/>
-    <!-- Base face -->
-    <ellipse cx="0" cy="38" rx="28" ry="9" fill="#A07830"/>
+  <!-- Cone -->
+  <g transform="translate(128, 65)">
+    <ellipse cx="0" cy="32" rx="18" ry="4" fill="url(#shadow)"/>
+    <polygon points="0,-32 -18,26 18,26" fill="url(#cone)"/>
+    <polygon points="0,-32 -4,26 4,26" fill="#C8E0B0" opacity="0.3"/>
+    <ellipse cx="0" cy="26" rx="18" ry="6" fill="#90B880"/>
   </g>
 
-  <!-- ═══ Frustum ═══ -->
-  <g transform="translate(235, 100)">
-    <!-- Shadow -->
-    <ellipse cx="0" cy="48" rx="28" ry="5" fill="url(#shadow)"/>
-    <!-- Body -->
-    <polygon points="-14,-38 14,-38 28,38 -28,38" fill="url(#frust)"/>
-    <!-- Highlight -->
-    <polygon points="-8,-38 0,-38 8,38 -8,38" fill="#A8D0A8" opacity="0.25"/>
-    <!-- Top face -->
-    <ellipse cx="0" cy="-38" rx="14" ry="6" fill="#95BF95"/>
-    <!-- Bottom face -->
-    <ellipse cx="0" cy="38" rx="28" ry="9" fill="#5A8A5A"/>
+  <!-- Frustum -->
+  <g transform="translate(208, 65)">
+    <ellipse cx="0" cy="32" rx="19" ry="4" fill="url(#shadow)"/>
+    <polygon points="-9,-26 9,-26 19,26 -19,26" fill="url(#frust)"/>
+    <polygon points="-5,-26 1,-26 7,26 -5,26" fill="#E0D8A8" opacity="0.25"/>
+    <ellipse cx="0" cy="-26" rx="9" ry="4" fill="#D0C890"/>
+    <ellipse cx="0" cy="26" rx="19" ry="6" fill="#B8A870"/>
   </g>
 
-  <!-- ═══ Sphere ═══ -->
-  <g transform="translate(315, 100)">
-    <!-- Shadow -->
-    <ellipse cx="0" cy="42" rx="28" ry="5" fill="url(#shadow)"/>
-    <!-- Main sphere -->
-    <circle cx="0" cy="0" r="32" fill="url(#sph)"/>
-    <!-- Highlight -->
-    <ellipse cx="-10" cy="-12" rx="14" ry="10" fill="#F0D8A8" opacity="0.45"/>
-    <!-- Small specular -->
-    <ellipse cx="-12" cy="-14" rx="5" ry="3" fill="#FFF" opacity="0.3"/>
+  <!-- Sphere -->
+  <g transform="translate(278, 65)">
+    <ellipse cx="0" cy="28" rx="19" ry="4" fill="url(#shadow)"/>
+    <circle cx="0" cy="0" r="22" fill="url(#sph)"/>
+    <ellipse cx="-6" cy="-8" rx="9" ry="6" fill="#F0D8B0" opacity="0.5"/>
+    <ellipse cx="-7" cy="-9" rx="3" ry="2" fill="#FFF" opacity="0.3"/>
   </g>
 </svg>
