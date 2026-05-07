@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F5EE"/>
+      <stop offset="100%" stop-color="#E2EDE0"/>
+    </linearGradient>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5B8C5A"/>
+      <stop offset="100%" stop-color="#7AAE78"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="640" height="400" fill="url(#bg)" rx="12"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.08">
+    <line x1="0" y1="100" x2="640" y2="100" stroke="#5B8C5A" stroke-width="0.5"/>
+    <line x1="0" y1="200" x2="640" y2="200" stroke="#5B8C5A" stroke-width="0.5"/>
+    <line x1="0" y1="300" x2="640" y2="300" stroke="#5B8C5A" stroke-width="0.5"/>
+    <line x1="160" y1="0" x2="160" y2="400" stroke="#5B8C5A" stroke-width="0.5"/>
+    <line x1="320" y1="0" x2="320" y2="400" stroke="#5B8C5A" stroke-width="0.5"/>
+    <line x1="480" y1="0" x2="480" y2="400" stroke="#5B8C5A" stroke-width="0.5"/>
+  </g>
+
+  <!-- ===== LEFT: Unit Circle ===== -->
+  <g transform="translate(195, 200)">
+    <!-- Coordinate axes -->
+    <line x1="-140" y1="0" x2="140" y2="0" stroke="#6B7D6C" stroke-width="1.5" opacity="0.6"/>
+    <line x1="0" y1="-140" x2="0" y2="140" stroke="#6B7D6C" stroke-width="1.5" opacity="0.6"/>
+    <!-- Arrow heads -->
+    <polygon points="140,0 134,-4 134,4" fill="#6B7D6C" opacity="0.6"/>
+    <polygon points="0,-140 -4,-134 4,-134" fill="#6B7D6C" opacity="0.6"/>
+
+    <!-- Axis labels -->
+    <text x="130" y="18" fill="#6B7D6C" font-family="serif" font-size="14" font-style="italic" opacity="0.7">x</text>
+    <text x="8" y="-128" fill="#6B7D6C" font-family="serif" font-size="14" font-style="italic" opacity="0.7">y</text>
+
+    <!-- Unit circle -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="#5B8C5A" stroke-width="2.5"/>
+
+    <!-- Radius mark (1) -->
+    <text x="128" y="-8" fill="#5B8C5A" font-family="serif" font-size="13" font-style="italic">1</text>
+
+    <!-- 45-degree angle -->
+    <line x1="0" y1="0" x2="84.85" y2="-84.85" stroke="#5B8C5A" stroke-width="2" opacity="0.9"/>
+
+    <!-- Angle arc (45°) -->
+    <path d="M 30,0 A 30,30 0 0,0 21.21,-21.21" fill="none" stroke="#C5A96A" stroke-width="1.5"/>
+
+    <!-- Angle label -->
+    <text x="40" y="-8" fill="#C5A96A" font-family="serif" font-size="13" font-style="italic">θ</text>
+
+    <!-- Point on circle at 45° -->
+    <circle cx="84.85" cy="-84.85" r="4" fill="#C5A96A"/>
+
+    <!-- cos projection (horizontal dashed) -->
+    <line x1="84.85" y1="-84.85" x2="84.85" y2="0" stroke="#C5A96A" stroke-width="1.2" stroke-dasharray="5,3"/>
+    <!-- cos bracket -->
+    <line x1="0" y1="6" x2="84.85" y2="6" stroke="#C5A96A" stroke-width="1"/>
+    <line x1="0" y1="2" x2="0" y2="10" stroke="#C5A96A" stroke-width="1"/>
+    <line x1="84.85" y1="2" x2="84.85" y2="10" stroke="#C5A96A" stroke-width="1"/>
+    <text x="32" y="24" fill="#C5A96A" font-family="serif" font-size="13" font-style="italic">cos θ</text>
+
+    <!-- sin projection (vertical dashed) -->
+    <line x1="0" y1="-84.85" x2="84.85" y2="-84.85" stroke="#5B8C5A" stroke-width="1.2" stroke-dasharray="5,3" opacity="0.7"/>
+    <!-- sin bracket -->
+    <line x1="-6" y1="0" x2="-6" y2="-84.85" stroke="#5B8C5A" stroke-width="1" opacity="0.7"/>
+    <line x1="-10" y1="0" x2="-2" y2="0" stroke="#5B8C5A" stroke-width="1" opacity="0.7"/>
+    <line x1="-10" y1="-84.85" x2="-2" y2="-84.85" stroke="#5B8C5A" stroke-width="1" opacity="0.7"/>
+    <text x="-52" y="-38" fill="#5B8C5A" font-family="serif" font-size="13" font-style="italic" opacity="0.7">sin θ</text>
+
+    <!-- Small ticks on axes -->
+    <line x1="84.85" y1="-3" x2="84.85" y2="3" stroke="#C5A96A" stroke-width="1"/>
+    <line x1="-3" y1="-84.85" x2="3" y2="-84.85" stroke="#5B8C5A" stroke-width="1" opacity="0.7"/>
+
+    <!-- Origin dot -->
+    <circle cx="0" cy="0" r="3" fill="#6B7D6C"/>
+  </g>
+
+  <!-- ===== RIGHT: Sine Wave ===== -->
+  <g transform="translate(380, 200)">
+    <!-- Wave axes -->
+    <line x1="0" y1="-120" x2="0" y2="120" stroke="#6B7D6C" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="0" x2="230" y2="0" stroke="#6B7D6C" stroke-width="1" opacity="0.5"/>
+    <!-- Arrow -->
+    <polygon points="230,0 224,-4 224,4" fill="#6B7D6C" opacity="0.5"/>
+
+    <!-- Axis labels -->
+    <text x="218" y="20" fill="#6B7D6C" font-family="serif" font-size="12" font-style="italic" opacity="0.6">θ</text>
+
+    <!-- Sine wave path (first half: 0 to π) -->
+    <path d="M 0,0 C 20,-80 50,-110 90,-110 C 130,-110 160,-80 180,0"
+          fill="none" stroke="url(#waveGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Second half: π to 2π -->
+    <path d="M 180,0 C 200,50 220,80 230,95"
+          fill="none" stroke="url(#waveGrad)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Key points on wave -->
+    <circle cx="0" cy="0" r="3" fill="#5B8C5A"/>
+    <circle cx="90" cy="-110" r="3" fill="#C5A96A"/>
+    <circle cx="180" cy="0" r="3" fill="#5B8C5A"/>
+
+    <!-- Key angle labels -->
+    <text x="-5" y="115" fill="#6B7D6C" font-family="serif" font-size="11" text-anchor="middle" opacity="0.6">0°</text>
+    <text x="90" y="115" fill="#C5A96A" font-family="serif" font-size="11" text-anchor="middle">90°</text>
+    <text x="180" y="115" fill="#6B7D6C" font-family="serif" font-size="11" text-anchor="middle" opacity="0.6">180°</text>
+
+    <!-- "1" label at peak -->
+    <text x="98" y="-108" fill="#C5A96A" font-family="serif" font-size="12" font-style="italic">1</text>
+
+    <!-- Dashed line from peak to axis -->
+    <line x1="90" y1="-110" x2="90" y2="0" stroke="#C5A96A" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.4"/>
+
+    <!-- "sin θ" label above wave -->
+    <text x="120" y="-95" fill="#5B8C5A" font-family="serif" font-size="14" font-style="italic" opacity="0.8">sin θ</text>
+  </g>
+
+  <!-- Decorative divider line between sections -->
+  <line x1="365" y1="60" x2="365" y2="340" stroke="#5B8C5A" stroke-width="0.5" opacity="0.15"/>
+
+  <!-- Title text at top -->
+  <text x="320" y="36" fill="#5B8C5A" font-family="'Noto Serif SC', serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="4">三角函数 · 单位圆</text>
+
+  <!-- Subtle bottom accent line -->
+  <line x1="260" y1="50" x2="380" y2="50" stroke="#C5A96A" stroke-width="1" opacity="0.4"/>
+</svg>
