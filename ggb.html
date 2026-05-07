@@ -6,10 +6,9 @@
 <title>柱·锥·台·球 — 青竹数苑</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://www.geogebra.org/apps/deployggb.js"></script>
 <style>
 /* ══════════════════════════════════════════
-   柱锥台球 — 竹林小轩风格 V2
+   柱锥台球 — Three.js 版 · 竹林小轩风格
    ══════════════════════════════════════════ */
 :root {
     --bamboo:       #5B8C5A;
@@ -20,194 +19,159 @@
     --text-primary: #2D3A2E;
     --text-secondary:#6B7D6C;
     --text-muted:   #9AAB9B;
-    --white:        #FFFFFF;
-    --shadow-sm:    0 2px 8px rgba(45,74,50,0.06);
-    --shadow-md:    0 4px 20px rgba(45,74,50,0.10);
-    --radius:       12px;
 }
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
     background: var(--bamboo-mist);
-    font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    height: 100vh; height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
+    font-family: -apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+    height:100vh; height:100dvh;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    user-select:none; -webkit-user-select:none;
 }
 
 /* ── 顶部导航 ── */
 .top-bar {
-    height: 48px;
-    background: rgba(240,245,238,0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(91,140,90,0.10);
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    flex-shrink: 0;
-    z-index: 30;
-    gap: 10px;
+    height:48px;
+    background:rgba(240,245,238,0.92);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(91,140,90,0.10);
+    display:flex; align-items:center;
+    padding:0 16px; flex-shrink:0; z-index:30; gap:10px;
 }
 .top-bar a {
-    display: flex; align-items: center; gap: 5px;
-    text-decoration: none;
-    color: var(--bamboo-dark);
-    font-size: 14px; font-weight: 500;
-    padding: 4px 10px; border-radius: 8px;
-    transition: background 0.2s;
+    display:flex; align-items:center; gap:5px;
+    text-decoration:none; color:var(--bamboo-dark);
+    font-size:14px; font-weight:500;
+    padding:4px 10px; border-radius:8px;
+    transition:background 0.2s;
 }
-.top-bar a:hover { background: rgba(91,140,90,0.08); }
+.top-bar a:hover { background:rgba(91,140,90,0.08); }
 .page-title {
-    font-family: 'Noto Serif SC', serif;
-    font-size: 15px; font-weight: 700;
-    color: var(--bamboo-dark);
-    letter-spacing: 1px;
-    margin-left: 4px;
+    font-family:'Noto Serif SC',serif;
+    font-size:15px; font-weight:700;
+    color:var(--bamboo-dark);
+    letter-spacing:1px; margin-left:4px;
 }
 
 /* ── 3D 视图区 ── */
-#ggb-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    background: #F7FAF6;
+#three-container {
+    flex:1; position:relative; overflow:hidden;
+    background:linear-gradient(180deg, #F7FAF6 0%, #EDF4EB 100%);
 }
-#ggb-element {
-    width: 100%; height: 100%;
-}
+#three-container canvas { display:block; }
 
-/* ── 形状切换按钮组（图像下方） ── */
+/* ── 形状切换按钮 ── */
 .shape-tabs {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px 6px;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(91,140,90,0.08);
-    flex-shrink: 0;
+    display:flex; justify-content:center; gap:8px;
+    padding:10px 16px 6px;
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-top:1px solid rgba(91,140,90,0.08);
+    flex-shrink:0;
 }
 .shape-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 18px;
-    border: 1.5px solid var(--bamboo-light);
-    border-radius: 20px;
-    background: var(--white);
-    color: var(--text-secondary);
-    font-size: 14px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
+    display:flex; align-items:center; gap:6px;
+    padding:8px 18px;
+    border:1.5px solid var(--bamboo-light);
+    border-radius:20px; background:#fff;
+    color:var(--text-secondary);
+    font-size:14px; font-weight:500;
+    cursor:pointer; transition:all 0.25s;
+    outline:none; -webkit-tap-highlight-color:transparent;
 }
 .shape-btn .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    transition: transform 0.25s;
+    width:8px; height:8px; border-radius:50%;
+    flex-shrink:0; transition:transform 0.25s;
 }
-.shape-btn:hover {
-    border-color: var(--bamboo);
-    background: rgba(91,140,90,0.04);
-}
+.shape-btn:hover { border-color:var(--bamboo); background:rgba(91,140,90,0.04); }
 .shape-btn.active {
-    border-color: var(--bamboo);
-    background: rgba(91,140,90,0.08);
-    color: var(--bamboo-dark);
-    font-weight: 600;
-    box-shadow: 0 0 0 3px rgba(91,140,90,0.10);
+    border-color:var(--bamboo);
+    background:rgba(91,140,90,0.08);
+    color:var(--bamboo-dark); font-weight:600;
+    box-shadow:0 0 0 3px rgba(91,140,90,0.10);
 }
-.shape-btn.active .dot { transform: scale(1.3); }
+.shape-btn.active .dot { transform:scale(1.3); }
 
-/* ── 底部参数栏 ── */
+/* ── 参数栏 ── */
 .param-bar {
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 8px 20px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    flex-shrink: 0;
-    border-top: 1px solid rgba(91,140,90,0.06);
-    min-height: 48px;
-    flex-wrap: wrap;
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    padding:8px 20px 14px;
+    display:flex; align-items:center; justify-content:center;
+    gap:20px; flex-shrink:0;
+    border-top:1px solid rgba(91,140,90,0.06);
+    min-height:48px; flex-wrap:wrap;
 }
-.param-group {
-    display: flex; align-items: center; gap: 8px;
-}
+.param-group { display:flex; align-items:center; gap:8px; }
 .param-label {
-    font-size: 13px; font-weight: 600;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    font-family: 'Georgia', 'Noto Serif SC', serif;
+    font-size:13px; font-weight:600;
+    color:var(--text-secondary); white-space:nowrap;
+    font-family:'Georgia','Noto Serif SC',serif;
 }
 .param-slider {
-    width: 90px; height: 4px;
-    -webkit-appearance: none; appearance: none;
-    background: var(--bamboo-light);
-    border-radius: 2px; outline: none; cursor: pointer;
+    width:90px; height:4px;
+    -webkit-appearance:none; appearance:none;
+    background:var(--bamboo-light);
+    border-radius:2px; outline:none; cursor:pointer;
 }
 .param-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--bamboo);
-    border: 2.5px solid #fff;
-    box-shadow: 0 1px 6px rgba(45,74,50,0.25);
-    cursor: pointer;
-    transition: transform 0.15s;
+    -webkit-appearance:none;
+    width:18px; height:18px; border-radius:50%;
+    background:var(--bamboo);
+    border:2.5px solid #fff;
+    box-shadow:0 1px 6px rgba(45,74,50,0.25);
+    cursor:pointer; transition:transform 0.15s;
 }
-.param-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.param-slider::-webkit-slider-thumb:hover { transform:scale(1.15); }
 .param-val {
-    font-size: 13px; font-weight: 700;
-    color: var(--bamboo);
-    min-width: 30px; text-align: center;
-    font-family: 'Georgia', 'Noto Serif SC', serif;
+    font-size:13px; font-weight:700;
+    color:var(--bamboo); min-width:30px; text-align:center;
+    font-family:'Georgia','Noto Serif SC',serif;
 }
 .param-divider {
-    width: 1px; height: 22px;
-    background: rgba(91,140,90,0.12);
+    width:1px; height:22px;
+    background:rgba(91,140,90,0.12);
 }
 
-/* ── 透明度控制 ── */
+/* ── 透明度 ── */
 .opacity-group {
-    display: flex; align-items: center; gap: 6px;
-    margin-left: 8px;
-    padding-left: 14px;
-    border-left: 1px solid rgba(91,140,90,0.12);
+    display:flex; align-items:center; gap:6px;
+    margin-left:8px; padding-left:14px;
+    border-left:1px solid rgba(91,140,90,0.12);
 }
-.opacity-icon {
-    font-size: 14px; opacity: 0.5;
+.opacity-icon { font-size:14px; opacity:0.5; }
+
+/* ── 提示文字 ── */
+.hint-text {
+    position:absolute; bottom:12px; left:50%;
+    transform:translateX(-50%);
+    font-size:12px; color:var(--text-muted);
+    pointer-events:none; opacity:0.6;
+    white-space:nowrap;
 }
 
 /* ── 响应式 ── */
-@media (max-width: 600px) {
-    .shape-tabs { gap: 5px; padding: 8px 10px 4px; }
-    .shape-btn { padding: 7px 12px; font-size: 13px; gap: 4px; }
-    .shape-btn .dot { width: 7px; height: 7px; }
-    .param-bar { padding: 6px 12px 10px; gap: 14px; }
-    .param-slider { width: 64px; }
-    .top-bar { padding: 0 10px; }
-    .page-title { font-size: 14px; }
+@media (max-width:600px) {
+    .shape-tabs { gap:5px; padding:8px 10px 4px; }
+    .shape-btn { padding:7px 12px; font-size:13px; gap:4px; }
+    .shape-btn .dot { width:7px; height:7px; }
+    .param-bar { padding:6px 12px 10px; gap:14px; }
+    .param-slider { width:64px; }
+    .top-bar { padding:0 10px; }
+    .page-title { font-size:14px; }
 }
-
-@media (max-width: 380px) {
-    .shape-btn { padding: 6px 10px; font-size: 12px; }
-    .param-slider { width: 50px; }
+@media (max-width:380px) {
+    .shape-btn { padding:6px 10px; font-size:12px; }
+    .param-slider { width:50px; }
 }
 </style>
 </head>
 <body>
 
-<!-- 顶部导航 -->
 <div class="top-bar">
     <a href="index.html">
         <span style="font-size:16px;line-height:1">←</span>
@@ -216,12 +180,10 @@ body {
     <span class="page-title">柱 · 锥 · 台 · 球</span>
 </div>
 
-<!-- 3D 视图 -->
-<div id="ggb-container">
-    <div id="ggb-element"></div>
+<div id="three-container">
+    <span class="hint-text">拖拽旋转 · 滚轮缩放</span>
 </div>
 
-<!-- 形状切换按钮（图像下方） -->
 <div class="shape-tabs">
     <button class="shape-btn active" data-shape="cylinder" onclick="switchShape('cylinder')">
         <span class="dot" style="background:#5B8C5A"></span>圆柱
@@ -237,7 +199,6 @@ body {
     </button>
 </div>
 
-<!-- 参数控制栏 -->
 <div class="param-bar">
     <div class="param-group" id="pg-r1">
         <span class="param-label" id="lbl-r1">r</span>
@@ -257,23 +218,33 @@ body {
     <div class="opacity-group">
         <span class="opacity-icon">◐</span>
         <input type="range" class="param-slider" id="sld-opacity"
-               min="0.1" max="0.8" step="0.05" value="0.35"
+               min="0.1" max="0.9" step="0.05" value="0.45"
                oninput="onOpacityInput()">
     </div>
 </div>
 
+<!-- Three.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 // ============================================================
-//  GeoGebra 柱锥台球 V2
+//  Three.js 柱锥台球
 // ============================================================
-let ggb = null;
-let activeShape = 'cylinder';
-let opacity = 0.35;
 
-// 当前图层对象名
-const layerObjs = { cylinder: [], cone: [], frustum: [], sphere: [] };
+// ── 颜色常量 ──
+const CLR = {
+    cylinder:  0x5B8C5A,
+    cone:      0xC5A96A,
+    frustum:   0x7BA87A,
+    sphere:    0x2D4A32,
+    wire:      0x5B8C5A,
+    wireLight: 0xA8C8A6,
+    axis:      0x999999,
+    gold:      0xC5A96A,
+    grid:      0xD6E5D2,
+};
 
-// 参数
+// ── 参数 ──
 const P = {
     cylinder: { r: 1.6, h: 2.4 },
     cone:     { r: 1.8, h: 2.8 },
@@ -281,66 +252,252 @@ const P = {
     sphere:   { R: 2.0 }
 };
 
-// 颜色
-const CLR = {
-    cylinder: { r:91,  g:140, b:90  },
-    cone:     { r:197, g:169, b:106 },
-    frustum:  { r:123, g:168, b:122 },
-    sphere:   { r:45,  g:74,  b:50  }
-};
+let activeShape = 'cylinder';
+let opacity = 0.45;
 
-// ============================================================
-//  GeoGebra 初始化
-// ============================================================
-function ggbOnInit(api) {
-    ggb = api;
-    ggb.enableRightClick(false);
-    ggb.evalCommand('ShowAxes(false)');
-    ggb.evalCommand('ShowGrid(false)');
+// ── 场景搭建 ──
+const container = document.getElementById('three-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(4, 3, 5);
 
-    buildShape('cylinder');
-    updateParamUI();
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+container.appendChild(renderer.domElement);
+
+// ── 控制器 ──
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.minDistance = 3;
+controls.maxDistance = 12;
+controls.target.set(0, 1, 0);
+
+// ── 光照 ──
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(5, 8, 6);
+scene.add(dirLight);
+const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+dirLight2.position.set(-3, 4, -4);
+scene.add(dirLight2);
+
+// ── 地面网格 ──
+const gridHelper = new THREE.GridHelper(8, 16, CLR.grid, CLR.grid);
+gridHelper.material.opacity = 0.3;
+gridHelper.material.transparent = true;
+scene.add(gridHelper);
+
+// ── 图形容器 ──
+const shapeGroup = new THREE.Group();
+scene.add(shapeGroup);
+
+// ── 辅助函数 ──
+function clearGroup(group) {
+    while (group.children.length) {
+        const child = group.children[0];
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+        }
+        group.remove(child);
+    }
 }
 
-const appletParams = {
-    appName: '3D',
-    width: 800, height: 600,
-    showToolBar: false,
-    showMenuBar: false,
-    showAlgebraInput: false,
-    enableLabelDrags: false,
-    enableShiftDragZoom: true,
-    showResetIcon: false,
-    showFullscreenButton: false,
-    appletOnLoad: ggbOnInit
-};
-
-window.addEventListener('load', () => {
-    new GGBApplet(appletParams, true).inject('ggb-element');
-});
-
-// ============================================================
-//  形状切换
-// ============================================================
-function switchShape(name) {
-    if (name === activeShape) return;
-    activeShape = name;
-
-    // 更新按钮状态
-    document.querySelectorAll('.shape-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.shape === name);
+// 创建虚线圆
+function dashedCircle(radius, y, color, segments) {
+    segments = segments || 64;
+    const pts = [];
+    for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineDashedMaterial({
+        color: color, dashSize: 0.15, gapSize: 0.1, linewidth: 1
     });
-
-    // 删除旧对象，构建新形状
-    deleteLayerObjs(name);
-    buildShape(name);
-    updateParamUI();
+    const line = new THREE.Line(geo, mat);
+    line.computeLineDistances();
+    return line;
 }
 
-// ============================================================
-//  构建形状
-// ============================================================
+// 创建实线段
+function solidLine(p1, p2, color, lw) {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(p1[0], p1[1], p1[2]),
+        new THREE.Vector3(p2[0], p2[1], p2[2])
+    ]);
+    const mat = new THREE.LineBasicMaterial({ color: color, linewidth: lw || 2 });
+    return new THREE.Line(geo, mat);
+}
+
+// 创建虚线段
+function dashedLine(p1, p2, color) {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(p1[0], p1[1], p1[2]),
+        new THREE.Vector3(p2[0], p2[1], p2[2])
+    ]);
+    const mat = new THREE.LineDashedMaterial({
+        color: color, dashSize: 0.12, gapSize: 0.08, linewidth: 1
+    });
+    const line = new THREE.Line(geo, mat);
+    line.computeLineDistances();
+    return line;
+}
+
+// 创建半透明实体 + 线框
+function solidWithWire(geometry, color, op) {
+    const group = new THREE.Group();
+    // 半透明实体
+    const solidMat = new THREE.MeshPhongMaterial({
+        color: color,
+        transparent: true,
+        opacity: op,
+        side: THREE.DoubleSide,
+        shininess: 30,
+        depthWrite: false
+    });
+    group.add(new THREE.Mesh(geometry, solidMat));
+    // 线框
+    const wireGeo = new THREE.WireframeGeometry(geometry);
+    const wireMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+    group.add(new THREE.LineSegments(wireGeo, wireMat));
+    return group;
+}
+
+// ── 构建函数 ──
+function buildCylinder() {
+    const r = P.cylinder.r, h = P.cylinder.h;
+    // 底面圆
+    const botGeo = new THREE.CircleGeometry(r, 64);
+    const bot = solidWithWire(botGeo, CLR.cylinder, opacity);
+    bot.rotation.x = -Math.PI / 2;
+    shapeGroup.add(bot);
+    // 顶面圆
+    const topGeo = new THREE.CircleGeometry(r, 64);
+    const top = solidWithWire(topGeo, CLR.cylinder, opacity);
+    top.rotation.x = -Math.PI / 2;
+    top.position.y = h;
+    shapeGroup.add(top);
+    // 侧面
+    const sideGeo = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
+    const side = solidWithWire(sideGeo, CLR.cylinder, opacity * 0.7);
+    side.position.y = h / 2;
+    shapeGroup.add(side);
+    // 母线（金色实线）
+    shapeGroup.add(solidLine([r, 0, 0], [r, h, 0], CLR.gold, 3));
+    // 轴线（虚线）
+    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    // 底面半径标注
+    shapeGroup.add(dashedLine([0, 0, 0], [r, 0, 0], CLR.wireLight));
+    // 底面直径透视线
+    shapeGroup.add(dashedLine([-r, 0, 0], [r, 0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, -r], [0, 0, r], CLR.wireLight));
+    // 顶面直径透视线
+    shapeGroup.add(dashedLine([-r, h, 0], [r, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, h, -r], [0, h, r], CLR.wireLight));
+    // 高度标注线
+    shapeGroup.add(dashedLine([r * 1.3, 0, 0], [r * 1.3, h, 0], CLR.wireLight));
+}
+
+function buildCone() {
+    const r = P.cone.r, h = P.cone.h;
+    // 底面
+    const botGeo = new THREE.CircleGeometry(r, 64);
+    const bot = solidWithWire(botGeo, CLR.cone, opacity);
+    bot.rotation.x = -Math.PI / 2;
+    shapeGroup.add(bot);
+    // 侧面
+    const sideGeo = new THREE.ConeGeometry(r, h, 64, 1, true);
+    const side = solidWithWire(sideGeo, CLR.cone, opacity * 0.7);
+    side.position.y = h / 2;
+    shapeGroup.add(side);
+    // 母线（金色实线，正面）
+    shapeGroup.add(solidLine([r, 0, 0], [0, h, 0], CLR.gold, 3));
+    // 对称母线（虚线）
+    shapeGroup.add(dashedLine([-r, 0, 0], [0, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, r], [0, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, -r], [0, h, 0], CLR.wireLight));
+    // 轴线
+    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    // 底面直径
+    shapeGroup.add(dashedLine([-r, 0, 0], [r, 0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, -r], [0, 0, r], CLR.wireLight));
+    // 高度标注
+    shapeGroup.add(dashedLine([r * 1.3, 0, 0], [r * 1.3, h, 0], CLR.wireLight));
+}
+
+function buildFrustum() {
+    const r1 = P.frustum.r1, r2 = P.frustum.r2, h = P.frustum.h;
+    // 底面（大圆）
+    const botGeo = new THREE.CircleGeometry(r2, 64);
+    const bot = solidWithWire(botGeo, CLR.frustum, opacity);
+    bot.rotation.x = -Math.PI / 2;
+    shapeGroup.add(bot);
+    // 顶面（小圆）
+    const topGeo = new THREE.CircleGeometry(r1, 64);
+    const top = solidWithWire(topGeo, CLR.frustum, opacity);
+    top.rotation.x = -Math.PI / 2;
+    top.position.y = h;
+    shapeGroup.add(top);
+    // 侧面
+    const sideGeo = new THREE.CylinderGeometry(r1, r2, h, 64, 1, true);
+    const side = solidWithWire(sideGeo, CLR.frustum, opacity * 0.7);
+    side.position.y = h / 2;
+    shapeGroup.add(side);
+    // 母线（金色实线）
+    shapeGroup.add(solidLine([r2, 0, 0], [r1, h, 0], CLR.gold, 3));
+    // 对称母线（虚线）
+    shapeGroup.add(dashedLine([-r2, 0, 0], [-r1, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, r2], [0, h, r1], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, -r2], [0, h, -r1], CLR.wireLight));
+    // 轴线
+    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    // 底面直径
+    shapeGroup.add(dashedLine([-r2, 0, 0], [r2, 0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, 0, -r2], [0, 0, r2], CLR.wireLight));
+    // 顶面直径
+    shapeGroup.add(dashedLine([-r1, h, 0], [r1, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, h, -r1], [0, h, r1], CLR.wireLight));
+    // 高度标注
+    shapeGroup.add(dashedLine([r2 * 1.3, 0, 0], [r2 * 1.3, h, 0], CLR.wireLight));
+}
+
+function buildSphere() {
+    const R = P.sphere.R;
+    // 球体
+    const sphGeo = new THREE.SphereGeometry(R, 64, 32);
+    const sph = solidWithWire(sphGeo, CLR.sphere, opacity * 0.6);
+    shapeGroup.add(sph);
+    // 赤道大圆（金色实线）
+    const eqPts = [];
+    for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        eqPts.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R));
+    }
+    const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPts);
+    const eqMat = new THREE.LineBasicMaterial({ color: CLR.gold, linewidth: 2 });
+    shapeGroup.add(new THREE.Line(eqGeo, eqMat));
+    // 经线1（虚线）
+    shapeGroup.add(dashedCircle(R, 0, CLR.wireLight, 128));
+    // 经线2（旋转90°，虚线）
+    const mer2 = dashedCircle(R, 0, CLR.wireLight, 128);
+    mer2.rotation.y = Math.PI / 2;
+    shapeGroup.add(mer2);
+    // 辅助小圆（虚线，增强透视）
+    const aux = dashedCircle(R * 0.6, 0, CLR.wireLight, 64);
+    aux.rotation.x = Math.PI / 4;
+    shapeGroup.add(aux);
+    // 半径标注
+    shapeGroup.add(solidLine([0, 0, 0], [R, 0, 0], CLR.gold, 2));
+}
+
+// ── 构建当前形状 ──
 function buildShape(name) {
+    clearGroup(shapeGroup);
     switch (name) {
         case 'cylinder': buildCylinder(); break;
         case 'cone':     buildCone(); break;
@@ -349,231 +506,18 @@ function buildShape(name) {
     }
 }
 
-// 辅助：执行命令并记录对象
-function cmd(objName, expr) {
-    ggb.evalCommand(expr);
-    if (objName) layerObjs[activeShape].push(objName);
+// ── 切换形状 ──
+function switchShape(name) {
+    if (name === activeShape) return;
+    activeShape = name;
+    document.querySelectorAll('.shape-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.shape === name);
+    });
+    buildShape(name);
+    updateParamUI();
 }
 
-// 辅助：设置对象样式
-function style(objName, clr, fillAmt, thickness, dashed) {
-    ggb.setColor(objName, clr.r, clr.g, clr.b);
-    ggb.evalCommand(`SetFilling(${objName}, ${fillAmt})`);
-    if (thickness) ggb.evalCommand(`SetLineThickness(${objName}, ${thickness})`);
-    if (dashed) ggb.evalCommand(`SetLineStyle(${objName}, 2)`);
-}
-
-// 删除当前形状旧对象
-function deleteLayerObjs(name) {
-    layerObjs[name].forEach(n => { try { ggb.deleteObject(n); } catch(e) {} });
-    layerObjs[name] = [];
-}
-
-// ============================================================
-//  圆柱
-// ============================================================
-function buildCylinder() {
-    const c = CLR.cylinder, p = P.cylinder;
-    cmd('rCyl', `rCyl = ${p.r}`);
-    cmd('hCyl', `hCyl = ${p.h}`);
-
-    // 底面
-    cmd('botCyl', `botCyl = Circle((0,0,0), rCyl)`);
-    style('botCyl', c, 0.5);
-
-    // 顶面
-    cmd('topCyl', `topCyl = Circle((0,0,hCyl), rCyl)`);
-    style('topCyl', c, 0.5);
-
-    // 侧面
-    cmd('sideCyl', `sideCyl = Surface(rCyl*cos(u), rCyl*sin(u), v, u, 0, 2π, v, 0, hCyl)`);
-    style('sideCyl', c, opacity);
-
-    // 母线（实线，强调）
-    cmd('genCyl', `genCyl = Segment((rCyl,0,0), (rCyl,0,hCyl))`);
-    ggb.setColor('genCyl', 197, 169, 106);
-    ggb.evalCommand('SetLineThickness(genCyl, 3)');
-
-    // 轴线（虚线）
-    cmd('axisCyl', `axisCyl = Segment((0,0,0), (0,0,hCyl))`);
-    style('axisCyl', {r:150,g:150,b:150}, 0, 1.5, true);
-
-    // 底面半径标注线（虚线）
-    cmd('rLineCyl', `rLineCyl = Segment((0,0,0), (rCyl,0,0))`);
-    style('rLineCyl', {r:150,g:150,b:150}, 0, 1.5, true);
-
-    // 顶面直径透视线（虚线，增强立体感）
-    cmd('diamTopCyl', `diamTopCyl = Segment((-rCyl,0,hCyl), (rCyl,0,hCyl))`);
-    style('diamTopCyl', {r:180,g:200,b:180}, 0, 1, true);
-
-    cmd('diamTopCyl2', `diamTopCyl2 = Segment((0,-rCyl,hCyl), (0,rCyl,hCyl))`);
-    style('diamTopCyl2', {r:180,g:200,b:180}, 0, 1, true);
-
-    // 底面直径透视线
-    cmd('diamBotCyl', `diamBotCyl = Segment((-rCyl,0,0), (rCyl,0,0))`);
-    style('diamBotCyl', {r:180,g:200,b:180}, 0, 1, true);
-
-    cmd('diamBotCyl2', `diamBotCyl2 = Segment((0,-rCyl,0), (0,rCyl,0))`);
-    style('diamBotCyl2', {r:180,g:200,b:180}, 0, 1, true);
-
-    // 高度标注线（虚线）
-    cmd('hLineCyl', `hLineCyl = Segment((rCyl*1.2,0,0), (rCyl*1.2,0,hCyl))`);
-    style('hLineCyl', {r:130,g:160,b:130}, 0, 1.5, true);
-
-    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
-}
-
-// ============================================================
-//  圆锥
-// ============================================================
-function buildCone() {
-    const c = CLR.cone, p = P.cone;
-    cmd('rCone', `rCone = ${p.r}`);
-    cmd('hCone', `hCone = ${p.h}`);
-
-    // 底面
-    cmd('botCone', `botCone = Circle((0,0,0), rCone)`);
-    style('botCone', c, 0.5);
-
-    // 侧面
-    cmd('sideCone', `sideCone = Surface(rCone*(1-v/hCone)*cos(u), rCone*(1-v/hCone)*sin(u), v, u, 0, 2π, v, 0, hCone)`);
-    style('sideCone', c, opacity);
-
-    // 母线
-    cmd('genCone', `genCone = Segment((rCone,0,0), (0,0,hCone))`);
-    ggb.setColor('genCone', 91, 140, 90);
-    ggb.evalCommand('SetLineThickness(genCone, 3)');
-
-    // 对称母线（虚线，增强透视）
-    cmd('genCone2', `genCone2 = Segment((-rCone,0,0), (0,0,hCone))`);
-    style('genCone2', {r:170,g:200,b:170}, 0, 1.5, true);
-
-    cmd('genCone3', `genCone3 = Segment((0,rCone,0), (0,0,hCone))`);
-    style('genCone3', {r:170,g:200,b:170}, 0, 1, true);
-
-    cmd('genCone4', `genCone4 = Segment((0,-rCone,0), (0,0,hCone))`);
-    style('genCone4', {r:170,g:200,b:170}, 0, 1, true);
-
-    // 轴线（虚线）
-    cmd('axisCone', `axisCone = Segment((0,0,0), (0,0,hCone))`);
-    style('axisCone', {r:150,g:150,b:150}, 0, 1.5, true);
-
-    // 底面直径透视线
-    cmd('diamCone', `diamCone = Segment((-rCone,0,0), (rCone,0,0))`);
-    style('diamCone', {r:180,g:200,b:180}, 0, 1, true);
-
-    cmd('diamCone2', `diamCone2 = Segment((0,-rCone,0), (0,rCone,0))`);
-    style('diamCone2', {r:180,g:200,b:180}, 0, 1, true);
-
-    // 高度标注线
-    cmd('hLineCone', `hLineCone = Segment((rCone*1.2,0,0), (rCone*1.2,0,hCone))`);
-    style('hLineCone', {r:130,g:160,b:130}, 0, 1.5, true);
-
-    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
-}
-
-// ============================================================
-//  圆台
-// ============================================================
-function buildFrustum() {
-    const c = CLR.frustum, p = P.frustum;
-    cmd('r1Frus', `r1Frus = ${p.r1}`);
-    cmd('r2Frus', `r2Frus = ${p.r2}`);
-    cmd('hFrus', `hFrus = ${p.h}`);
-
-    // 底面（大圆）
-    cmd('botFrus', `botFrus = Circle((0,0,0), r2Frus)`);
-    style('botFrus', c, 0.5);
-
-    // 顶面（小圆）
-    cmd('topFrus', `topFrus = Circle((0,0,hFrus), r1Frus)`);
-    style('topFrus', c, 0.5);
-
-    // 侧面
-    cmd('sideFrus', `sideFrus = Surface((r2Frus + (r1Frus-r2Frus)*v/hFrus)*cos(u), (r2Frus + (r1Frus-r2Frus)*v/hFrus)*sin(u), v, u, 0, 2π, v, 0, hFrus)`);
-    style('sideFrus', c, opacity);
-
-    // 母线
-    cmd('genFrus', `genFrus = Segment((r2Frus,0,0), (r1Frus,0,hFrus))`);
-    ggb.setColor('genFrus', 197, 169, 106);
-    ggb.evalCommand('SetLineThickness(genFrus, 3)');
-
-    // 对称母线（虚线）
-    cmd('genFrus2', `genFrus2 = Segment((-r2Frus,0,0), (-r1Frus,0,hFrus))`);
-    style('genFrus2', {r:170,g:200,b:170}, 0, 1.5, true);
-
-    cmd('genFrus3', `genFrus3 = Segment((0,r2Frus,0), (0,r1Frus,hFrus))`);
-    style('genFrus3', {r:170,g:200,b:170}, 0, 1, true);
-
-    cmd('genFrus4', `genFrus4 = Segment((0,-r2Frus,0), (0,-r1Frus,hFrus))`);
-    style('genFrus4', {r:170,g:200,b:170}, 0, 1, true);
-
-    // 轴线（虚线）
-    cmd('axisFrus', `axisFrus = Segment((0,0,0), (0,0,hFrus))`);
-    style('axisFrus', {r:150,g:150,b:150}, 0, 1.5, true);
-
-    // 底面直径透视线
-    cmd('diamBotFrus', `diamBotFrus = Segment((-r2Frus,0,0), (r2Frus,0,0))`);
-    style('diamBotFrus', {r:180,g:200,b:180}, 0, 1, true);
-
-    cmd('diamBotFrus2', `diamBotFrus2 = Segment((0,-r2Frus,0), (0,r2Frus,0))`);
-    style('diamBotFrus2', {r:180,g:200,b:180}, 0, 1, true);
-
-    // 顶面直径透视线
-    cmd('diamTopFrus', `diamTopFrus = Segment((-r1Frus,0,hFrus), (r1Frus,0,hFrus))`);
-    style('diamTopFrus', {r:180,g:200,b:180}, 0, 1, true);
-
-    cmd('diamTopFrus2', `diamTopFrus2 = Segment((0,-r1Frus,hFrus), (0,r1Frus,hFrus))`);
-    style('diamTopFrus2', {r:180,g:200,b:180}, 0, 1, true);
-
-    // 高度标注线
-    cmd('hLineFrus', `hLineFrus = Segment((r2Frus*1.2,0,0), (r2Frus*1.2,0,hFrus))`);
-    style('hLineFrus', {r:130,g:160,b:130}, 0, 1.5, true);
-
-    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
-}
-
-// ============================================================
-//  球
-// ============================================================
-function buildSphere() {
-    const c = CLR.sphere, p = P.sphere;
-    cmd('rSph', `rSph = ${p.R}`);
-
-    // 球体
-    cmd('sphereSph', `sphereSph = Sphere((0,0,0), rSph)`);
-    ggb.setColor('sphereSph', c.r, c.g, c.b);
-    ggb.evalCommand(`SetFilling(sphereSph, ${opacity * 0.5})`);
-
-    // 赤道大圆
-    cmd('eqSph', `eqSph = Circle((0,0,0), rSph, Vector((0,0,1)))`);
-    ggb.setColor('eqSph', 197, 169, 106);
-    ggb.evalCommand('SetLineThickness(eqSph, 2.5)');
-    ggb.evalCommand('SetFilling(eqSph, 0)');
-
-    // 经线大圆1（虚线）
-    cmd('mer1Sph', `mer1Sph = Circle((0,0,0), rSph, Vector((1,0,0)))`);
-    style('mer1Sph', {r:160,g:190,b:160}, 0, 1.5, true);
-
-    // 经线大圆2（虚线）
-    cmd('mer2Sph', `mer2Sph = Circle((0,0,0), rSph, Vector((0,1,0)))`);
-    style('mer2Sph', {r:160,g:190,b:160}, 0, 1.5, true);
-
-    // 半径标注线
-    cmd('rLineSph', `rLineSph = Segment((0,0,0), (rSph,0,0))`);
-    ggb.setColor('rLineSph', 197, 169, 106);
-    ggb.evalCommand('SetLineThickness(rLineSph, 2)');
-
-    // 辅助虚线圆（增强透视感）
-    cmd('auxSph', `auxSph = Circle((0,0,0), rSph*0.7, Vector((0,0,1)))`);
-    style('auxSph', {r:200,g:215,b:200}, 0, 1, true);
-
-    ggb.evalCommand('SetViewDirection(Vector((1, 0.6, 0.5)))');
-}
-
-// ============================================================
-//  参数 UI 同步
-// ============================================================
+// ── 参数 UI 同步 ──
 function updateParamUI() {
     const lbl1 = document.getElementById('lbl-r1');
     const lbl2 = document.getElementById('lbl-r2');
@@ -584,14 +528,14 @@ function updateParamUI() {
 
     if (activeShape === 'sphere') {
         lbl1.textContent = 'R';
-        sld1.min = 0.8; sld1.max = 2.8; sld1.step = 0.1;
+        sld1.min = 0.5; sld1.max = 3.0; sld1.step = 0.1;
         sld1.value = P.sphere.R;
         document.getElementById('val-r1').textContent = P.sphere.R.toFixed(1);
         pg2.style.display = 'none';
         divM.style.display = 'none';
     } else if (activeShape === 'frustum') {
         lbl1.textContent = 'r₁';
-        sld1.min = 0.3; sld1.max = 2.0; sld1.step = 0.1;
+        sld1.min = 0.2; sld1.max = 2.0; sld1.step = 0.1;
         sld1.value = P.frustum.r1;
         document.getElementById('val-r1').textContent = P.frustum.r1.toFixed(1);
         lbl2.textContent = 'r₂';
@@ -614,10 +558,8 @@ function updateParamUI() {
     }
 }
 
-// ============================================================
-//  滑条交互
-// ============================================================
-let debounceTimer = null;
+// ── 滑条交互 ──
+let debounce = null;
 
 function onSliderInput() {
     const v1 = parseFloat(document.getElementById('sld-r1').value);
@@ -625,33 +567,41 @@ function onSliderInput() {
     document.getElementById('val-r1').textContent = v1.toFixed(1);
     document.getElementById('val-r2').textContent = v2.toFixed(1);
 
-    // 更新参数
-    if (activeShape === 'sphere') {
-        P.sphere.R = v1;
-    } else if (activeShape === 'frustum') {
-        P.frustum.r1 = v1;
-        P.frustum.r2 = v2;
-    } else {
-        P[activeShape].r = v1;
-        P[activeShape].h = v2;
-    }
+    if (activeShape === 'sphere') P.sphere.R = v1;
+    else if (activeShape === 'frustum') { P.frustum.r1 = v1; P.frustum.r2 = v2; }
+    else { P[activeShape].r = v1; P[activeShape].h = v2; }
 
-    // 防抖重建
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        deleteLayerObjs(activeShape);
-        buildShape(activeShape);
-    }, 80);
+    clearTimeout(debounce);
+    debounce = setTimeout(() => buildShape(activeShape), 60);
 }
 
 function onOpacityInput() {
     opacity = parseFloat(document.getElementById('sld-opacity').value);
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        deleteLayerObjs(activeShape);
-        buildShape(activeShape);
-    }, 80);
+    clearTimeout(debounce);
+    debounce = setTimeout(() => buildShape(activeShape), 60);
 }
+
+// ── 响应式 ──
+function onResize() {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+
+// ── 动画循环 ──
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+// ── 启动 ──
+onResize();
+buildShape('cylinder');
+updateParamUI();
+animate();
 </script>
 </body>
 </html>
