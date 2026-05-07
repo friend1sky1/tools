@@ -40,13 +40,13 @@
   <text x="592" y="270" font-family="Georgia, serif" font-size="14" fill="#6B7D6C" font-style="italic">x</text>
   <text x="108" y="298" font-family="Georgia, serif" font-size="12" fill="#6B7D6C">O</text>
 
-  <!-- Main parabola: a>0, y_svg = 80 + 0.004*(x-320)^2 -->
-  <!-- Key points: (80,308) (120,240) (160,182) (200,138) (240,106) (280,86) (320,80) (360,86) (400,106) (440,138) (480,182) (520,240) (560,308) -->
-  <path d="M 80,308 Q 120,240 160,182 Q 200,124 240,106 Q 280,88 320,80 Q 360,88 400,106 Q 440,124 480,182 Q 520,240 560,308" fill="none" stroke="#5B8C5A" stroke-width="3" stroke-linecap="round"/>
+  <!-- Main parabola (a>0, opens upward in math / vertex at top in SVG) -->
+  <!-- Exact quadratic Bezier: endpoints (80,310) and (560,310), control point (320,-150) -->
+  <path d="M 80,310 Q 320,-150 560,310" fill="none" stroke="#5B8C5A" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- Mirror parabola: a<0, y_svg = 320 - 0.004*(x-320)^2 -->
-  <!-- Key points: (120,160) (200,262) (280,314) (320,320) (360,314) (440,262) (520,160) -->
-  <path d="M 120,160 Q 200,262 280,314 Q 320,340 360,314 Q 440,262 520,160" fill="none" stroke="#D6E5D2" stroke-width="2" stroke-dasharray="6,4"/>
+  <!-- Mirror parabola (a<0, opens downward in math / vertex at bottom in SVG) -->
+  <!-- Exact quadratic Bezier: endpoints (120,160) and (520,160), control point (320,480) -->
+  <path d="M 120,160 Q 320,480 520,160" fill="none" stroke="#D6E5D2" stroke-width="2" stroke-dasharray="6,4"/>
 
   <!-- Vertex marker -->
   <circle cx="320" cy="80" r="5" fill="#C5A96A"/>
