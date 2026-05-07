@@ -23,7 +23,7 @@
   </defs>
 
   <!-- Cylinder -->
-  <g transform="translate(48, 65)">
+  <g transform="translate(60, 65)">
     <ellipse cx="0" cy="32" rx="16" ry="4" fill="url(#shadow)"/>
     <rect x="-15" y="-26" width="30" height="52" fill="url(#cyl)" rx="1"/>
     <ellipse cx="0" cy="-26" rx="15" ry="6" fill="#B0D8B0"/>
@@ -32,7 +32,7 @@
   </g>
 
   <!-- Cone -->
-  <g transform="translate(128, 65)">
+  <g transform="translate(125, 65)">
     <ellipse cx="0" cy="32" rx="18" ry="4" fill="url(#shadow)"/>
     <polygon points="0,-32 -18,26 18,26" fill="url(#cone)"/>
     <polygon points="0,-32 -4,26 4,26" fill="#C8E0B0" opacity="0.3"/>
@@ -40,7 +40,7 @@
   </g>
 
   <!-- Frustum -->
-  <g transform="translate(208, 65)">
+  <g transform="translate(195, 65)">
     <ellipse cx="0" cy="32" rx="19" ry="4" fill="url(#shadow)"/>
     <polygon points="-9,-26 9,-26 19,26 -19,26" fill="url(#frust)"/>
     <polygon points="-5,-26 1,-26 7,26 -5,26" fill="#E0D8A8" opacity="0.25"/>
@@ -49,7 +49,7 @@
   </g>
 
   <!-- Sphere -->
-  <g transform="translate(278, 65)">
+  <g transform="translate(260, 65)">
     <ellipse cx="0" cy="28" rx="19" ry="4" fill="url(#shadow)"/>
     <circle cx="0" cy="0" r="22" fill="url(#sph)"/>
     <ellipse cx="-6" cy="-8" rx="9" ry="6" fill="#F0D8B0" opacity="0.5"/>
