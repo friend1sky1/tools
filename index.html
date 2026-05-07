@@ -40,12 +40,13 @@ body {
     max-width: 1200px; margin: 0 auto; padding: 0 24px;
     height: 56px; display: flex; align-items: center; justify-content: space-between;
 }
-.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--bamboo-dark); }
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--bamboo-dark); flex-shrink: 0; }
+.nav-brand div { white-space: nowrap; }
 .nav-logo { font-size: 22px; line-height: 1; }
 .nav-logo-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
 .nav-title { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
 .nav-subtitle { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; margin-left: 2px; }
-.nav-links { display: flex; align-items: center; gap: 6px; }
+.nav-links { display: flex; align-items: center; gap: 6px; flex-shrink: 1; min-width: 0; overflow-x: auto; }
 .nav-link {
     padding: 6px 14px; font-size: 14px; font-weight: 500;
     color: var(--text-secondary); text-decoration: none; border-radius: 8px;
@@ -104,6 +105,8 @@ body {
     .tools-grid { grid-template-columns: 1fr; padding: 0 16px 60px; }
     .nav-subtitle { display: none; }
     .br-mobile { display: block; }
+    .nav-brand { gap: 6px; }
+    .nav-link { padding: 4px 10px; font-size: 12px; }
     .categories { padding: 0 16px 24px; }
 }
 </style>
