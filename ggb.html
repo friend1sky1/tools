@@ -206,14 +206,14 @@ body {
     <div class="param-group" id="pg-r1">
         <span class="param-label" id="lbl-r1">r</span>
         <input type="range" class="param-slider" id="sld-r1"
-               min="0.3" max="2.0" step="0.1" value="1.2">
+               min="0.3" max="1.8" step="0.1" value="0.9">
         <span class="param-val" id="val-r1">1.6</span>
     </div>
     <div class="param-divider" id="div-mid"></div>
     <div class="param-group" id="pg-r2">
         <span class="param-label" id="lbl-r2">h</span>
         <input type="range" class="param-slider" id="sld-r2"
-               min="0.4" max="2.8" step="0.1" value="2.0">
+               min="0.4" max="2.4" step="0.1" value="1.6">
         <span class="param-val" id="val-r2">2.4</span>
     </div>
     <div class="opacity-group">
@@ -254,10 +254,10 @@ const CLR = {
 
 // ── 参数 ──
 const P = {
-    cylinder: { r: 1.2, h: 2.0 },
-    cone:     { r: 1.8, h: 2.8 },
-    frustum:  { r1: 0.8, r2: 1.8, h: 2.0 },
-    sphere:   { R: 1.4 }
+    cylinder: { r: 0.9, h: 1.6 },
+    cone:     { r: 1.0, h: 1.8 },
+    frustum:  { r1: 0.5, r2: 1.0, h: 1.4 },
+    sphere:   { R: 1.0 }
 };
 
 let activeShape = 'cylinder';
@@ -267,7 +267,7 @@ let opacity = 0.45;
 const container = document.getElementById('three-container');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
-camera.position.set(3, 6, 4);
+camera.position.set(3, 5, 4);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -279,8 +279,8 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.enablePan = false;
-controls.minDistance = 3;
-controls.maxDistance = 12;
+controls.minDistance = 4;
+controls.maxDistance = 14;
 controls.target.set(0, 1, 0);
 
 // ── 光照 ──
@@ -534,29 +534,29 @@ function updateParamUI() {
 
     if (activeShape === 'sphere') {
         lbl1.textContent = 'R';
-        sld1.min = 0.5; sld1.max = 2.5; sld1.step = 0.1;
+        sld1.min = 0.5; sld1.max = 2.0; sld1.step = 0.1;
         sld1.value = P.sphere.R;
         document.getElementById('val-r1').textContent = P.sphere.R.toFixed(1);
         pg2.style.display = 'none';
         divM.style.display = 'none';
     } else if (activeShape === 'frustum') {
         lbl1.textContent = 'r₁';
-        sld1.min = 0.2; sld1.max = 2.0; sld1.step = 0.1;
+        sld1.min = 0.2; sld1.max = 1.5; sld1.step = 0.1;
         sld1.value = P.frustum.r1;
         document.getElementById('val-r1').textContent = P.frustum.r1.toFixed(1);
         lbl2.textContent = 'r₂';
-        sld2.min = 0.5; sld2.max = 2.5; sld2.step = 0.1;
+        sld2.min = 0.4; sld2.max = 1.8; sld2.step = 0.1;
         sld2.value = P.frustum.r2;
         document.getElementById('val-r2').textContent = P.frustum.r2.toFixed(1);
         pg2.style.display = 'flex';
         divM.style.display = 'block';
     } else {
         lbl1.textContent = 'r';
-        sld1.min = 0.3; sld1.max = 2.0; sld1.step = 0.1;
+        sld1.min = 0.3; sld1.max = 1.8; sld1.step = 0.1;
         sld1.value = P[activeShape].r;
         document.getElementById('val-r1').textContent = P[activeShape].r.toFixed(1);
         lbl2.textContent = 'h';
-        sld2.min = 0.4; sld2.max = 2.8; sld2.step = 0.1;
+        sld2.min = 0.4; sld2.max = 2.4; sld2.step = 0.1;
         sld2.value = P[activeShape].h;
         document.getElementById('val-r2').textContent = P[activeShape].h.toFixed(1);
         pg2.style.display = 'flex';
