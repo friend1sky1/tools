@@ -97,8 +97,8 @@ canvas{display:block;width:100%;height:100%}
   </div>
   <div class="row">
     <label>大小</label>
-    <input type="range" id="sldScale" min="30" max="100" value="35">
-    <span class="val" id="valScale">35</span>
+    <input type="range" id="sldScale" min="3" max="15" value="8">
+    <span class="val" id="valScale">8</span>
   </div>
   <div class="row">
     <label>速度</label>
@@ -121,7 +121,7 @@ const eqLabel = document.getElementById('eqLabel');
 
 /* ── state ── */
 let mode  = 'parametric';   // 'parametric' | 'polar'
-let scale = 16;             // 15 – 100  (pixels per unit)
+let scale = 8;              // 3 – 15  (pixels per unit)
 let speed = 8;              // 1 – 20    (steps per frame)
 let t     = 0;              // current parameter
 let drawing = true;
