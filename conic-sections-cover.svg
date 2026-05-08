@@ -1,58 +1,131 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
   <defs>
-    <linearGradient id="gEll" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F5EE"/>
+      <stop offset="100%" stop-color="#E8EDE6"/>
+    </linearGradient>
+    <linearGradient id="ellGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#5B8C5A"/>
       <stop offset="100%" stop-color="#7BA87A"/>
     </linearGradient>
-    <linearGradient id="gPar" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="parGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#C5A96A"/>
       <stop offset="100%" stop-color="#D4B87A"/>
     </linearGradient>
-    <linearGradient id="gHyp" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hypGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#7BA8B4"/>
       <stop offset="100%" stop-color="#8BB8C4"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
-      <feOffset dx="0" dy="3" result="off"/>
-      <feFlood flood-color="#00000020"/>
-      <feComposite in2="off" operator="in"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="rgba(45,74,50,0.06)"/>
+      <stop offset="100%" stop-color="rgba(45,74,50,0)"/>
+    </radialGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="320" height="200" fill="#F5F0EB" rx="6"/>
+  <rect width="640" height="400" fill="url(#bg)" rx="12"/>
 
-  <!-- Coordinate axes -->
-  <line x1="160" y1="20" x2="160" y2="170" stroke="#C8C0B8" stroke-width="0.8"/>
-  <line x1="30" y1="95" x2="290" y2="95" stroke="#C8C0B8" stroke-width="0.8"/>
+  <!-- Subtle grid -->
+  <g opacity="0.06" stroke="#5B8C5A" stroke-width="0.5">
+    <line x1="0" y1="80" x2="640" y2="80"/><line x1="0" y1="160" x2="640" y2="160"/>
+    <line x1="0" y1="240" x2="640" y2="240"/><line x1="0" y1="320" x2="640" y2="320"/>
+    <line x1="128" y1="0" x2="128" y2="400"/><line x1="256" y1="0" x2="256" y2="400"/>
+    <line x1="384" y1="0" x2="384" y2="400"/><line x1="512" y1="0" x2="512" y2="400"/>
+  </g>
 
-  <!-- Ellipse (left, ~x:20-120) -->
-  <ellipse cx="60" cy="95" rx="42" ry="28" fill="none" stroke="url(#gEll)" stroke-width="2.2" filter="url(#shadow)"/>
-  <!-- Ellipse foci -->
-  <circle cx="40" cy="95" r="2.2" fill="#5B8C5A"/>
-  <circle cx="80" cy="95" r="2.2" fill="#5B8C5A"/>
-  <!-- Ellipse directrix (dashed) -->
-  <line x1="18" y1="50" x2="18" y2="140" stroke="#5B8C5A" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+  <!-- ===== CENTER: Unified coordinate system ===== -->
+  <g transform="translate(320, 200)">
+    <!-- Coordinate axes -->
+    <line x1="-260" y1="0" x2="260" y2="0" stroke="#6B7D6C" stroke-width="1.2" opacity="0.4"/>
+    <line x1="0" y1="-160" x2="0" y2="160" stroke="#6B7D6C" stroke-width="1.2" opacity="0.4"/>
+    <polygon points="260,0 254,-4 254,4" fill="#6B7D6C" opacity="0.4"/>
+    <polygon points="0,-160 -4,-154 4,-154" fill="#6B7D6C" opacity="0.4"/>
 
-  <!-- Parabola (center, ~x:110-220) -->
-  <path d="M135,40 Q170,95 205,40" fill="none" stroke="url(#gPar)" stroke-width="2.2" filter="url(#shadow)"/>
-  <!-- Parabola focus -->
-  <circle cx="170" cy="68" r="2.2" fill="#C5A96A"/>
-  <!-- Parabola directrix -->
-  <line x1="120" y1="122" x2="220" y2="122" stroke="#C5A96A" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+    <!-- ===== ELLIPSE (left, e=0.6) ===== -->
+    <g>
+      <ellipse cx="-60" cy="0" rx="120" ry="96" fill="none" stroke="url(#ellGrad)" stroke-width="2.5"/>
+      <ellipse cx="-60" cy="0" rx="120" ry="96" fill="#5B8C5A" opacity="0.04"/>
+      <!-- Foci -->
+      <circle cx="-60" cy="0" r="3.5" fill="#5B8C5A"/>
+      <circle cx="-60-72" cy="0" r="3" fill="#5B8C5A" opacity="0.7"/>
+      <circle cx="-60+72" cy="0" r="3" fill="#5B8C5A" opacity="0.7"/>
+      <!-- F labels -->
+      <text x="-60-72" y="16" fill="#5B8C5A" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.7">F'</text>
+      <text x="-60+72" y="16" fill="#5B8C5A" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.7">F</text>
+      <!-- e label -->
+      <text x="-60" y="-105" fill="#5B8C5A" font-family="serif" font-size="13" font-style="italic" text-anchor="middle">e = 0.6</text>
+      <!-- directrix (dashed) -->
+      <line x1="-260" y1="-80" x2="-260" y2="80" stroke="#5B8C5A" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <text x="-265" y="-85" fill="#5B8C5A" font-family="serif" font-size="10" font-style="italic" text-anchor="end" opacity="0.4">d</text>
+    </g>
 
-  <!-- Hyperbola (right, ~x:200-310) — two branches -->
-  <path d="M240,55 Q260,75 290,48" fill="none" stroke="url(#gHyp)" stroke-width="2.2" filter="url(#shadow)"/>
-  <path d="M240,135 Q260,115 290,142" fill="none" stroke="url(#gHyp)" stroke-width="2.2"/>
-  <!-- Hyperbola asymptotes (thin dashed) -->
-  <line x1="225" y1="95" x2="300" y2="50" stroke="#7BA8B4" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.35"/>
-  <line x1="225" y1="95" x2="300" y2="140" stroke="#7BA8B4" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.35"/>
-  <!-- Hyperbola foci -->
-  <circle cx="255" cy="95" r="2.2" fill="#7BA8B4"/>
-  <circle cx="285" cy="95" r="2.2" fill="#7BA8B4"/>
+    <!-- ===== PARABOLA (center, e=1) ===== -->
+    <g>
+      <!-- y² = 4px, p=40, vertex at (60, 0) -->
+      <path d="M 60,0 C 70,-50 90,-90 130,-120 M 60,0 C 70,50 90,90 130,120"
+            fill="none" stroke="url(#parGrad)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- vertex -->
+      <circle cx="60" cy="0" r="3" fill="#C5A96A"/>
+      <!-- focus -->
+      <circle cx="100" cy="0" r="3" fill="#C5A96A" opacity="0.7"/>
+      <text x="100" y="16" fill="#C5A96A" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.7">F</text>
+      <!-- e label -->
+      <text x="90" y="-100" fill="#C5A96A" font-family="serif" font-size="13" font-style="italic" text-anchor="middle">e = 1</text>
+      <!-- directrix -->
+      <line x1="20" y1="-100" x2="20" y2="100" stroke="#C5A96A" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <text x="15" y="-105" fill="#C5A96A" font-family="serif" font-size="10" font-style="italic" text-anchor="end" opacity="0.4">d</text>
+    </g>
 
-  <!-- Soft bottom shadow -->
-  <ellipse cx="160" cy="185" rx="140" ry="10" fill="#00000008"/>
+    <!-- ===== HYPERBOLA (right, e=1.5) ===== -->
+    <g>
+      <!-- Right branch -->
+      <path d="M 170,0 C 180,-40 200,-80 240,-110 M 170,0 C 180,40 200,80 240,110"
+            fill="none" stroke="url(#hypGrad)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Left branch -->
+      <path d="M 170,0 C 160,-40 140,-80 100,-110 M 170,0 C 160,40 140,80 100,110"
+            fill="none" stroke="url(#hypGrad)" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+      <!-- Asymptotes (dashed) -->
+      <line x1="170" y1="0" x2="250" y2="-100" stroke="#7BA8B4" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <line x1="170" y1="0" x2="250" y2="100" stroke="#7BA8B4" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <line x1="170" y1="0" x2="90" y2="-100" stroke="#7BA8B4" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <line x1="170" y1="0" x2="90" y2="100" stroke="#7BA8B4" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.3"/>
+      <!-- Vertices -->
+      <circle cx="170" cy="0" r="3" fill="#7BA8B4"/>
+      <!-- Foci -->
+      <circle cx="170+60" cy="0" r="3" fill="#7BA8B4" opacity="0.7"/>
+      <circle cx="170-60" cy="0" r="3" fill="#7BA8B4" opacity="0.7"/>
+      <text x="170+60" y="16" fill="#7BA8B4" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.7">F</text>
+      <text x="170-60" y="16" fill="#7BA8B4" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.7">F'</text>
+      <!-- e label -->
+      <text x="200" y="-100" fill="#7BA8B4" font-family="serif" font-size="13" font-style="italic" text-anchor="middle">e = 1.5</text>
+    </g>
+  </g>
+
+  <!-- Shadow -->
+  <ellipse cx="320" cy="350" rx="180" ry="10" fill="url(#shadow)"/>
+
+  <!-- Title -->
+  <text x="320" y="36" fill="#5B8C5A" font-family="'Noto Serif SC', serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="4">圆锥曲线</text>
+  <line x1="270" y1="50" x2="370" y2="50" stroke="#C5A96A" stroke-width="1" opacity="0.4"/>
+
+  <!-- Legend at bottom -->
+  <g transform="translate(180, 370)" font-size="12" font-family="serif">
+    <circle cx="0" cy="0" r="4" fill="#5B8C5A"/>
+    <text x="10" y="4" fill="#5B8C5A">椭圆</text>
+    <circle cx="80" cy="0" r="4" fill="#C5A96A"/>
+    <text x="90" y="4" fill="#C5A96A">抛物线</text>
+    <circle cx="180" cy="0" r="4" fill="#7BA8B4"/>
+    <text x="190" y="4" fill="#7BA8B4">双曲线</text>
+  </g>
+
+  <!-- e scale indicator -->
+  <g transform="translate(480, 340)" opacity="0.4">
+    <line x1="0" y1="0" x2="120" y2="0" stroke="#6B7D6C" stroke-width="1"/>
+    <line x1="0" y1="-4" x2="0" y2="4" stroke="#6B7D6C" stroke-width="1"/>
+    <line x1="40" y1="-4" x2="40" y2="4" stroke="#6B7D6C" stroke-width="1"/>
+    <line x1="120" y1="-4" x2="120" y2="4" stroke="#6B7D6C" stroke-width="1"/>
+    <text x="0" y="14" fill="#6B7D6C" font-family="serif" font-size="10" text-anchor="middle">0</text>
+    <text x="40" y="14" fill="#6B7D6C" font-family="serif" font-size="10" text-anchor="middle">1</text>
+    <text x="120" y="14" fill="#6B7D6C" font-family="serif" font-size="10" text-anchor="middle">e</text>
+  </g>
 </svg>
