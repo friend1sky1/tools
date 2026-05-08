@@ -155,6 +155,10 @@ input[type=range]::-moz-range-thumb{
       <span data-type="parabola">抛物线 e=1</span>
       <span data-type="hyperbola">双曲线 e>1</span>
     </div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:2px">
+      <button id="btnAnim" style="padding:6px 20px;border:1.5px solid #D6E5D2;border-radius:8px;background:var(--bamboo);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">▶ 演示动画</button>
+      <button id="btnReset" style="padding:6px 16px;border:1.5px solid #D6E5D2;border-radius:8px;background:transparent;color:var(--bamboo-dark);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">↻ 重置</button>
+    </div>
   </div>
 </div>
 
@@ -190,6 +194,8 @@ let e = 0.6;           // current eccentricity
 let targetE = 0.6;     // target for smooth animation
 let a = 3;           // semi-major axis in math units
 let animFrame;
+let demoRunning = false;
+let demoE = 0;         // demo progress 0→2.5
 
 /* === Resize === */
 function resize(){
@@ -567,11 +573,31 @@ function draw(){
 }
 
 /* === Animation loop === */
-function animate(){
+let demoLastTs = 0;
+function animate(ts){
+  // Demo mode: auto-cycle e from 0 to 2.5
+  if(demoRunning){
+    if(!demoLastTs) demoLastTs = ts;
+    const dt = (ts - demoLastTs) / 1000;
+    demoLastTs = ts;
+    demoE += dt * 0.35; // speed: 0.35 units/sec, ~7 seconds for full cycle
+    if(demoE >= 2.5){
+      demoE = 2.5;
+      stopDemo();
+      demoLastTs = 0;
+    } else {
+      targetE = demoE;
+      slider.value = demoE;
+      eValEl.textContent = demoE.toFixed(2);
+    }
+  } else {
+    demoLastTs = 0;
+  }
+
   // Smooth interpolation
   const diff = targetE - e;
   if(Math.abs(diff) > 0.0005){
-    e += diff * 0.15; // smooth easing
+    e += diff * 0.15;
   } else {
     e = targetE;
   }
@@ -579,16 +605,47 @@ function animate(){
   animFrame = requestAnimationFrame(animate);
 }
 
+/* === Demo animation === */
+function startDemo(){
+  demoRunning = true;
+  demoE = 0;
+  btnAnim.textContent = '⏸ 暂停';
+}
+function stopDemo(){
+  demoRunning = false;
+  btnAnim.textContent = '▶ 演示动画';
+}
+
 /* === Init === */
+const btnAnim = document.getElementById('btnAnim');
+const btnReset = document.getElementById('btnReset');
+
 resize();
 slider.addEventListener('input', () => {
+  if(demoRunning) stopDemo();
   targetE = parseFloat(slider.value);
   eValEl.textContent = targetE.toFixed(2);
 });
-// Set initial
-eValEl.textContent = '0.00';
 
-// Start
+btnAnim.addEventListener('click', () => {
+  if(demoRunning) {
+    stopDemo();
+  } else {
+    startDemo();
+  }
+});
+
+btnReset.addEventListener('click', () => {
+  stopDemo();
+  targetE = 0.6;
+  slider.value = 0.6;
+  eValEl.textContent = '0.60';
+});
+
+// Set initial
+eValEl.textContent = '0.60';
+
+// Start render loop
 animate();
 
 })();
