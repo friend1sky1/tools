@@ -198,7 +198,7 @@ body {
         <span class="dot" style="background:#7BA87A"></span>圆台
     </button>
     <button class="shape-btn" data-shape="sphere">
-        <span class="dot" style="background:#2D4A32"></span>球
+        <span class="dot" style="background:#7BA8B4"></span>球
     </button>
 </div>
 
@@ -244,7 +244,7 @@ const CLR = {
     cylinder:  0x5B8C5A,
     cone:      0xC5A96A,
     frustum:   0x7BA87A,
-    sphere:    0x2D4A32,
+    sphere:    0x7BA8B4,
     wire:      0x5B8C5A,
     wireLight: 0xA8C8A6,
     axis:      0x999999,
@@ -476,31 +476,34 @@ function buildFrustum() {
 
 function buildSphere() {
     const R = P.sphere.R;
+    const cy = R; // 球心上移，底部刚好在网格面
     // 球体
     const sphGeo = new THREE.SphereGeometry(R, 64, 32);
-    const sph = solidWithWire(sphGeo, CLR.sphere, opacity * 0.6);
+    const sph = solidWithWire(sphGeo, CLR.sphere, opacity * 0.55);
+    sph.position.y = cy;
     shapeGroup.add(sph);
     // 赤道大圆（金色实线）
     const eqPts = [];
     for (let i = 0; i <= 128; i++) {
         const a = (i / 128) * Math.PI * 2;
-        eqPts.push(new THREE.Vector3(Math.cos(a) * R, 0, Math.sin(a) * R));
+        eqPts.push(new THREE.Vector3(Math.cos(a) * R, cy, Math.sin(a) * R));
     }
     const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPts);
     const eqMat = new THREE.LineBasicMaterial({ color: CLR.gold, linewidth: 2 });
     shapeGroup.add(new THREE.Line(eqGeo, eqMat));
     // 经线1（虚线）
-    shapeGroup.add(dashedCircle(R, 0, CLR.wireLight, 128));
+    const mer1 = dashedCircle(R, cy, CLR.wireLight, 128);
+    shapeGroup.add(mer1);
     // 经线2（旋转90°，虚线）
-    const mer2 = dashedCircle(R, 0, CLR.wireLight, 128);
+    const mer2 = dashedCircle(R, cy, CLR.wireLight, 128);
     mer2.rotation.y = Math.PI / 2;
     shapeGroup.add(mer2);
     // 辅助小圆（虚线，增强透视）
-    const aux = dashedCircle(R * 0.6, 0, CLR.wireLight, 64);
+    const aux = dashedCircle(R * 0.6, cy, CLR.wireLight, 64);
     aux.rotation.x = Math.PI / 4;
     shapeGroup.add(aux);
     // 半径标注
-    shapeGroup.add(solidLine([0, 0, 0], [R, 0, 0], CLR.gold, 2));
+    shapeGroup.add(solidLine([0, cy, 0], [R, cy, 0], CLR.gold, 2));
 }
 
 // ── 构建当前形状 ──
