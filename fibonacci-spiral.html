@@ -192,32 +192,35 @@ function buildLayout(fibSeq){
    The arc connects from the corner shared with the previous square
    to the corner shared with the next square.
    Direction cycles: CW(right→down) → CW(down→left) → CW(left→up) → CW(up→right) */
-function buildSpiralArcs(layout){
+function buildSpiralArcs(layout, sc, ox, oy){
   const arcs = [];
   for(let i=1; i<layout.length; i++){
     const s = layout[i];
+    // Scale to canvas coordinates
+    const sx = s.x * sc + ox;
+    const sy = s.y * sc + oy;
+    const ss = s.w * sc;
     const dir = (i-1) % 4;
-    // Center and angles for quarter-circle arc in this square
     let cx, cy, sA, eA;
     switch(dir){
-      case 0: // arc center at bottom-left, sweep from top to right
-        cx = s.x;     cy = s.y + s.w;
+      case 0:
+        cx = sx;     cy = sy + ss;
         sA = Math.PI/2;  eA = 0;
         break;
-      case 1: // arc center at bottom-right, sweep from left to top
-        cx = s.x+s.w; cy = s.y + s.w;
+      case 1:
+        cx = sx+ss;  cy = sy + ss;
         sA = Math.PI;    eA = Math.PI/2;
         break;
-      case 2: // arc center at top-right, sweep from bottom to left
-        cx = s.x+s.w; cy = s.y;
+      case 2:
+        cx = sx+ss;  cy = sy;
         sA = 3*Math.PI/2; eA = Math.PI;
         break;
-      case 3: // arc center at top-left, sweep from right to bottom
-        cx = s.x;     cy = s.y;
+      case 3:
+        cx = sx;     cy = sy;
         sA = 0;          eA = 3*Math.PI/2;
         break;
     }
-    arcs.push({cx, cy, r:s.w, sA, eA, idx:i});
+    arcs.push({cx, cy, r:ss, sA, eA, idx:i});
   }
   return arcs;
 }
@@ -260,7 +263,7 @@ function draw(prog){
   }));
 
   // Build spiral arcs (one per square from index 1 onward)
-  const arcs = buildSpiralArcs(layout);
+  const arcs = buildSpiralArcs(layout, sc, ox, oy);
   const totalArcs = arcs.length;
   const currentArc = prog * totalArcs;
 
@@ -296,31 +299,31 @@ function draw(prog){
   const frac = currentArc - fullArcs;
 
   if(fullArcs > 0 || frac > 0){
-    // Helper: draw partial spiral path
+    // Helper: draw partial spiral path using line segments
+    // (avoids ctx.arc direction bugs entirely)
     function spiralPath(){
       ctx.beginPath();
       let started = false;
-      for(let i=0; i<fullArcs && i<totalArcs; i++){
-        const a = arcs[i];
-        if(!started){
-          ctx.moveTo(
-            a.cx + a.r * Math.cos(a.sA),
-            a.cy - a.r * Math.sin(a.sA)
-          );
-          started = true;
+      const STEPS = 40; // points per quarter arc
+
+      function drawArc(a, frac1){
+        const steps = Math.ceil(STEPS * frac1);
+        for(let s=0; s<=steps; s++){
+          const t = s / STEPS;
+          if(t > frac1) break;
+          const angle = a.sA + t * (a.eA - a.sA);
+          const px = a.cx + a.r * Math.cos(angle);
+          const py = a.cy + a.r * Math.sin(angle);
+          if(!started){ ctx.moveTo(px, py); started = true; }
+          else ctx.lineTo(px, py);
         }
-        ctx.arc(a.cx, a.cy, a.r, -a.sA, -a.eA, false);
+      }
+
+      for(let i=0; i<fullArcs && i<totalArcs; i++){
+        drawArc(arcs[i], 1);
       }
       if(frac > 0 && fullArcs < totalArcs){
-        const a = arcs[fullArcs];
-        const partialEnd = a.sA + frac * (a.eA - a.sA);
-        if(!started){
-          ctx.moveTo(
-            a.cx + a.r * Math.cos(a.sA),
-            a.cy - a.r * Math.sin(a.sA)
-          );
-        }
-        ctx.arc(a.cx, a.cy, a.r, -a.sA, -partialEnd, false);
+        drawArc(arcs[fullArcs], frac);
       }
     }
 
@@ -340,17 +343,17 @@ function draw(prog){
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Leading dot
+    // Leading dot (compute from arc endpoint)
     let dotX, dotY;
     if(frac > 0 && fullArcs < totalArcs){
       const a = arcs[fullArcs];
       const partialEnd = a.sA + frac * (a.eA - a.sA);
       dotX = a.cx + a.r * Math.cos(partialEnd);
-      dotY = a.cy - a.r * Math.sin(partialEnd);
+      dotY = a.cy + a.r * Math.sin(partialEnd);
     } else if(fullArcs > 0){
       const a = arcs[fullArcs-1];
       dotX = a.cx + a.r * Math.cos(a.eA);
-      dotY = a.cy - a.r * Math.sin(a.eA);
+      dotY = a.cy + a.r * Math.sin(a.eA);
     }
     if(dotX !== undefined){
       ctx.beginPath();
