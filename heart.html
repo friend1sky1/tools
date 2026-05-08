@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>青竹数苑 · 心形曲线</title>
+<link rel="icon" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bamboo:#5B8C5A;--bamboo-dark:#2D4A32;--bamboo-mist:#F0F5EE;
+  --bamboo-light:#D6E5D2;--wood-gold:#C5A96A;
+  --heart:#C57B7B;--heart-light:#D4918F;--heart-fill:rgba(212,145,143,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif}
+body{background:var(--bamboo-mist);display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* ── top bar ── */
+.top-bar{
+  height:48px;background:rgba(240,245,238,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(91,140,90,.10);
+  display:flex;align-items:center;padding:0 16px;flex-shrink:0;z-index:30;gap:10px;
+}
+.top-bar a{color:var(--bamboo-dark);text-decoration:none;font-size:15px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.top-bar a:hover{color:var(--bamboo)}
+.top-bar .title{font-family:'Noto Serif SC',serif;font-size:17px;color:var(--bamboo-dark);flex:1;text-align:center;margin-right:48px}
+
+/* ── canvas area ── */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+canvas{display:block}
+
+/* ── equation overlay ── */
+.eq-label{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  font-family:'Noto Serif SC',serif;font-size:14px;color:var(--bamboo-dark);
+  background:rgba(240,245,238,.85);backdrop-filter:blur(6px);
+  padding:6px 18px;border-radius:20px;white-space:nowrap;
+  border:1px solid rgba(91,140,90,.12);pointer-events:none;
+  opacity:.92;
+}
+.eq-label .math{font-family:Georgia,'Times New Roman',serif;font-style:italic}
+
+/* ── bottom controls ── */
+.controls{
+  flex-shrink:0;background:rgba(240,245,238,.95);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(91,140,90,.10);padding:14px 18px 18px;
+  display:flex;flex-direction:column;gap:12px;z-index:30;
+}
+.row{display:flex;align-items:center;gap:10px}
+.row label{font-size:13px;color:var(--bamboo-dark);min-width:60px;text-align:right;white-space:nowrap}
+.row input[type=range]{flex:1;accent-color:var(--bamboo);height:6px;cursor:pointer}
+.row .val{font-size:12px;color:#888;min-width:32px;text-align:center}
+
+/* toggle buttons */
+.toggle-row{display:flex;gap:8px;justify-content:center}
+.toggle-row button{
+  font-family:'Noto Serif SC',serif;font-size:13px;
+  padding:5px 18px;border-radius:18px;border:1.5px solid var(--bamboo);
+  background:transparent;color:var(--bamboo-dark);cursor:pointer;transition:.2s;
+}
+.toggle-row button.active{background:var(--bamboo);color:#fff}
+.toggle-row button:hover:not(.active){background:var(--bamboo-light)}
+
+/* hint */
+.hint{text-align:center;font-size:11px;color:rgba(91,140,90,.55);padding-bottom:2px;letter-spacing:1px}
+
+/* mobile tweaks */
+@media(max-width:480px){
+  .top-bar .title{font-size:15px;margin-right:36px}
+  .eq-label{font-size:12px;padding:5px 12px}
+  .controls{padding:10px 12px 14px;gap:10px}
+  .row label{min-width:48px;font-size:12px}
+  .toggle-row button{font-size:12px;padding:4px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── nav ── -->
+<nav class="top-bar">
+  <a href="index.html">← 返回</a>
+  <span class="title">心形曲线</span>
+</nav>
+
+<!-- ── canvas ── -->
+<div class="canvas-wrap">
+  <div class="eq-label" id="eqLabel"></div>
+  <canvas id="cv"></canvas>
+</div>
+
+<!-- ── controls ── -->
+<div class="controls">
+  <div class="toggle-row">
+    <button class="active" data-mode="parametric">参数方程</button>
+    <button data-mode="polar">极坐标</button>
+  </div>
+  <div class="row">
+    <label>大小</label>
+    <input type="range" id="sldScale" min="30" max="100" value="65">
+    <span class="val" id="valScale">65</span>
+  </div>
+  <div class="row">
+    <label>速度</label>
+    <input type="range" id="sldSpeed" min="1" max="20" value="8">
+    <span class="val" id="valSpeed">8</span>
+  </div>
+  <div class="hint">心形曲线 · 参数方程</div>
+</div>
+
+<script>
+/* ============================================================
+   Heart Curve – Canvas 2D interactive demo
+   Parametric:  x = 16 sin³t,  y = 13cos t − 5cos 2t − 2cos 3t − cos 4t
+   Polar:       r = 1 − sin θ  (cardioid)
+   ============================================================ */
+
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const eqLabel = document.getElementById('eqLabel');
+
+/* ── state ── */
+let mode  = 'parametric';   // 'parametric' | 'polar'
+let scale = 65;             // 30 – 100  (pixels per unit)
+let speed = 8;              // 1 – 20    (steps per frame)
+let t     = 0;              // current parameter
+let drawing = true;
+let lastTs = 0;
+let dpr = window.devicePixelRatio || 1;
+
+/* ── resize ── */
+function resize(){
+  const wrap = cv.parentElement;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  dpr = window.devicePixelRatio || 1;
+  cv.width  = w * dpr;
+  cv.height = h * dpr;
+  cv.style.width  = w + 'px';
+  cv.style.height = h + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ── math helpers ── */
+function parametricXY(t){
+  const s = Math.sin(t);
+  return {
+    x: 16 * s * s * s,
+    y: 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)
+  };
+}
+function polarXY(theta){
+  const r = 1 - Math.sin(theta);
+  return { x: r * Math.cos(theta), y: -r * Math.sin(theta) }; // y flipped
+}
+function totalSamples(){
+  return mode === 'parametric' ? 500 : 600;
+}
+function sampleAt(i, n){
+  if(mode === 'parametric'){
+    const t = (i / n) * Math.PI * 2;
+    return parametricXY(t);
+  } else {
+    const th = (i / n) * Math.PI * 2;
+    return polarXY(th);
+  }
+}
+
+/* ── to canvas coords ── */
+function toCanvas(p){
+  const cw = cv.width / dpr;
+  const ch = cv.height / dpr;
+  const s = scale;
+  return {
+    x: cw/2 + p.x * s,
+    y: ch/2 - p.y * s + s * 1.5   // offset down slightly
+  };
+}
+
+/* ── draw ── */
+function draw(){
+  const cw = cv.width / dpr;
+  const ch = cv.height / dpr;
+  ctx.clearRect(0,0,cw,ch);
+
+  const n = totalSamples();
+  const stepsDone = Math.min(Math.floor(t), n);
+
+  if(stepsDone < 1) return;
+
+  // ── subtle fill (closed path up to current point) ──
+  ctx.save();
+  ctx.beginPath();
+  const p0 = toCanvas(sampleAt(0, n));
+  ctx.moveTo(p0.x, p0.y);
+  for(let i = 1; i <= stepsDone; i++){
+    const p = toCanvas(sampleAt(i, n));
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(212,145,143,.13)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── stroke with gradient ──
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(p0.x, p0.y);
+  for(let i = 1; i <= stepsDone; i++){
+    const p = toCanvas(sampleAt(i, n));
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.strokeStyle = '#C57B7B';
+  ctx.lineWidth = 2.8;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.shadowColor = 'rgba(197,123,123,.35)';
+  ctx.shadowBlur = 12;
+  ctx.stroke();
+  ctx.restore();
+
+  // ── glow stroke (second pass, wider, lighter) ──
+  if(stepsDone > 10){
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(p0.x, p0.y);
+    for(let i = 1; i <= stepsDone; i++){
+      const p = toCanvas(sampleAt(i, n));
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(212,145,143,.25)';
+    ctx.lineWidth = 7;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── pen tip dot ──
+  if(stepsDone < n){
+    const tip = toCanvas(sampleAt(stepsDone, n));
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(tip.x, tip.y, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#C57B7B';
+    ctx.shadowColor = 'rgba(197,123,123,.5)';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ── animation loop ── */
+function animate(ts){
+  if(!lastTs) lastTs = ts;
+  const dt = ts - lastTs;
+  lastTs = ts;
+
+  if(drawing){
+    const n = totalSamples();
+    // advance t based on speed (steps per ~16ms frame)
+    t += speed * (dt / 16.67);
+    if(t >= n){
+      t = n;
+      drawing = false;
+    }
+    draw();
+  }
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+/* ── restart animation ── */
+function restart(){
+  t = 0;
+  drawing = true;
+  lastTs = 0;
+}
+
+/* ── equation label ── */
+function updateEqLabel(){
+  if(mode === 'parametric'){
+    eqLabel.innerHTML = '<span class="math">x = 16sin³t, &nbsp;y = 13cos t − 5cos 2t − 2cos 3t − cos 4t</span>';
+  } else {
+    eqLabel.innerHTML = '<span class="math">r = 1 − sin θ</span>';
+  }
+  document.querySelector('.hint').textContent = '心形曲线 · ' + (mode === 'parametric' ? '参数方程' : '极坐标');
+}
+
+/* ── controls binding ── */
+const sldScale = document.getElementById('sldScale');
+const sldSpeed = document.getElementById('sldSpeed');
+const valScale = document.getElementById('valScale');
+const valSpeed = document.getElementById('valSpeed');
+
+sldScale.addEventListener('input', ()=>{
+  scale = +sldScale.value;
+  valScale.textContent = scale;
+  // re-render current progress immediately
+  if(!drawing) draw();
+});
+sldSpeed.addEventListener('input', ()=>{
+  speed = +sldSpeed.value;
+  valSpeed.textContent = speed;
+});
+
+/* ── mode toggle ── */
+document.querySelectorAll('.toggle-row button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    updateEqLabel();
+    restart();
+  });
+});
+
+updateEqLabel();
+</script>
+</body>
+</html>
