@@ -257,7 +257,7 @@ const P = {
     cylinder: { r: 1.6, h: 2.4 },
     cone:     { r: 1.8, h: 2.8 },
     frustum:  { r1: 0.8, r2: 1.8, h: 2.0 },
-    sphere:   { R: 2.0 }
+    sphere:   { R: 1.4 }
 };
 
 let activeShape = 'cylinder';
@@ -476,7 +476,7 @@ function buildFrustum() {
 
 function buildSphere() {
     const R = P.sphere.R;
-    const cy = R; // 球心上移，底部刚好在网格面
+    const cy = 1.0; // 球心居中（视图中心）
     // 球体
     const sphGeo = new THREE.SphereGeometry(R, 64, 32);
     const sph = solidWithWire(sphGeo, CLR.sphere, opacity * 0.55);
@@ -492,16 +492,11 @@ function buildSphere() {
     const eqMat = new THREE.LineBasicMaterial({ color: CLR.gold, linewidth: 2 });
     shapeGroup.add(new THREE.Line(eqGeo, eqMat));
     // 经线1（虚线）
-    const mer1 = dashedCircle(R, cy, CLR.wireLight, 128);
-    shapeGroup.add(mer1);
+    shapeGroup.add(dashedCircle(R, cy, CLR.wireLight, 128));
     // 经线2（旋转90°，虚线）
     const mer2 = dashedCircle(R, cy, CLR.wireLight, 128);
     mer2.rotation.y = Math.PI / 2;
     shapeGroup.add(mer2);
-    // 辅助小圆（虚线，增强透视）
-    const aux = dashedCircle(R * 0.6, cy, CLR.wireLight, 64);
-    aux.rotation.x = Math.PI / 4;
-    shapeGroup.add(aux);
     // 半径标注
     shapeGroup.add(solidLine([0, cy, 0], [R, cy, 0], CLR.gold, 2));
 }
@@ -539,7 +534,7 @@ function updateParamUI() {
 
     if (activeShape === 'sphere') {
         lbl1.textContent = 'R';
-        sld1.min = 0.5; sld1.max = 3.0; sld1.step = 0.1;
+        sld1.min = 0.5; sld1.max = 2.5; sld1.step = 0.1;
         sld1.value = P.sphere.R;
         document.getElementById('val-r1').textContent = P.sphere.R.toFixed(1);
         pg2.style.display = 'none';
