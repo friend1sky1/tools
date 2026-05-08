@@ -196,31 +196,35 @@ function buildSpiralArcs(layout, sc, ox, oy){
   const arcs = [];
   for(let i=1; i<layout.length; i++){
     const s = layout[i];
-    // Scale to canvas coordinates
     const sx = s.x * sc + ox;
     const sy = s.y * sc + oy;
     const ss = s.w * sc;
     const dir = (i-1) % 4;
-    let cx, cy, sA, eA;
+    // Canvas angles: right=0, down=π/2, left=π, up=3π/2
+    let cx, cy, sA, eA, ccw;
     switch(dir){
-      case 0:
-        cx = sx;     cy = sy + ss;
-        sA = Math.PI/2;  eA = 0;
+      case 0: // center bottom-left, arc from top(3π/2) to right(0)
+        cx = sx;      cy = sy + ss;
+        sA = 3*Math.PI/2; eA = 2*Math.PI;
+        ccw = false; // CW short arc: 3π/2→2π
         break;
-      case 1:
-        cx = sx+ss;  cy = sy + ss;
-        sA = Math.PI;    eA = Math.PI/2;
+      case 1: // center bottom-right, arc from left(π) to top(3π/2)
+        cx = sx + ss; cy = sy + ss;
+        sA = Math.PI;     eA = 3*Math.PI/2;
+        ccw = false; // CW short arc: π→3π/2
         break;
-      case 2:
-        cx = sx+ss;  cy = sy;
-        sA = 3*Math.PI/2; eA = Math.PI;
+      case 2: // center top-right, arc from bottom(π/2) to left(π)
+        cx = sx + ss; cy = sy;
+        sA = Math.PI/2;   eA = Math.PI;
+        ccw = false; // CW short arc: π/2→π
         break;
-      case 3:
-        cx = sx;     cy = sy;
-        sA = 0;          eA = 3*Math.PI/2;
+      case 3: // center top-left, arc from right(0) to bottom(π/2)
+        cx = sx;      cy = sy;
+        sA = 0;           eA = Math.PI/2;
+        ccw = false; // CW short arc: 0→π/2
         break;
     }
-    arcs.push({cx, cy, r:ss, sA, eA, idx:i});
+    arcs.push({cx, cy, r:ss, sA, eA, ccw, idx:i});
   }
   return arcs;
 }
