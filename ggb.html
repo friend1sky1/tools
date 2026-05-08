@@ -206,14 +206,14 @@ body {
     <div class="param-group" id="pg-r1">
         <span class="param-label" id="lbl-r1">r</span>
         <input type="range" class="param-slider" id="sld-r1"
-               min="0.4" max="2.4" step="0.1" value="1.6">
+               min="0.3" max="2.0" step="0.1" value="1.2">
         <span class="param-val" id="val-r1">1.6</span>
     </div>
     <div class="param-divider" id="div-mid"></div>
     <div class="param-group" id="pg-r2">
         <span class="param-label" id="lbl-r2">h</span>
         <input type="range" class="param-slider" id="sld-r2"
-               min="0.4" max="3.0" step="0.1" value="2.4">
+               min="0.4" max="2.8" step="0.1" value="2.0">
         <span class="param-val" id="val-r2">2.4</span>
     </div>
     <div class="opacity-group">
@@ -254,7 +254,7 @@ const CLR = {
 
 // ── 参数 ──
 const P = {
-    cylinder: { r: 1.6, h: 2.4 },
+    cylinder: { r: 1.2, h: 2.0 },
     cone:     { r: 1.8, h: 2.8 },
     frustum:  { r1: 0.8, r2: 1.8, h: 2.0 },
     sphere:   { R: 1.4 }
@@ -266,8 +266,8 @@ let opacity = 0.45;
 // ── 场景搭建 ──
 const container = document.getElementById('three-container');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-camera.position.set(4, 3, 5);
+const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+camera.position.set(3, 6, 4);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -552,11 +552,11 @@ function updateParamUI() {
         divM.style.display = 'block';
     } else {
         lbl1.textContent = 'r';
-        sld1.min = 0.4; sld1.max = 2.4; sld1.step = 0.1;
+        sld1.min = 0.3; sld1.max = 2.0; sld1.step = 0.1;
         sld1.value = P[activeShape].r;
         document.getElementById('val-r1').textContent = P[activeShape].r.toFixed(1);
         lbl2.textContent = 'h';
-        sld2.min = 0.4; sld2.max = 3.0; sld2.step = 0.1;
+        sld2.min = 0.4; sld2.max = 2.8; sld2.step = 0.1;
         sld2.value = P[activeShape].h;
         document.getElementById('val-r2').textContent = P[activeShape].h.toFixed(1);
         pg2.style.display = 'flex';
