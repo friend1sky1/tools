@@ -153,7 +153,9 @@ function parametricXY(t){
 }
 function polarXY(theta){
   const r = 1 - Math.sin(theta);
-  return { x: r * Math.cos(theta), y: -r * Math.sin(theta) }; // y flipped
+  // Scale up to match parametric size (parametric spans ~32 units, polar ~2 units)
+  const m = 15;
+  return { x: m * r * Math.cos(theta), y: -m * r * Math.sin(theta) };
 }
 function totalSamples(){
   return mode === 'parametric' ? 500 : 600;
@@ -173,9 +175,10 @@ function toCanvas(p){
   const cw = cv.width / dpr;
   const ch = cv.height / dpr;
   const s = scale;
+  const yOff = mode === 'parametric' ? s * 1.5 : s * 15;
   return {
     x: cw/2 + p.x * s,
-    y: ch/2 - p.y * s + s * 1.5   // offset down slightly
+    y: ch/2 - p.y * s + yOff
   };
 }
 
@@ -238,16 +241,46 @@ function draw(){
     ctx.restore();
   }
 
-  // ── pen tip dot ──
+  // ── pen tip dot + X,Y coordinates ──
   if(stepsDone < n){
     const tip = toCanvas(sampleAt(stepsDone, n));
+    const rawPt = sampleAt(stepsDone, n);
     ctx.save();
+    // Dot
     ctx.beginPath();
     ctx.arc(tip.x, tip.y, 4, 0, Math.PI*2);
     ctx.fillStyle = '#C57B7B';
     ctx.shadowColor = 'rgba(197,123,123,.5)';
     ctx.shadowBlur = 10;
     ctx.fill();
+    ctx.restore();
+    // X, Y coordinate label
+    ctx.save();
+    const xStr = rawPt.x.toFixed(1);
+    const yStr = rawPt.y.toFixed(1);
+    const label = `(${xStr}, ${yStr})`;
+    ctx.font = '600 12px -apple-system,"PingFang SC",sans-serif';
+    let lx = tip.x + 12;
+    let ly = tip.y - 10;
+    const cw = cv.width / dpr;
+    const ch = cv.height / dpr;
+    if(lx + 80 > cw) lx = tip.x - 90;
+    if(ly < 20) ly = tip.y + 20;
+    if(ly > ch - 10) ly = tip.y - 25;
+    // Background pill
+    const metrics = ctx.measureText(label);
+    const tw = metrics.width + 10;
+    ctx.fillStyle = 'rgba(240,245,238,0.88)';
+    ctx.beginPath();
+    ctx.roundRect(lx - 5, ly - 16, tw, 21, 5);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(91,140,90,0.15)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(45,74,50,0.75)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(label, lx, ly);
     ctx.restore();
   }
 }
