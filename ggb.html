@@ -379,99 +379,105 @@ function solidWithWire(geometry, color, op) {
 // ── 构建函数 ──
 function buildCylinder() {
     const r = P.cylinder.r, h = P.cylinder.h;
+    const y0 = 0.25; // 整体上移
     // 底面圆
     const botGeo = new THREE.CircleGeometry(r, 64);
     const bot = solidWithWire(botGeo, CLR.cylinder, opacity);
     bot.rotation.x = -Math.PI / 2;
+    bot.position.y = y0;
     shapeGroup.add(bot);
     // 顶面圆
     const topGeo = new THREE.CircleGeometry(r, 64);
     const top = solidWithWire(topGeo, CLR.cylinder, opacity);
     top.rotation.x = -Math.PI / 2;
-    top.position.y = h;
+    top.position.y = h + y0;
     shapeGroup.add(top);
     // 侧面
     const sideGeo = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
     const side = solidWithWire(sideGeo, CLR.cylinder, opacity * 0.7);
-    side.position.y = h / 2;
+    side.position.y = h / 2 + y0;
     shapeGroup.add(side);
     // 母线（金色实线）
-    shapeGroup.add(solidLine([r, 0, 0], [r, h, 0], CLR.gold, 3));
+    shapeGroup.add(solidLine([r, y0, 0], [r, h + y0, 0], CLR.gold, 3));
     // 轴线（虚线）
-    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    shapeGroup.add(dashedLine([0, y0, 0], [0, h + y0, 0], CLR.axis));
     // 底面半径标注
-    shapeGroup.add(dashedLine([0, 0, 0], [r, 0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, 0], [r, y0, 0], CLR.wireLight));
     // 底面直径透视线
-    shapeGroup.add(dashedLine([-r, 0, 0], [r, 0, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, -r], [0, 0, r], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r, y0, 0], [r, y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, -r], [0, y0, r], CLR.wireLight));
     // 顶面直径透视线
-    shapeGroup.add(dashedLine([-r, h, 0], [r, h, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, h, -r], [0, h, r], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r, h + y0, 0], [r, h + y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, h + y0, -r], [0, h + y0, r], CLR.wireLight));
     // 高度标注线
-    shapeGroup.add(dashedLine([r * 1.3, 0, 0], [r * 1.3, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([r * 1.3, y0, 0], [r * 1.3, h + y0, 0], CLR.wireLight));
 }
 
 function buildCone() {
     const r = P.cone.r, h = P.cone.h;
+    const y0 = 0.25;
     // 底面
     const botGeo = new THREE.CircleGeometry(r, 64);
     const bot = solidWithWire(botGeo, CLR.cone, opacity);
     bot.rotation.x = -Math.PI / 2;
+    bot.position.y = y0;
     shapeGroup.add(bot);
     // 侧面
     const sideGeo = new THREE.ConeGeometry(r, h, 64, 1, true);
     const side = solidWithWire(sideGeo, CLR.cone, opacity * 0.7);
-    side.position.y = h / 2;
+    side.position.y = h / 2 + y0;
     shapeGroup.add(side);
     // 母线（金色实线，正面）
-    shapeGroup.add(solidLine([r, 0, 0], [0, h, 0], CLR.gold, 3));
+    shapeGroup.add(solidLine([r, y0, 0], [0, h + y0, 0], CLR.gold, 3));
     // 对称母线（虚线）
-    shapeGroup.add(dashedLine([-r, 0, 0], [0, h, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, r], [0, h, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, -r], [0, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r, y0, 0], [0, h + y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, r], [0, h + y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, -r], [0, h + y0, 0], CLR.wireLight));
     // 轴线
-    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    shapeGroup.add(dashedLine([0, y0, 0], [0, h + y0, 0], CLR.axis));
     // 底面直径
-    shapeGroup.add(dashedLine([-r, 0, 0], [r, 0, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, -r], [0, 0, r], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r, y0, 0], [r, y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, -r], [0, y0, r], CLR.wireLight));
     // 高度标注
-    shapeGroup.add(dashedLine([r * 1.3, 0, 0], [r * 1.3, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([r * 1.3, y0, 0], [r * 1.3, h + y0, 0], CLR.wireLight));
 }
 
 function buildFrustum() {
     const r1 = P.frustum.r1, r2 = P.frustum.r2, h = P.frustum.h;
+    const y0 = 0.25;
     // 底面（大圆）
     const botGeo = new THREE.CircleGeometry(r2, 64);
     const bot = solidWithWire(botGeo, CLR.frustum, opacity);
     bot.rotation.x = -Math.PI / 2;
+    bot.position.y = y0;
     shapeGroup.add(bot);
     // 顶面（小圆）
     const topGeo = new THREE.CircleGeometry(r1, 64);
     const top = solidWithWire(topGeo, CLR.frustum, opacity);
     top.rotation.x = -Math.PI / 2;
-    top.position.y = h;
+    top.position.y = h + y0;
     shapeGroup.add(top);
     // 侧面
     const sideGeo = new THREE.CylinderGeometry(r1, r2, h, 64, 1, true);
     const side = solidWithWire(sideGeo, CLR.frustum, opacity * 0.7);
-    side.position.y = h / 2;
+    side.position.y = h / 2 + y0;
     shapeGroup.add(side);
     // 母线（金色实线）
-    shapeGroup.add(solidLine([r2, 0, 0], [r1, h, 0], CLR.gold, 3));
+    shapeGroup.add(solidLine([r2, y0, 0], [r1, h + y0, 0], CLR.gold, 3));
     // 对称母线（虚线）
-    shapeGroup.add(dashedLine([-r2, 0, 0], [-r1, h, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, r2], [0, h, r1], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, -r2], [0, h, -r1], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r2, y0, 0], [-r1, h + y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, r2], [0, h + y0, r1], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, -r2], [0, h + y0, -r1], CLR.wireLight));
     // 轴线
-    shapeGroup.add(dashedLine([0, 0, 0], [0, h, 0], CLR.axis));
+    shapeGroup.add(dashedLine([0, y0, 0], [0, h + y0, 0], CLR.axis));
     // 底面直径
-    shapeGroup.add(dashedLine([-r2, 0, 0], [r2, 0, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, 0, -r2], [0, 0, r2], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r2, y0, 0], [r2, y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, y0, -r2], [0, y0, r2], CLR.wireLight));
     // 顶面直径
-    shapeGroup.add(dashedLine([-r1, h, 0], [r1, h, 0], CLR.wireLight));
-    shapeGroup.add(dashedLine([0, h, -r1], [0, h, r1], CLR.wireLight));
+    shapeGroup.add(dashedLine([-r1, h + y0, 0], [r1, h + y0, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([0, h + y0, -r1], [0, h + y0, r1], CLR.wireLight));
     // 高度标注
-    shapeGroup.add(dashedLine([r2 * 1.3, 0, 0], [r2 * 1.3, h, 0], CLR.wireLight));
+    shapeGroup.add(dashedLine([r2 * 1.3, y0, 0], [r2 * 1.3, h + y0, 0], CLR.wireLight));
 }
 
 function buildSphere() {
