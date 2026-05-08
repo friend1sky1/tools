@@ -143,8 +143,8 @@ input[type=range]::-moz-range-thumb{
   <div class="control-bar">
     <div class="slider-row">
       <span class="slider-label">e =</span>
-      <input type="range" id="eSlider" min="0" max="2.5" step="0.005" value="0">
-      <span class="slider-val" id="eVal">0.00</span>
+      <input type="range" id="eSlider" min="0" max="2.5" step="0.005" value="0.6">
+      <span class="slider-val" id="eVal">0.60</span>
     </div>
     <div class="e-markers">
       <span>0</span><span>0.5</span><span>1</span><span>1.5</span><span>2</span><span>2.5</span>
@@ -186,8 +186,8 @@ const C = {
 
 /* === State === */
 let W, H, dpr;
-let e = 0;           // current eccentricity
-let targetE = 0;     // target for smooth animation
+let e = 0.6;           // current eccentricity
+let targetE = 0.6;     // target for smooth animation
 let a = 3;           // semi-major axis in math units
 let animFrame;
 
