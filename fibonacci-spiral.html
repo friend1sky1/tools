@@ -339,30 +339,30 @@ function buildLayout(fibSeq, cw, ch){
     const ls = r.w * scale;
     r.sx = lx; r.sy = ly; r.ss = ls;
 
-    // Determine arc center and angles for this square
-    // The arc is a quarter circle. Direction depends on the step index.
+    // Arc in standard canvas coordinates (y-down)
+    // Each direction draws a quarter-circle arc
     const d = r.idx % 4;
-    let arcCx, arcCy, arcR, arcStart, arcEnd;
+    let arcCx, arcCy, arcR, arcStart, arcEnd, arcCCW;
     arcR = ls;
     switch(d){
-      case 0: // arc from bottom-left to top-right
+      case 0: // center at bottom-left, arc from top(-π/2) to right(0)
         arcCx = lx; arcCy = ly + ls;
-        arcStart = Math.PI; arcEnd = -Math.PI/2;
+        arcStart = -Math.PI/2; arcEnd = 0; arcCCW = false;
         break;
-      case 1: // arc from bottom-right to bottom-left
+      case 1: // center at bottom-right, arc from left(π) to top(-π/2)
         arcCx = lx + ls; arcCy = ly + ls;
-        arcStart = -Math.PI/2; arcEnd = Math.PI;
+        arcStart = Math.PI; arcEnd = Math.PI/2; arcCCW = true;
         break;
-      case 2: // arc from top-right to bottom-right
+      case 2: // center at top-right, arc from bottom(π/2) to left(π)
         arcCx = lx + ls; arcCy = ly;
-        arcStart = 0; arcEnd = Math.PI/2;
+        arcStart = Math.PI/2; arcEnd = Math.PI; arcCCW = false;
         break;
-      case 3: // arc from top-left to top-right
+      case 3: // center at top-left, arc from right(0) to bottom(π/2)
         arcCx = lx; arcCy = ly;
-        arcStart = Math.PI/2; arcEnd = 0;
+        arcStart = 0; arcEnd = -Math.PI/2; arcCCW = true;
         break;
     }
-    r.arc = {cx:arcCx, cy:arcCy, r:arcR, start:arcStart, end:arcEnd};
+    r.arc = {cx:arcCx, cy:arcCy, r:arcR, start:arcStart, end:arcEnd, ccw:arcCCW};
   }
 
   return rects;
@@ -423,26 +423,18 @@ function draw(currentStep, currentArcProgress){
       if(!started){
         ctx.moveTo(
           a.cx + a.r * Math.cos(a.start),
-          a.cy - a.r * Math.sin(a.start)
+          a.cy + a.r * Math.sin(a.start)
         );
         started = true;
       }
 
       if(isCurrent){
-        // Partial arc
-        let endAngle;
-        if(a.start > a.end){
-          // Clockwise (canvas default)
-          endAngle = a.start + (a.end - a.start + 2*Math.PI) * currentArcProgress;
-          if(endAngle > a.start) endAngle = a.start - (a.start - a.end + 2*Math.PI) * currentArcProgress;
-        } else {
-          endAngle = a.start + (a.end - a.start) * currentArcProgress;
-        }
-        ctx.arc(a.cx, a.cy, a.r, -a.start, -endAngle, a.start > a.end);
+        // Partial arc for animation
+        const endAngle = a.start + (a.end - a.start) * currentArcProgress;
+        ctx.arc(a.cx, a.cy, a.r, a.start, endAngle, a.ccw);
       } else {
-        // Full arc — note: canvas arc goes clockwise by default
-        // We use negative y, so we flip with minus signs
-        ctx.arc(a.cx, a.cy, a.r, -a.start, -a.end, a.start > a.end);
+        // Full arc
+        ctx.arc(a.cx, a.cy, a.r, a.start, a.end, a.ccw);
       }
     }
     ctx.stroke();
@@ -561,6 +553,11 @@ function init(){
   // Not needed, keep simple
 
   rebuild();
+  // Auto-play animation on load
+  playing = true;
+  lastTime = 0;
+  updateButtons();
+  rafId = requestAnimationFrame(animate);
 }
 
 document.addEventListener("DOMContentLoaded", init);
