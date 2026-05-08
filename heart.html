@@ -175,7 +175,7 @@ function toCanvas(p){
   const cw = cv.width / dpr;
   const ch = cv.height / dpr;
   const s = scale;
-  const yOff = mode === 'parametric' ? s * 1.5 : -s;
+  const yOff = mode === 'parametric' ? s * 1.5 : -s * 7;
   return {
     x: cw/2 + p.x * s,
     y: ch/2 - p.y * s + yOff
