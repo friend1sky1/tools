@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>青竹数苑 · 正弦波叠加</title>
+<link rel="icon" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bamboo:#5B8C5A;--bamboo-dark:#2D4A32;--bamboo-mist:#F0F5EE;
+  --bamboo-light:#D6E5D2;--wood-gold:#C5A96A;
+}
+html,body{height:100%;overflow:hidden;background:var(--bamboo-mist);
+  font-family:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;color:#333}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* Top bar */
+.top-bar{height:48px;background:rgba(240,245,238,0.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(91,140,90,0.10);display:flex;align-items:center;
+  padding:0 16px;flex-shrink:0;z-index:30;gap:10px}
+.top-bar a{color:var(--bamboo-dark);text-decoration:none;font-size:14px;
+  display:flex;align-items:center;gap:4px;white-space:nowrap;opacity:.7;transition:opacity .2s}
+.top-bar a:hover{opacity:1}
+.top-bar .title{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:700;
+  color:var(--bamboo-dark);white-space:nowrap}
+
+/* Canvas area */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;min-height:0}
+canvas{display:block;width:100%;height:100%}
+
+/* Formula bar */
+.formula-bar{background:rgba(240,245,238,0.95);backdrop-filter:blur(8px);
+  border-top:1px solid rgba(91,140,90,0.10);padding:8px 16px;flex-shrink:0;
+  font-size:13px;line-height:1.6;color:var(--bamboo-dark);min-height:40px;
+  font-family:'Courier New',monospace;overflow-x:auto;white-space:nowrap}
+.formula-bar .label{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  font-weight:600;margin-right:6px}
+
+/* Control bar */
+.ctrl-bar{background:rgba(240,245,238,0.97);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(91,140,90,0.12);padding:10px 16px 14px;flex-shrink:0;z-index:20}
+.ctrl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.ctrl-row:last-child{margin-bottom:0}
+.ctrl-label{font-size:12px;color:var(--bamboo-dark);font-weight:600;white-space:nowrap;min-width:56px}
+
+/* Checkboxes */
+.cb-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cb-item{display:flex;align-items:center;gap:3px;cursor:pointer;user-select:none;
+  font-size:12px;padding:3px 8px;border-radius:12px;
+  background:rgba(214,229,210,0.5);border:1px solid rgba(91,140,90,0.15);
+  transition:all .2s}
+.cb-item:hover{background:rgba(214,229,210,0.8)}
+.cb-item.active{border-color:var(--bamboo);background:rgba(91,140,90,0.12)}
+.cb-item input{accent-color:var(--bamboo);width:13px;height:13px;cursor:pointer}
+.cb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Sliders */
+.slider-group{display:flex;align-items:center;gap:8px;flex:1;min-width:140px}
+.slider-group input[type=range]{flex:1;accent-color:var(--bamboo);height:4px;cursor:pointer}
+.slider-val{font-size:12px;color:var(--bamboo-dark);font-weight:700;min-width:24px;text-align:center}
+
+/* Info badge */
+.info-badge{position:absolute;top:12px;right:12px;background:rgba(45,74,50,0.85);
+  color:#fff;font-size:11px;padding:4px 10px;border-radius:12px;
+  backdrop-filter:blur(6px);pointer-events:none;z-index:10;opacity:0;transition:opacity .4s}
+.info-badge.show{opacity:1}
+
+/* Mobile tweaks */
+@media(max-width:480px){
+  .top-bar .title{font-size:14px}
+  .cb-item{font-size:11px;padding:2px 6px}
+  .ctrl-label{min-width:44px;font-size:11px}
+  .formula-bar{font-size:11px;padding:6px 12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Top bar -->
+  <div class="top-bar">
+    <a href="index.html">← 返回</a>
+    <span class="title">正弦波叠加</span>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <canvas id="cvs"></canvas>
+    <div class="info-badge" id="badge">试试增加更多谐波 →</div>
+  </div>
+
+  <!-- Formula -->
+  <div class="formula-bar">
+    <span class="label">合成波 =</span><span id="formula">sin(x)</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="ctrl-bar">
+    <div class="ctrl-row">
+      <span class="ctrl-label">谐波分量</span>
+      <div class="cb-group" id="cbs"></div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">谐波数量</span>
+      <div class="slider-group">
+        <input type="range" id="sldN" min="1" max="15" value="1" step="1">
+        <span class="slider-val" id="valN">1</span>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">动画速度</span>
+      <div class="slider-group">
+        <input type="range" id="sldSpd" min="0" max="100" value="40">
+        <span class="slider-val" id="valSpd">40</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ── Palette ── */
+const COLORS = [
+  '#8E99A4','#A0847A','#8B7E74','#9E8D84','#7A8B8B',
+  '#9C8E7E','#838B83','#A49393','#8D9B8D','#968E7E',
+  '#8A8E9E','#9B8D82','#7E8E8E','#A08E80','#8E9688'
+];
+const BAMBOO = '#5B8C5A';
+
+/* ── State ── */
+let harmonics = 1;          // 1-15
+let speed = 40;             // 0-100
+let phase = 0;
+let enabled = new Set([1]); // which odd harmonics are on
+let badgeTimer = null;
+let badgeShown = false;
+
+/* ── DOM ── */
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+const formula = document.getElementById('formula');
+const badge = document.getElementById('badge');
+const sldN = document.getElementById('sldN');
+const valN = document.getElementById('valN');
+const sldSpd = document.getElementById('sldSpd');
+const valSpd = document.getElementById('valSpd');
+const cbGroup = document.getElementById('cbs');
+
+/* ── Build checkboxes for odd harmonics 1,3,5,...,29 ── */
+const oddList = [];
+for(let i=0;i<15;i++) oddList.push(2*i+1); // 1,3,5,...,29
+
+function buildCBs(){
+  cbGroup.innerHTML = '';
+  for(let i=0;i<harmonics;i++){
+    const n = oddList[i];
+    const item = document.createElement('label');
+    item.className = 'cb-item' + (enabled.has(n)?' active':'');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = enabled.has(n);
+    cb.addEventListener('change',()=>{
+      if(cb.checked) enabled.add(n); else enabled.delete(n);
+      item.classList.toggle('active',cb.checked);
+      updateFormula();
+    });
+    const dot = document.createElement('span');
+    dot.className = 'cb-dot';
+    dot.style.background = COLORS[i % COLORS.length];
+    const txt = document.createElement('span');
+    txt.textContent = n===1?'基波':'第'+n+'次';
+    item.appendChild(cb);
+    item.appendChild(dot);
+    item.appendChild(txt);
+    cbGroup.appendChild(item);
+  }
+}
+
+/* ── Formula text ── */
+function updateFormula(){
+  const parts = [];
+  for(let i=0;i<harmonics;i++){
+    const n = oddList[i];
+    if(!enabled.has(n)) continue;
+    const amp = (1/n).toFixed(n===1?0:4).replace(/0+$/,'').replace(/\.$/,'');
+    if(n===1) parts.push('sin(x)');
+    else parts.push('sin('+n+'x)/'+n);
+  }
+  formula.textContent = parts.length? parts.join(' + ') : '0';
+}
+
+/* ── Slider handlers ── */
+sldN.addEventListener('input',()=>{
+  harmonics = +sldN.value;
+  valN.textContent = harmonics;
+  // enable new ones by default
+  for(let i=0;i<harmonics;i++){ enabled.add(oddList[i]); }
+  buildCBs();
+  updateFormula();
+  showBadge();
+});
+sldSpd.addEventListener('input',()=>{
+  speed = +sldSpd.value;
+  valSpd.textContent = speed;
+});
+
+/* ── Badge ── */
+function showBadge(){
+  if(!badgeShown && harmonics>=5){
+    badge.classList.add('show');
+    badgeShown = true;
+    clearTimeout(badgeTimer);
+    badgeTimer = setTimeout(()=>badge.classList.remove('show'),3000);
+  }
+}
+
+/* ── Resize ── */
+let W,H,dpr;
+function resize(){
+  const rect = cvs.parentElement.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio||1, 2);
+  W = rect.width; H = rect.height;
+  cvs.width = W*dpr; cvs.height = H*dpr;
+  cvs.style.width = W+'px'; cvs.style.height = H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);
+resize();
+
+/* ── Draw ── */
+const TWO_PI = Math.PI*2;
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  /* Grid */
+  ctx.save();
+  ctx.strokeStyle = 'rgba(91,140,90,0.08)';
+  ctx.lineWidth = 1;
+  const midY = H/2;
+  const ampPx = H*0.35;
+  // horizontal axis
+  ctx.beginPath(); ctx.moveTo(0,midY); ctx.lineTo(W,midY); ctx.stroke();
+  // vertical grid every π
+  const pxPerPi = W/4; // show 2 full periods
+  for(let x=0;x<=W;x+=pxPerPi){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  // light horizontal bands
+  ctx.strokeStyle = 'rgba(91,140,90,0.04)';
+  for(let a=-1;a<=1;a+=0.5){
+    const y = midY - a*ampPx;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  ctx.restore();
+
+  /* Phase labels */
+  ctx.font = '11px -apple-system,PingFang SC,Microsoft YaHei,sans-serif';
+  ctx.fillStyle = 'rgba(45,74,50,0.35)';
+  ctx.textAlign = 'center';
+  const labels = ['0','π','2π','3π','4π'];
+  for(let i=0;i<=4;i++){
+    ctx.fillText(labels[i], i*pxPerPi, midY+18);
+  }
+
+  /* Y axis labels */
+  ctx.textAlign = 'right';
+  ctx.fillText('+1', 28, midY - ampPx + 4);
+  ctx.fillText('−1', 28, midY + ampPx + 4);
+  ctx.textAlign = 'left';
+  ctx.fillText('y', 6, 14);
+  ctx.fillText('x →', W-28, midY-ampPx-6);
+
+  const step = 2; // pixel step for smooth curves
+
+  /* Draw individual harmonics */
+  for(let hi=0;hi<harmonics;hi++){
+    const n = oddList[hi];
+    if(!enabled.has(n)) continue;
+    const color = COLORS[hi % COLORS.length];
+    const amp = 1/n;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.5;
+    for(let px=0;px<=W;px+=step){
+      const x = (px/W)*TWO_PI*2 + phase; // 2 full periods
+      const y = amp * Math.sin(n*x);
+      const py = midY - y*ampPx;
+      px===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /* Draw sum wave */
+  ctx.beginPath();
+  ctx.strokeStyle = BAMBOO;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  for(let px=0;px<=W;px+=step){
+    let sum = 0;
+    for(let hi=0;hi<harmonics;hi++){
+      const n = oddList[hi];
+      if(!enabled.has(n)) continue;
+      const x = (px/W)*TWO_PI*2 + phase;
+      sum += (1/n)*Math.sin(n*x);
+    }
+    const py = midY - sum*ampPx;
+    px===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  /* Glow effect on sum wave */
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = BAMBOO;
+  ctx.beginPath();
+  for(let px=0;px<=W;px+=step){
+    let sum = 0;
+    for(let hi=0;hi<harmonics;hi++){
+      const n = oddList[hi];
+      if(!enabled.has(n)) continue;
+      const x = (px/W)*TWO_PI*2 + phase;
+      sum += (1/n)*Math.sin(n*x);
+    }
+    const py = midY - sum*ampPx;
+    px===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ── Animation loop ── */
+let lastT = 0;
+function loop(t){
+  const dt = lastT ? (t-lastT)/1000 : 0;
+  lastT = t;
+  phase += dt * speed * 0.04;
+  if(phase > TWO_PI*100) phase -= TWO_PI*100; // prevent overflow
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* ── Init ── */
+buildCBs();
+updateFormula();
+requestAnimationFrame(loop);
+
+/* Show initial hint */
+setTimeout(()=>{
+  if(!badgeShown){
+    badge.textContent = '拖动滑块增加谐波，观察方波的形成 ↑';
+    badge.classList.add('show');
+    setTimeout(()=>badge.classList.remove('show'),4000);
+  }
+},1500);
+
+})();
+</script>
+</body>
+</html>
