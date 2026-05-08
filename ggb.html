@@ -476,7 +476,7 @@ function buildFrustum() {
 
 function buildSphere() {
     const R = P.sphere.R;
-    const cy = 1.0; // 球心居中（视图中心）
+    const cy = 0.85; // 球心略低于视图中心
     // 球体
     const sphGeo = new THREE.SphereGeometry(R, 64, 32);
     const sph = solidWithWire(sphGeo, CLR.sphere, opacity * 0.55);
