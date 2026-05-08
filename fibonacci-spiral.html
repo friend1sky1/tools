@@ -2,565 +2,415 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>青竹数苑 · 斐波那契螺旋线</title>
-<link rel="icon" href="favicon.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bamboo:#5B8C5A;
-  --bamboo-dark:#2D4A32;
-  --bamboo-mist:#F0F5EE;
-  --bamboo-light:#D6E5D2;
-  --wood-gold:#C5A96A;
+  --bamboo:#5B8C5A;--bamboo-dark:#2D4A32;--bamboo-mist:#F0F5EE;
+  --bamboo-light:#D6E5D2;--wood-gold:#C5A96A;
 }
-html,body{height:100%;overflow:hidden;background:var(--bamboo-mist);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bamboo-mist);
+  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
-/* ─── Top Bar ─── */
+/* top bar */
 .top-bar{
-  height:48px;
-  background:rgba(240,245,238,0.92);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(91,140,90,0.10);
-  display:flex;align-items:center;
-  padding:0 16px;flex-shrink:0;z-index:30;gap:10px;
+  height:48px;background:rgba(240,245,238,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(91,140,90,.10);
+  display:flex;align-items:center;padding:0 16px;flex-shrink:0;z-index:30;gap:10px;
 }
-.back-btn{
-  display:inline-flex;align-items:center;gap:4px;
-  color:var(--bamboo-dark);text-decoration:none;font-size:14px;
-  padding:4px 8px;border-radius:6px;transition:background .2s;
-}
-.back-btn:hover{background:rgba(91,140,90,0.08)}
-.page-title{
-  font-family:'Noto Serif SC',serif;font-size:17px;font-weight:700;
-  color:var(--bamboo-dark);white-space:nowrap;
-}
+.top-bar a{color:var(--bamboo-dark);text-decoration:none;font-size:14px;
+  display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;transition:background .2s}
+.top-bar a:hover{background:rgba(91,140,90,.08)}
+.page-title{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:700;
+  color:var(--bamboo-dark);white-space:nowrap;margin-left:4px}
 
-/* ─── Canvas Area ─── */
-.canvas-wrap{
-  flex:1;position:relative;overflow:hidden;min-height:0;
-}
+/* canvas */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;min-height:0}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 
-/* ─── Info Overlay ─── */
-.info-overlay{
+/* info overlay */
+.info{
   position:absolute;top:12px;left:16px;
-  background:rgba(240,245,238,0.88);backdrop-filter:blur(8px);
-  border:1px solid rgba(91,140,90,0.12);border-radius:10px;
+  background:rgba(240,245,238,.88);backdrop-filter:blur(8px);
+  border:1px solid rgba(91,140,90,.12);border-radius:10px;
   padding:10px 14px;font-size:13px;color:var(--bamboo-dark);
-  pointer-events:none;line-height:1.6;
-  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+  pointer-events:none;line-height:1.7;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
 }
-.info-overlay .fn-label{font-weight:700;color:var(--wood-gold);font-size:15px}
-.info-overlay .phi{color:var(--bamboo);font-weight:600}
+.info .fn{font-weight:700;color:var(--wood-gold);font-size:15px}
+.info .phi{color:var(--bamboo);font-weight:600}
 
-/* ─── Control Bar ─── */
-.control-bar{
-  flex-shrink:0;
-  background:rgba(240,245,238,0.95);
-  backdrop-filter:blur(12px);
-  border-top:1px solid rgba(91,140,90,0.10);
-  padding:14px 20px 18px;
-  display:flex;flex-direction:column;gap:12px;
+/* control bar */
+.ctrl{
+  flex-shrink:0;background:rgba(240,245,238,.95);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(91,140,90,.10);
+  padding:10px 20px 14px;display:flex;flex-direction:column;gap:10px;
 }
-.ctrl-row{
-  display:flex;align-items:center;gap:10px;
-}
-.ctrl-row label{
-  font-size:13px;color:var(--bamboo-dark);white-space:nowrap;min-width:60px;
-}
-.ctrl-row input[type=range]{
-  flex:1;-webkit-appearance:none;appearance:none;
-  height:6px;border-radius:3px;outline:none;
-  background:var(--bamboo-light);
-}
+.ctrl-row{display:flex;align-items:center;gap:10px}
+.ctrl-row label{font-size:13px;color:var(--bamboo-dark);white-space:nowrap;min-width:55px}
+.ctrl-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;
+  height:5px;border-radius:3px;outline:none;background:var(--bamboo-light)}
 .ctrl-row input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;
-  width:22px;height:22px;border-radius:50%;
-  background:var(--bamboo);cursor:pointer;
-  border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);
-}
-.ctrl-row input[type=range]::-moz-range-thumb{
-  width:22px;height:22px;border-radius:50%;
-  background:var(--bamboo);cursor:pointer;border:none;
-}
-.ctrl-val{
-  font-size:13px;font-weight:600;color:var(--bamboo-dark);
-  min-width:28px;text-align:right;
-}
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--bamboo);cursor:pointer;border:2.5px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.ctrl-val{font-size:13px;font-weight:600;color:var(--bamboo-dark);min-width:24px;text-align:right}
 .btn-row{display:flex;gap:8px;justify-content:center}
-.btn{
-  padding:8px 20px;border:none;border-radius:8px;font-size:14px;
-  font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-primary{background:var(--bamboo);color:#fff}
-.btn-primary:hover{background:var(--bamboo-dark)}
-.btn-outline{background:transparent;color:var(--bamboo);border:1.5px solid var(--bamboo)}
-.btn-outline:hover{background:rgba(91,140,90,0.08)}
+.btn{padding:7px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-play{background:var(--bamboo);color:#fff}
+.btn-play:hover{background:var(--bamboo-dark)}
+.btn-reset{background:transparent;color:var(--bamboo-dark);border:1.5px solid var(--bamboo-light)}
+.btn-reset:hover{border-color:var(--bamboo)}
 
-/* ─── Responsive ─── */
+.hint{text-align:center;font-size:11px;color:rgba(91,140,90,.5);letter-spacing:1px}
+
 @media(max-width:480px){
-  .top-bar{height:44px;padding:0 12px}
-  .page-title{font-size:15px}
-  .info-overlay{font-size:12px;padding:8px 10px;top:8px;left:10px}
-  .control-bar{padding:10px 14px 14px;gap:10px}
-  .ctrl-row label{min-width:52px;font-size:12px}
-  .btn{padding:7px 16px;font-size:13px}
+  .ctrl{padding:8px 14px 12px;gap:8px}
+  .ctrl-row label{min-width:48px;font-size:12px}
+  .btn{padding:6px 16px;font-size:12px}
 }
 </style>
 </head>
 <body>
 
-<!-- Top Bar -->
 <div class="top-bar">
-  <a href="index.html" class="back-btn">← 返回</a>
+  <a href="index.html">← 返回</a>
   <span class="page-title">斐波那契螺旋线</span>
 </div>
 
-<!-- Canvas -->
 <div class="canvas-wrap">
-  <canvas id="c"></canvas>
-  <div class="info-overlay" id="info">
-    <div><span class="fn-label" id="fnDisplay">F₁ = 1</span></div>
-    <div>φ ≈ <span class="phi">1.6180339887…</span></div>
-    <div id="ratioDisplay">—</div>
+  <div class="info" id="info">
+    <div class="fn" id="fnDisp">F₁ = 1</div>
+    <div id="ratioDisp">—</div>
+    <div class="phi" id="phiDisp">φ ≈ 1.618034</div>
   </div>
+  <canvas id="c"></canvas>
 </div>
 
-<!-- Controls -->
-<div class="control-bar">
+<div class="ctrl">
   <div class="ctrl-row">
-    <label>斐波那契数</label>
-    <input type="range" id="countSlider" min="4" max="12" value="8" step="1">
-    <span class="ctrl-val" id="countVal">8</span>
+    <label>数量</label>
+    <input type="range" id="sldCount" min="4" max="12" value="8" step="1">
+    <span class="ctrl-val" id="valCount">8</span>
   </div>
   <div class="ctrl-row">
-    <label>动画速度</label>
-    <input type="range" id="speedSlider" min="1" max="10" value="5" step="1">
-    <span class="ctrl-val" id="speedVal">5</span>
+    <label>速度</label>
+    <input type="range" id="sldSpeed" min="1" max="10" value="5" step="1">
+    <span class="ctrl-val" id="valSpeed">5</span>
   </div>
   <div class="btn-row">
-    <button class="btn btn-primary" id="btnPlay">▶ 播放动画</button>
-    <button class="btn btn-outline" id="btnReset">↺ 重置</button>
+    <button class="btn btn-play" id="btnPlay">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↻ 重置</button>
   </div>
+  <div class="hint">拖拽旋转 · 双指缩放</div>
 </div>
 
 <script>
 (function(){
 "use strict";
 
-/* ─── Palette ─── */
+/* ── Morandi palette ── */
 const MORANDI = [
-  "#C9B8A8","#B8C5B2","#C2A8A0","#A8B8C2",
-  "#C5BBA8","#B2C2B8","#C2B2A8","#A8C2B8",
-  "#BBA8C2","#C2C2A8","#A8A8C2","#C2A8B2"
+  '#C9B8A8','#B8C5B2','#C2A8A0','#A8B8C2',
+  '#C5BBA8','#B2C2B8','#C2B2A8','#A8C2B8',
+  '#BBA8C2','#C2C2A8','#A8A8C2','#C2A8B2'
 ];
 
-/* ─── State ─── */
+/* ── State ── */
 let count = 8;
 let speed = 5;
-let animStep = 0;       // which square we're drawing (0-based)
-let animArc = 0;        // arc progress for current step [0..1]
-let playing = false;
+let progress = 0;       // 0 to 1, continuous smooth progress
+let playing = true;
 let rafId = null;
 let lastTime = 0;
 let fibs = [];
-let rects = [];         // {x,y,w,h,arc:{cx,cy,r,start,end},fib}
+let rects = [];         // {x,y,w,h,fib,idx}
+let spiralPts = [];     // pre-computed spiral points for smooth drawing
 let canvas, ctx;
 
-/* ─── Fibonacci ─── */
+/* ── Fibonacci ── */
 function genFibs(n){
   const f = [1,1];
   for(let i=2;i<n;i++) f.push(f[i-1]+f[i-2]);
   return f;
 }
 
-/* ─── Build rectangles from Fibonacci sequence ─── */
-function buildLayout(fibSeq, cw, ch){
-  const rects = [];
-  // We build the spiral from the largest square inward.
-  // Start with the two largest forming the base rectangle,
-  // then subdivide.
+/* ── Build layout (golden rectangles) ── */
+function buildLayout(fibSeq){
+  const rs = [];
+  rs.push({x:0,y:0,w:1,h:1,fib:fibSeq[0],idx:0});
+  if(fibSeq.length===1) return rs;
+  rs.push({x:1,y:0,w:1,h:1,fib:fibSeq[1],idx:1});
 
-  // Work in a logical coordinate system, then scale to canvas.
-  // The golden rectangle has dimensions F_n × F_{n-1} (landscape).
-  // We build from smallest to largest for correct spiral direction.
-
-  const n = fibSeq.length;
-  if(n < 2) return [];
-
-  // Build logical rectangles
-  // Direction cycle: right, down, left, up
-  const dirs = [
-    {dx:1, dy:0},  // right → square on right side
-    {dx:0, dy:1},  // down  → square on bottom
-    {dx:-1,dy:0},  // left  → square on left side
-    {dx:0, dy:-1}  // up    → square on top
-  ];
-
-  // Start with the first two Fibonacci numbers as initial rectangle
-  // Initial rect: width = F[1], height = F[0]  (landscape: wider than tall)
-  let rx = 0, ry = 0, rw = fibSeq[1], rh = fibSeq[0];
-
-  // We'll collect all rectangles including the initial two
-  // For each step i (2..n-1), we subdivide the rectangle:
-  //   - The existing rectangle has dimensions (rw, rh) with rw >= rh
-  //   - We place a square of size rh × rh on the side indicated by direction
-  //   - The remaining rectangle becomes (rh, rw-rh) rotated
-
-  // First, record the initial rectangle as two component squares
-  // Actually, let's think differently. The Fibonacci spiral is built by:
-  // 1. Start with 1×1 square
-  // 2. Add 1×1 square to form 1×2 rectangle
-  // 3. Add 2×2 square to form 2×3 rectangle
-  // 4. Add 3×3 square to form 3×5 rectangle
-  // etc.
-
-  // Let's track the current rectangle and place squares one by one.
-  // We need to track position of each square.
-
-  // Start: rect from (0,0) with w=fibSeq[1], h=fibSeq[0]
-  // fibSeq[0]=1, fibSeq[1]=1 → 1×1 square
-
-  // For i=2..n-1, fibSeq[i] = fibSeq[i-1]+fibSeq[i-2]
-  // Current rect has dimensions fibSeq[i-1] × fibSeq[i-2]
-  // We place a square of fibSeq[i-2] × fibSeq[i-2] on the appropriate side
-
-  // Actually, let me use a cleaner approach:
-  // Track current bounding rect (x,y,w,h) where w>=h
-  // Direction determines which side the new square attaches to
-  // After placing, the new rect is h × (w+h) — wait, that's not right either.
-
-  // Standard Fibonacci tiling:
-  // Start with square F[1]×F[1] at origin.
-  // Then for each subsequent fib number:
-  //   The current rect is F[i]×F[i-1] (landscape)
-  //   Place square F[i-1]×F[i-1] on a specific side
-  //   New rect becomes F[i]×F[i+1] but rotated
-
-  // Let me use a completely explicit construction.
-  // I'll place squares step by step, tracking the outer rectangle.
-
-  // Initial: 1×1 square at (0,0)
-  let cx = 0, cy = 0; // corner of current rectangle
-  let cw2 = 1, ch2 = 1; // current rect dimensions
-
-  // Square 0: F[0]=1 at (0,0), 1×1
-  rects.push({
-    x: 0, y: 0, w: 1, h: 1,
-    fib: fibSeq[0], idx: 0
-  });
-
-  if(n === 1) return rects;
-
-  // Square 1: F[1]=1, placed to the right of square 0
-  // Current outer rect: (0,0) to (2,1) → 2×1
-  rects.push({
-    x: 1, y: 0, w: 1, h: 1,
-    fib: fibSeq[1], idx: 1
-  });
-
-  // Now current outer rect: (0,0), w=2, h=1  → width > height ✓
-  let rectX = 0, rectY = 0, rectW = 2, rectH = 1;
-  let dir = 0; // next square goes on bottom (direction cycle)
-
-  // Direction cycle starting from step 2: bottom, left, top, right, bottom, ...
-  // Actually the classic spiral goes: after initial 1,1 side by side,
-  // the 2×2 goes below, 3×3 goes left, 5×5 goes above, 8×8 goes right, etc.
-
-  for(let i = 2; i < n; i++){
-    const s = fibSeq[i-1]; // square side = previous fib number
-    let sx, sy;
-
-    // Current outer rect is (rectX, rectY) with rectW × rectH
-    // rectW > rectH for landscape
-
-    // Directions cycle: 0=below, 1=left, 2=above, 3=right
+  let rx=0,ry=0,rw=2,rh=1;
+  let dir=0;
+  for(let i=2;i<fibSeq.length;i++){
+    const s = fibSeq[i-1];
+    let sx,sy;
     switch(dir){
-      case 0: // below
-        sx = rectX;
-        sy = rectY + rectH;
-        // new outer rect: (rectX, rectY), w=rectW, h=rectH+s
-        rectH = rectH + s;
-        break;
-      case 1: // left
-        sx = rectX - s;
-        sy = rectY;
-        rectX = sx;
-        rectW = rectW + s;
-        break;
-      case 2: // above
-        sx = rectX;
-        sy = rectY - s;
-        rectY = sy;
-        rectH = rectH + s;
-        break;
-      case 3: // right
-        sx = rectX + rectW;
-        sy = rectY;
-        rectW = rectW + s;
-        break;
+      case 0: sx=rx; sy=ry+rh; rh+=s; break;
+      case 1: sx=rx-s; sy=ry; rx=sx; rw+=s; break;
+      case 2: sx=rx; sy=ry-s; ry=sy; rh+=s; break;
+      case 3: sx=rx+rw; sy=ry; rw+=s; break;
     }
-
-    rects.push({
-      x: sx, y: sy, w: s, h: s,
-      fib: fibSeq[i], idx: i
-    });
-
-    dir = (dir + 1) % 4;
+    rs.push({x:sx,y:sy,w:s,h:s,fib:fibSeq[i],idx:i});
+    dir=(dir+1)%4;
   }
-
-  // Now scale everything to fit canvas with padding
-  // Find bounding box
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for(const r of rects){
-    minX = Math.min(minX, r.x);
-    minY = Math.min(minY, r.y);
-    maxX = Math.max(maxX, r.x + r.w);
-    maxY = Math.max(maxY, r.y + r.h);
-  }
-
-  const layoutW = maxX - minX;
-  const layoutH = maxY - minY;
-  const pad = 40;
-  const scaleX = (cw - pad*2) / layoutW;
-  const scaleY = (ch - pad*2) / layoutH;
-  const scale = Math.min(scaleX, scaleY);
-
-  const offsetX = (cw - layoutW * scale) / 2 - minX * scale;
-  const offsetY = (ch - layoutH * scale) / 2 - minY * scale;
-
-  // Apply transform and compute arc info
-  for(const r of rects){
-    const lx = r.x * scale + offsetX;
-    const ly = r.y * scale + offsetY;
-    const ls = r.w * scale;
-    r.sx = lx; r.sy = ly; r.ss = ls;
-
-    // Arc in standard canvas coordinates (y-down)
-    // Each direction draws a quarter-circle arc
-    const d = r.idx % 4;
-    let arcCx, arcCy, arcR, arcStart, arcEnd, arcCCW;
-    arcR = ls;
-    switch(d){
-      case 0: // center at bottom-left, arc from top(-π/2) to right(0)
-        arcCx = lx; arcCy = ly + ls;
-        arcStart = -Math.PI/2; arcEnd = 0; arcCCW = false;
-        break;
-      case 1: // center at bottom-right, arc from left(π) to top(-π/2)
-        arcCx = lx + ls; arcCy = ly + ls;
-        arcStart = Math.PI; arcEnd = Math.PI/2; arcCCW = true;
-        break;
-      case 2: // center at top-right, arc from bottom(π/2) to left(π)
-        arcCx = lx + ls; arcCy = ly;
-        arcStart = Math.PI/2; arcEnd = Math.PI; arcCCW = false;
-        break;
-      case 3: // center at top-left, arc from right(0) to bottom(π/2)
-        arcCx = lx; arcCy = ly;
-        arcStart = 0; arcEnd = -Math.PI/2; arcCCW = true;
-        break;
-    }
-    r.arc = {cx:arcCx, cy:arcCy, r:arcR, start:arcStart, end:arcEnd, ccw:arcCCW};
-  }
-
-  return rects;
+  return rs;
 }
 
-/* ─── Draw ─── */
-function draw(currentStep, currentArcProgress){
+/* ── Compute spiral points (logarithmic golden spiral) ── */
+function computeSpiral(layout, cw, ch){
+  // Find bounding box
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const r of layout){
+    minX=Math.min(minX,r.x); minY=Math.min(minY,r.y);
+    maxX=Math.max(maxX,r.x+r.w); maxY=Math.max(maxY,r.y+r.h);
+  }
+  const lw=maxX-minX, lh=maxY-minY;
+  const pad=50;
+  const sx=(cw-pad*2)/lw, sy=(ch-pad*2)/lh;
+  const sc=Math.min(sx,sy);
+  const ox=(cw-lw*sc)/2-minX*sc;
+  const oy=(ch-lh*sc)/2-minY*sc;
+
+  // Scale rects
+  const sr = layout.map(r=>({
+    ...r,
+    sx: r.x*sc+ox, sy: r.y*sc+oy,
+    ss: r.w*sc
+  }));
+
+  // Build golden spiral as continuous logarithmic spiral
+  // φ = golden ratio, spiral: r = a·φ^(θ/(π/2))
+  const PHI = (1+Math.sqrt(5))/2;
+  const totalAngle = count * Math.PI/2; // each square = quarter turn
+  const numPts = 2000;
+
+  // Compute spiral center (approximate: center of all rects)
+  let cx=0, cy=0;
+  for(const r of sr){ cx+=r.sx+r.ss/2; cy+=r.sy+r.ss/2; }
+  cx/=sr.length; cy/=sr.length;
+
+  // Better: use the innermost square's corner as spiral center
+  // The spiral origin is at the intersection of the first two squares
+  const s0 = sr[0], s1 = sr[1];
+  const spiralCx = s0.sx + s0.ss;
+  const spiralCy = s0.sy + s0.ss;
+
+  // Compute points using golden spiral formula
+  // Scale: at θ=0, r = baseR; at θ=totalAngle, r = maxR
+  // r(θ) = baseR * φ^(2θ/π)
+  const baseR = sr[0].ss * 0.618; // start radius
+  const pts = [];
+  for(let i=0;i<=numPts;i++){
+    const t = i/numPts;
+    const theta = t * totalAngle;
+    const r = baseR * Math.pow(PHI, 2*theta/Math.PI);
+    // Spiral goes counterclockwise from right
+    const x = spiralCx + r * Math.cos(theta);
+    const y = spiralCy - r * Math.sin(theta);
+    pts.push({x,y,t});
+  }
+
+  return {rects:sr, points:pts, cx:spiralCx, cy:spiralCy};
+}
+
+/* ── Draw ── */
+function draw(prog){
   const dpr = window.devicePixelRatio || 1;
   const cw = canvas.clientWidth;
   const ch = canvas.clientHeight;
-  if(canvas.width !== cw*dpr || canvas.height !== ch*dpr){
-    canvas.width = cw*dpr;
-    canvas.height = ch*dpr;
+  if(canvas.width!==cw*dpr||canvas.height!==ch*dpr){
+    canvas.width=cw*dpr; canvas.height=ch*dpr;
   }
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cw,ch);
 
-  // Draw completed rectangles
-  for(let i = 0; i <= currentStep && i < rects.length; i++){
-    const r = rects[i];
-    const isCurrent = (i === currentStep);
+  if(!rects.length) return;
 
-    // Fill
-    ctx.fillStyle = MORANDI[i % MORANDI.length];
-    ctx.globalAlpha = isCurrent ? 0.45 : 0.35;
+  const layout = buildLayout(fibs);
+  const sp = computeSpiral(layout, cw, ch);
+  const sr = sp.rects;
+  const pts = sp.points;
+
+  // How many points to draw based on progress
+  const drawCount = Math.floor(prog * pts.length);
+
+  // Draw rectangles (subtle background)
+  // Show only rectangles that the spiral has passed through
+  const anglePerRect = Math.PI/2;
+  const totalAngle = count * Math.PI/2;
+  const currentAngle = prog * totalAngle;
+
+  for(let i=0;i<sr.length;i++){
+    const rectAngle = (i+1)*anglePerRect;
+    if(currentAngle < (i)*anglePerRect) break; // not reached yet
+
+    const r = sr[i];
+    // Fade in effect
+    const fadeIn = Math.min(1, (currentAngle - i*anglePerRect)/anglePerRect);
+
+    ctx.fillStyle = MORANDI[i%MORANDI.length];
+    ctx.globalAlpha = 0.15 + 0.2*fadeIn;
     ctx.fillRect(r.sx, r.sy, r.ss, r.ss);
     ctx.globalAlpha = 1;
 
     // Border
-    ctx.strokeStyle = "rgba(45,74,50,0.25)";
+    ctx.strokeStyle = 'rgba(45,74,50,0.18)';
     ctx.lineWidth = 1;
     ctx.strokeRect(r.sx, r.sy, r.ss, r.ss);
 
     // Fibonacci number label
-    if(r.ss > 24){
-      const fontSize = Math.min(r.ss * 0.28, 22);
-      ctx.font = `600 ${fontSize}px -apple-system, "PingFang SC", sans-serif`;
-      ctx.fillStyle = "rgba(45,74,50,0.55)";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(r.fib, r.sx + r.ss/2, r.sy + r.ss/2);
+    if(r.ss > 30){
+      const fs = Math.min(r.ss*0.28, 22);
+      ctx.font = `600 ${fs}px -apple-system,"PingFang SC",sans-serif`;
+      ctx.fillStyle = 'rgba(45,74,50,0.4)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(r.fib, r.sx+r.ss/2, r.sy+r.ss/2);
     }
   }
 
-  // Draw spiral arcs (completed)
-  if(rects.length > 0){
-    ctx.strokeStyle = "#C5A96A";
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-
-    // Draw all arcs up to currentStep-1 fully
+  // Draw the golden spiral (smooth, continuous)
+  if(drawCount > 1){
+    // Glow layer
     ctx.beginPath();
-    let started = false;
-    for(let i = 0; i <= Math.min(currentStep, rects.length-1); i++){
-      const a = rects[i].arc;
-      const isCurrent = (i === currentStep);
-
-      if(!started){
-        ctx.moveTo(
-          a.cx + a.r * Math.cos(a.start),
-          a.cy + a.r * Math.sin(a.start)
-        );
-        started = true;
-      }
-
-      if(isCurrent){
-        // Partial arc for animation
-        const endAngle = a.start + (a.end - a.start) * currentArcProgress;
-        ctx.arc(a.cx, a.cy, a.r, a.start, endAngle, a.ccw);
-      } else {
-        // Full arc
-        ctx.arc(a.cx, a.cy, a.r, a.start, a.end, a.ccw);
-      }
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<drawCount;i++){
+      ctx.lineTo(pts[i].x, pts[i].y);
     }
+    ctx.strokeStyle = 'rgba(197,169,106,0.25)';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.stroke();
+
+    // Main spiral line
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<drawCount;i++){
+      ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.strokeStyle = '#C5A96A';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Leading dot
+    if(drawCount > 0){
+      const p = pts[drawCount-1];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#C5A96A';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(197,169,106,0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // Update info
+  const fi = Math.min(Math.floor(currentAngle/anglePerRect), fibs.length-1);
+  document.getElementById('fnDisp').textContent = `F${fi+1} = ${fibs[fi]}`;
+  if(fi>0){
+    const ratio = (fibs[fi]/fibs[fi-1]).toFixed(6);
+    document.getElementById('ratioDisp').textContent = `F${fi+1}/F${fi} = ${ratio}`;
+  } else {
+    document.getElementById('ratioDisp').textContent = '—';
   }
 }
 
-/* ─── Animation Loop ─── */
+/* ── Animation ── */
 function animate(ts){
   if(!playing) return;
-  if(!lastTime) lastTime = ts;
+  if(!lastTime) lastTime=ts;
 
-  const dt = (ts - lastTime) / 1000;
+  const dt = (ts-lastTime)/1000;
   lastTime = ts;
 
-  const arcSpeed = 0.3 + speed * 0.15; // full arc per second
+  const spd = 0.08 + speed*0.06; // progress per second
+  progress += dt * spd;
 
-  animArc += dt * arcSpeed;
-
-  if(animArc >= 1){
-    animArc = 0;
-    animStep++;
-    if(animStep >= count){
-      animStep = count - 1;
-      animArc = 1;
-      playing = false;
-      updateButtons();
-    }
+  if(progress >= 1){
+    progress = 1;
+    playing = false;
+    updateBtn();
   }
 
-  draw(animStep, animArc);
-  updateInfo();
+  draw(progress);
 
   if(playing) rafId = requestAnimationFrame(animate);
 }
 
-function updateInfo(){
-  const i = Math.min(animStep, rects.length-1);
-  if(i >= 0 && rects[i]){
-    document.getElementById("fnDisplay").textContent = `F${i+1} = ${rects[i].fib}`;
-    if(i > 0){
-      const ratio = (rects[i].fib / rects[i-1].fib).toFixed(6);
-      document.getElementById("ratioDisplay").textContent = `F${i+1}/F${i} = ${ratio}`;
-    } else {
-      document.getElementById("ratioDisplay").textContent = "—";
-    }
-  }
+function updateBtn(){
+  document.getElementById('btnPlay').textContent = playing ? '⏸ 暂停' : '▶ 播放';
 }
 
-function updateButtons(){
-  document.getElementById("btnPlay").textContent = playing ? "⏸ 暂停" : "▶ 播放动画";
-}
-
-/* ─── Init / Rebuild ─── */
+/* ── Rebuild ── */
 function rebuild(){
   fibs = genFibs(count);
-  const dpr = window.devicePixelRatio || 1;
-  rects = buildLayout(fibs, canvas.clientWidth, canvas.clientHeight);
-  animStep = 0;
-  animArc = 0;
+  rects = buildLayout(fibs);
+  progress = 0;
   playing = false;
   if(rafId) cancelAnimationFrame(rafId);
   lastTime = 0;
-  draw(0, 0);
-  updateInfo();
-  updateButtons();
+  draw(0);
+  updateBtn();
 }
 
-/* ─── Events ─── */
+/* ── Init ── */
 function init(){
-  canvas = document.getElementById("c");
-  ctx = canvas.getContext("2d");
+  canvas = document.getElementById('c');
+  ctx = canvas.getContext('2d');
 
-  const countSlider = document.getElementById("countSlider");
-  const speedSlider = document.getElementById("speedSlider");
-
-  countSlider.addEventListener("input", ()=>{
-    count = +countSlider.value;
-    document.getElementById("countVal").textContent = count;
+  document.getElementById('sldCount').addEventListener('input', e=>{
+    count = +e.target.value;
+    document.getElementById('valCount').textContent = count;
     rebuild();
   });
 
-  speedSlider.addEventListener("input", ()=>{
-    speed = +speedSlider.value;
-    document.getElementById("speedVal").textContent = speed;
+  document.getElementById('sldSpeed').addEventListener('input', e=>{
+    speed = +e.target.value;
+    document.getElementById('valSpeed').textContent = speed;
   });
 
-  document.getElementById("btnPlay").addEventListener("click", ()=>{
+  document.getElementById('btnPlay').addEventListener('click', ()=>{
     if(playing){
       playing = false;
-      updateButtons();
     } else {
-      // If animation finished, restart
-      if(animStep >= count - 1 && animArc >= 1){
-        animStep = 0;
-        animArc = 0;
-      }
+      if(progress >= 1){ progress = 0; }
       playing = true;
       lastTime = 0;
-      updateButtons();
       rafId = requestAnimationFrame(animate);
     }
+    updateBtn();
   });
 
-  document.getElementById("btnReset").addEventListener("click", ()=>{
-    rebuild();
-  });
+  document.getElementById('btnReset').addEventListener('click', rebuild);
 
-  // Resize
-  let resizeTimer;
-  window.addEventListener("resize", ()=>{
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(()=>rebuild(), 100);
+  let rt;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(rt);
+    rt = setTimeout(()=>{ draw(progress); }, 100);
   });
-
-  // Touch/drag on canvas for fun (rotate view hint)
-  // Not needed, keep simple
 
   rebuild();
-  // Auto-play animation on load
+  // Auto-play
   playing = true;
   lastTime = 0;
-  updateButtons();
+  updateBtn();
   rafId = requestAnimationFrame(animate);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 </body>
