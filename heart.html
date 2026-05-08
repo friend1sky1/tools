@@ -152,7 +152,7 @@ function parametricXY(t){
   };
 }
 function polarXY(theta){
-  const r = 1 - Math.sin(theta);
+  const r = 1 + Math.sin(theta);
   // Scale up to match parametric size (parametric spans ~32 units, polar ~2 units)
   const m = 15;
   return { x: m * r * Math.cos(theta), y: -m * r * Math.sin(theta) };
@@ -317,7 +317,7 @@ function updateEqLabel(){
   if(mode === 'parametric'){
     eqLabel.innerHTML = '<span class="math">x = 16sin³t, &nbsp;y = 13cos t − 5cos 2t − 2cos 3t − cos 4t</span>';
   } else {
-    eqLabel.innerHTML = '<span class="math">r = 1 − sin θ</span>';
+    eqLabel.innerHTML = '<span class="math">r = 1 + sin θ</span>';
   }
   document.querySelector('.hint').textContent = '心形曲线 · ' + (mode === 'parametric' ? '参数方程' : '极坐标');
 }
