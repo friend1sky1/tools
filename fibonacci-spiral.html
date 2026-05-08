@@ -188,10 +188,15 @@ function buildLayout(fibSeq){
 }
 
 /* ── Build spiral as quarter-circle arcs matching each square ──
-   Arc i (for square i, i>=1) draws a quarter circle inside square i.
-   The arc connects from the corner shared with the previous square
-   to the corner shared with the next square.
-   Direction cycles: CW(right→down) → CW(down→left) → CW(left→up) → CW(up→right) */
+   Classic Fibonacci spiral: each arc is a quarter circle inscribed in its square.
+   The arc enters from one corner and exits from an adjacent corner.
+   The center sits at the corner diagonal to both entry and exit.
+   All arcs sweep clockwise (in screen coords, y-down).
+
+   dir 0: entry=top-left   → exit=bottom-left, center=top-right,    sA=π   eA=3π/2
+   dir 1: entry=top-left   → exit=bottom-right, center=bottom-left,  sA=3π/2 eA=2π
+   dir 2: entry=bottom-right → exit=top-left,   center=bottom-right, sA=0    eA=π/2
+   dir 3: entry=bottom-right → exit=top-right,  center=top-left,     sA=π/2  eA=π */
 function buildSpiralArcs(layout, sc, ox, oy){
   const arcs = [];
   for(let i=1; i<layout.length; i++){
@@ -200,31 +205,26 @@ function buildSpiralArcs(layout, sc, ox, oy){
     const sy = s.y * sc + oy;
     const ss = s.w * sc;
     const dir = (i-1) % 4;
-    // Canvas angles: right=0, down=π/2, left=π, up=3π/2
-    let cx, cy, sA, eA, ccw;
+    let cx, cy, sA, eA;
     switch(dir){
-      case 0: // center bottom-left, arc from top(3π/2) to right(0)
+      case 0: // center at top-right
+        cx = sx + ss; cy = sy;
+        sA = Math.PI;     eA = 3*Math.PI/2;
+        break;
+      case 1: // center at bottom-left
         cx = sx;      cy = sy + ss;
         sA = 3*Math.PI/2; eA = 2*Math.PI;
-        ccw = false; // CW short arc: 3π/2→2π
         break;
-      case 1: // center bottom-right, arc from left(π) to top(3π/2)
+      case 2: // center at bottom-right
         cx = sx + ss; cy = sy + ss;
-        sA = Math.PI;     eA = 3*Math.PI/2;
-        ccw = false; // CW short arc: π→3π/2
-        break;
-      case 2: // center top-right, arc from bottom(π/2) to left(π)
-        cx = sx + ss; cy = sy;
-        sA = Math.PI/2;   eA = Math.PI;
-        ccw = false; // CW short arc: π/2→π
-        break;
-      case 3: // center top-left, arc from right(0) to bottom(π/2)
-        cx = sx;      cy = sy;
         sA = 0;           eA = Math.PI/2;
-        ccw = false; // CW short arc: 0→π/2
+        break;
+      case 3: // center at top-left
+        cx = sx;      cy = sy;
+        sA = Math.PI/2;   eA = Math.PI;
         break;
     }
-    arcs.push({cx, cy, r:ss, sA, eA, ccw, idx:i});
+    arcs.push({cx, cy, r:ss, sA, eA, idx:i});
   }
   return arcs;
 }
@@ -298,36 +298,37 @@ function draw(prog){
     }
   }
 
-  // --- Draw spiral (quarter-circle arcs) ---
+  // --- Draw spiral (quarter-circle arcs via ctx.arc) ---
   const fullArcs = Math.floor(currentArc);
   const frac = currentArc - fullArcs;
 
   if(fullArcs > 0 || frac > 0){
-    // Helper: draw partial spiral path using line segments
-    // (avoids ctx.arc direction bugs entirely)
+    // Build spiral path using proper quarter-circle arcs
     function spiralPath(){
       ctx.beginPath();
       let started = false;
-      const STEPS = 40; // points per quarter arc
 
-      function drawArc(a, frac1){
-        const steps = Math.ceil(STEPS * frac1);
-        for(let s=0; s<=steps; s++){
-          const t = s / STEPS;
-          if(t > frac1) break;
-          const angle = a.sA + t * (a.eA - a.sA);
-          const px = a.cx + a.r * Math.cos(angle);
-          const py = a.cy + a.r * Math.sin(angle);
-          if(!started){ ctx.moveTo(px, py); started = true; }
-          else ctx.lineTo(px, py);
+      function drawArcSegment(a, f){
+        // Draw clockwise arc from sA, sweeping f fraction of the quarter turn
+        // Ensure we sweep clockwise (positive direction in canvas coords)
+        let start = a.sA;
+        let end = a.sA + f * (a.eA - a.sA);
+        // If the computed sweep goes "backwards", adjust by a full circle
+        if(end < start) end += 2 * Math.PI;
+        if(!started){
+          const px = a.cx + a.r * Math.cos(start);
+          const py = a.cy + a.r * Math.sin(start);
+          ctx.moveTo(px, py);
+          started = true;
         }
+        ctx.arc(a.cx, a.cy, a.r, start, end, false);
       }
 
       for(let i=0; i<fullArcs && i<totalArcs; i++){
-        drawArc(arcs[i], 1);
+        drawArcSegment(arcs[i], 1);
       }
       if(frac > 0 && fullArcs < totalArcs){
-        drawArc(arcs[fullArcs], frac);
+        drawArcSegment(arcs[fullArcs], frac);
       }
     }
 
@@ -347,7 +348,7 @@ function draw(prog){
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Leading dot (compute from arc endpoint)
+    // Leading dot
     let dotX, dotY;
     if(frac > 0 && fullArcs < totalArcs){
       const a = arcs[fullArcs];
