@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <!-- Shell body gradient -->
+    <radialGradient id="shellBody" cx="0.4" cy="0.4" r="0.6">
+      <stop offset="0%" stop-color="#f5e6d0"/>
+      <stop offset="30%" stop-color="#e8c9a0"/>
+      <stop offset="60%" stop-color="#d4a574"/>
+      <stop offset="100%" stop-color="#b8865a"/>
+    </radialGradient>
+    <!-- Shell highlight -->
+    <radialGradient id="shellHighlight" cx="0.35" cy="0.3" r="0.4">
+      <stop offset="0%" stop-color="#fff8f0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fff8f0" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Chamber gradient -->
+    <radialGradient id="chamber" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#f8eed8"/>
+      <stop offset="100%" stop-color="#d4a574"/>
+    </radialGradient>
+    <!-- Shadow -->
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.3)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    <!-- Shell texture filter -->
+    <filter id="shellTexture">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" seed="2" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+      <feBlend in="SourceGraphic" in2="grayNoise" mode="soft-light"/>
+    </filter>
+    <!-- Soft glow -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Inner shadow for depth -->
+    <filter id="innerShadow">
+      <feGaussianBlur stdDeviation="3"/>
+      <feOffset dx="2" dy="2"/>
+      <feComposite in2="SourceGraphic" operator="arithmetic" k1="0" k2="1" k3="-0.5" k4="0"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="640" height="400" fill="url(#bg)" rx="12"/>
+
+  <!-- Subtle bokeh circles in background -->
+  <circle cx="120" cy="80" r="40" fill="#f5e6d0" opacity="0.03"/>
+  <circle cx="520" cy="320" r="60" fill="#f5e6d0" opacity="0.02"/>
+  <circle cx="550" cy="60" r="25" fill="#d4a574" opacity="0.03"/>
+  <circle cx="80" cy="300" r="35" fill="#e8c9a0" opacity="0.02"/>
+
+  <!-- Shell shadow on surface -->
+  <ellipse cx="320" cy="340" rx="160" ry="20" fill="url(#shadow)" opacity="0.4"/>
+
+  <!-- === NAUTILUS SHELL === -->
+  <g transform="translate(320, 200) scale(1.1)">
+
+    <!-- Outer shell silhouette (dark edge) -->
+    <path d="M -120,60 C -130,20 -120,-60 -80,-100 C -40,-140 20,-140 60,-120
+             C 100,-100 130,-60 140,-10 C 150,40 130,80 100,100
+             C 70,120 30,120 0,110 C -30,100 -60,80 -90,60 C -100,55 -115,55 -120,60 Z"
+          fill="#8b6340" opacity="0.6"/>
+
+    <!-- Main shell body - outer whorl -->
+    <path d="M -115,55 C -125,15 -115,-55 -75,-95 C -35,-135 25,-135 65,-115
+             C 105,-95 135,-55 145,-5 C 155,45 135,85 105,105
+             C 75,125 35,125 5,115 C -25,105 -55,85 -85,65 L -115,55 Z"
+          fill="url(#shellBody)"/>
+
+    <!-- Shell texture overlay -->
+    <path d="M -115,55 C -125,15 -115,-55 -75,-95 C -35,-135 25,-135 65,-115
+             C 105,-95 135,-55 145,-5 C 155,45 135,85 105,105
+             C 75,125 35,125 5,115 C -25,105 -55,85 -85,65 L -115,55 Z"
+          fill="url(#shellBody)" filter="url(#shellTexture)" opacity="0.7"/>
+
+    <!-- Outer whorl band markings -->
+    <g stroke="#c4955a" stroke-width="0.8" fill="none" opacity="0.4">
+      <path d="M -100,40 C -108,5 -100,-45 -65,-80 C -30,-115 20,-120 55,-105 C 90,-90 120,-55 130,-10"/>
+      <path d="M -85,50 C -95,15 -90,-40 -55,-72 C -20,-105 25,-108 58,-95 C 92,-82 118,-50 125,-5"/>
+      <path d="M -70,55 C -78,25 -72,-30 -42,-58 C -12,-86 28,-90 55,-78 C 82,-66 105,-38 112,5"/>
+    </g>
+
+    <!-- Inner spiral - showing chamber structure -->
+    <!-- Chamber 1 (outermost) -->
+    <path d="M -100,40 C -108,5 -100,-45 -65,-80 C -30,-115 20,-120 55,-105 C 90,-90 120,-55 130,-10
+             C 140,35 120,75 90,95 C 60,115 25,115 0,105"
+          fill="none" stroke="#b8865a" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Chamber 2 -->
+    <path d="M -80,30 C -85,0 -80,-35 -55,-60 C -30,-85 10,-90 40,-80 C 70,-70 95,-40 100,0
+             C 105,40 85,70 60,85 C 35,100 10,95 -10,85"
+          fill="url(#chamber)" opacity="0.3"/>
+
+    <!-- Chamber 3 -->
+    <path d="M -55,20 C -60,0 -55,-20 -40,-38 C -25,-56 5,-60 25,-52 C 45,-44 65,-25 70,0
+             C 75,25 60,45 42,55 C 24,65 5,62 -10,52"
+          fill="url(#chamber)" opacity="0.4"/>
+
+    <!-- Chamber 4 -->
+    <path d="M -35,12 C -38,0 -35,-12 -25,-24 C -15,-36 2,-38 15,-32 C 28,-26 40,-12 42,2
+             C 44,16 34,30 22,38 C 10,46 -2,44 -12,36"
+          fill="url(#chamber)" opacity="0.5"/>
+
+    <!-- Chamber 5 (small) -->
+    <path d="M -18,6 C -20,0 -18,-6 -12,-14 C -6,-22 2,-24 10,-20 C 18,-16 24,-6 25,2
+             C 26,10 20,18 12,22 C 4,26 -3,24 -8,20"
+          fill="url(#chamber)" opacity="0.6"/>
+
+    <!-- Chamber 6 (innermost visible) -->
+    <path d="M -8,3 C -9,0 -8,-3 -5,-8 C -2,-13 2,-14 6,-12 C 10,-10 13,-4 13,1
+             C 13,6 10,10 6,12 C 2,14 -2,13 -4,10"
+          fill="#f8eed8" opacity="0.7"/>
+
+    <!-- Central cavity -->
+    <circle cx="2" cy="1" r="5" fill="#e8c9a0" stroke="#d4a574" stroke-width="0.5"/>
+
+    <!-- Growth lines on shell (realistic detail) -->
+    <g stroke="#a07040" stroke-width="0.3" fill="none" opacity="0.3">
+      <path d="M -90,50 Q -80,0 -60,-70"/>
+      <path d="M -75,55 Q -65,10 -48,-55"/>
+      <path d="M -60,58 Q -50,18 -38,-42"/>
+      <path d="M -45,55 Q -38,22 -28,-30"/>
+      <path d="M -30,48 Q -25,20 -18,-18"/>
+      <path d="M -15,38 Q -12,18 -8,-8"/>
+    </g>
+
+    <!-- Highlight / pearlescent sheen -->
+    <path d="M -80,30 C -85,0 -80,-35 -55,-60 C -30,-85 10,-90 40,-80 C 70,-70 95,-40 100,0
+             C 105,40 85,70 60,85 C 35,100 10,95 -10,85"
+          fill="url(#shellHighlight)" opacity="0.5"/>
+
+    <!-- Stripe pattern on outer whorl -->
+    <g stroke="#d4a574" stroke-width="2" fill="none" opacity="0.15">
+      <path d="M -110,50 C -118,15 -110,-50 -72,-88 C -35,-125 22,-128 60,-112
+               C 98,-96 128,-58 138,-8 C 148,42 128,82 98,100 C 68,118 32,118 2,108"/>
+      <path d="M -105,45 C -112,12 -105,-45 -68,-82 C -32,-118 25,-122 62,-108
+               C 100,-92 128,-55 135,-5 C 142,45 125,80 95,98"/>
+    </g>
+
+    <!-- Siphuncle detail (the tube in center) -->
+    <line x1="-15" y1="-5" x2="8" y2="5" stroke="#c4955a" stroke-width="1" opacity="0.3"/>
+
+  </g>
+
+  <!-- Subtle light reflection on shell -->
+  <ellipse cx="280" cy="140" rx="30" ry="15" fill="white" opacity="0.08" transform="rotate(-20 280 140)"/>
+
+  <!-- Bottom text -->
+  <text x="320" y="370" fill="#d4a574" font-family="'Noto Serif SC', serif" font-size="16" font-weight="700" text-anchor="middle" letter-spacing="6" opacity="0.8">鹦鹉螺</text>
+  <text x="320" y="390" fill="#8899aa" font-family="serif" font-size="11" font-style="italic" text-anchor="middle" opacity="0.5">Nautilus pompilius</text>
+</svg>
