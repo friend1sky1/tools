@@ -1,29 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
   <defs>
-    <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#C57B7B"/>
-      <stop offset="100%" stop-color="#D4918F"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F5EE"/>
+      <stop offset="100%" stop-color="#E8EDE6"/>
     </linearGradient>
-    <linearGradient id="sg" x1="0.3" y1="0" x2="0.7" y2="1">
-      <stop offset="0%" stop-color="#D9B0A0" stop-opacity="0.45"/>
+    <linearGradient id="heartGrad" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#D4918F"/>
+      <stop offset="50%" stop-color="#C57B7B"/>
+      <stop offset="100%" stop-color="#B86A6A"/>
+    </linearGradient>
+    <radialGradient id="heartShine" cx="0.35" cy="0.3" r="0.4">
+      <stop offset="0%" stop-color="#E8B0AE" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#C57B7B" stop-opacity="0"/>
-    </linearGradient>
+    </radialGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="rgba(45,74,50,0.08)"/>
+      <stop offset="100%" stop-color="rgba(45,74,50,0)"/>
+    </radialGradient>
   </defs>
-  <!-- Subtle grid behind heart -->
-  <g stroke="#D5CCC8" stroke-width="0.4" stroke-dasharray="4 6" opacity="0.35">
-    <line x1="160" y1="10" x2="160" y2="190"/>
-    <line x1="80" y1="100" x2="240" y2="100"/>
-    <line x1="100" y1="30" x2="100" y2="170"/>
-    <line x1="220" y1="30" x2="220" y2="170"/>
-    <line x1="120" y1="50" x2="120" y2="160"/>
-    <line x1="200" y1="50" x2="200" y2="160"/>
-    <line x1="70" y1="70" x2="250" y2="70"/>
-    <line x1="70" y1="130" x2="250" y2="130"/>
+
+  <!-- Background -->
+  <rect width="640" height="400" fill="url(#bg)" rx="12"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.06" stroke="#5B8C5A" stroke-width="0.5">
+    <line x1="0" y1="80" x2="640" y2="80"/><line x1="0" y1="160" x2="640" y2="160"/>
+    <line x1="0" y1="240" x2="640" y2="240"/><line x1="0" y1="320" x2="640" y2="320"/>
+    <line x1="128" y1="0" x2="128" y2="400"/><line x1="256" y1="0" x2="256" y2="400"/>
+    <line x1="384" y1="0" x2="384" y2="400"/><line x1="512" y1="0" x2="512" y2="400"/>
   </g>
-  <!-- Heart curve -->
-  <path d="M160,168 C156,156 108,122 84,92 C60,62 62,30 88,26 C114,22 138,44 160,72 C182,44 206,22 232,26 C258,30 260,62 236,92 C212,122 164,156 160,168Z" fill="url(#hg)" stroke="#B86A6A" stroke-width="0.8"/>
-  <!-- Highlight on upper-left -->
-  <ellipse cx="118" cy="58" rx="18" ry="22" fill="url(#sg)" transform="rotate(-15 118 58)"/>
+
+  <!-- Coordinate axes behind heart -->
+  <g transform="translate(320, 195)" opacity="0.15">
+    <line x1="-180" y1="0" x2="180" y2="0" stroke="#6B7D6C" stroke-width="1"/>
+    <line x1="0" y1="-150" x2="0" y2="150" stroke="#6B7D6C" stroke-width="1"/>
+    <!-- ticks -->
+    <g stroke="#6B7D6C" stroke-width="0.8">
+      <line x1="-120" y1="-3" x2="-120" y2="3"/><line x1="-60" y1="-3" x2="-60" y2="3"/>
+      <line x1="60" y1="-3" x2="60" y2="3"/><line x1="120" y1="-3" x2="120" y2="3"/>
+      <line x1="-3" y1="-60" x2="3" y2="-60"/><line x1="-3" y1="-120" x2="3" y2="-120"/>
+      <line x1="-3" y1="60" x2="3" y2="60"/><line x1="-3" y1="120" x2="3" y2="120"/>
+    </g>
+  </g>
+
+  <!-- Parametric curve trace (dashed, showing the math) -->
+  <g transform="translate(320, 195)" opacity="0.12">
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#C57B7B" stroke-width="0.8" stroke-dasharray="4,6"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#C57B7B" stroke-width="0.5" stroke-dasharray="3,5"/>
+  </g>
+
   <!-- Shadow -->
-  <ellipse cx="160" cy="180" rx="52" ry="6" fill="#B8A090" opacity="0.2"/>
+  <ellipse cx="320" cy="330" rx="90" ry="12" fill="url(#shadow)"/>
+
+  <!-- Heart shape (parametric: x=16sin³t, y=13cos t−5cos2t−2cos3t−cos4t) -->
+  <g transform="translate(320, 190)">
+    <!-- Main heart path -->
+    <path d="M 0,45
+      C 0,45 -20,30 -55,5
+      C -90,-20 -110,-55 -100,-85
+      C -90,-115 -55,-125 -30,-115
+      C -10,-108 0,-85 0,-70
+      C 0,-85 10,-108 30,-115
+      C 55,-125 90,-115 100,-85
+      C 110,-55 90,-20 55,5
+      C 20,30 0,45 0,45 Z"
+      fill="url(#heartGrad)" stroke="#B86A6A" stroke-width="1.5"/>
+
+    <!-- Shine overlay -->
+    <path d="M 0,45
+      C 0,45 -20,30 -55,5
+      C -90,-20 -110,-55 -100,-85
+      C -90,-115 -55,-125 -30,-115
+      C -10,-108 0,-85 0,-70
+      C 0,-85 10,-108 30,-115
+      C 55,-125 90,-115 100,-85
+      C 110,-55 90,-20 55,5
+      C 20,30 0,45 0,45 Z"
+      fill="url(#heartShine)"/>
+
+    <!-- Highlight dot on upper left -->
+    <ellipse cx="-45" cy="-80" rx="15" ry="10" fill="#E8B0AE" opacity="0.35" transform="rotate(-20,-45,-80)"/>
+  </g>
+
+  <!-- Title -->
+  <text x="320" y="36" fill="#5B8C5A" font-family="'Noto Serif SC', serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="4">心形曲线</text>
+  <line x1="270" y1="50" x2="370" y2="50" stroke="#C5A96A" stroke-width="1" opacity="0.4"/>
+
+  <!-- Equation labels -->
+  <text x="490" y="340" fill="#6B7D6C" font-family="serif" font-size="12" font-style="italic" opacity="0.5">x = 16sin³t</text>
+  <text x="490" y="358" fill="#6B7D6C" font-family="serif" font-size="12" font-style="italic" opacity="0.5">y = 13cos t − 5cos 2t − …</text>
 </svg>
