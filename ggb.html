@@ -60,7 +60,10 @@ body {
     flex:1; position:relative; overflow:hidden;
     background:linear-gradient(180deg, #F7FAF6 0%, #EDF4EB 100%);
 }
-#three-container canvas { display:block; }
+#three-container canvas {
+    display:block;
+    touch-action: none;
+}
 
 /* ── 形状切换按钮 ── */
 .shape-tabs {
@@ -181,7 +184,7 @@ body {
 </div>
 
 <div id="three-container">
-    <span class="hint-text">拖拽旋转 · 滚轮缩放</span>
+    <span class="hint-text" id="hint">拖拽旋转 · 双指缩放</span>
 </div>
 
 <div class="shape-tabs">
@@ -594,6 +597,14 @@ function onResize() {
     renderer.setSize(w, h);
 }
 window.addEventListener('resize', onResize);
+
+// ── 检测触屏，更新提示文字 ──
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+if (isTouchDevice) {
+    document.getElementById('hint').textContent = '拖拽旋转 · 双指缩放';
+} else {
+    document.getElementById('hint').textContent = '拖拽旋转 · 滚轮缩放';
+}
 
 // ── 动画循环 ──
 function animate() {
