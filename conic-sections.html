@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>青竹数苑 · 圆锥曲线</title>
+<link rel="icon" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bamboo:#5B8C5A;
+  --bamboo-dark:#2D4A32;
+  --bamboo-mist:#F0F5EE;
+  --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A;
+}
+html,body{height:100%;overflow:hidden;background:var(--bamboo-mist);font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+.top-bar{
+  height:48px;background:rgba(240,245,238,0.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(91,140,90,0.10);
+  display:flex;align-items:center;padding:0 16px;
+  flex-shrink:0;z-index:30;gap:10px;
+}
+.back-link{
+  color:var(--bamboo-dark);text-decoration:none;
+  font-size:15px;display:flex;align-items:center;gap:4px;
+  transition:opacity .2s;
+}
+.back-link:hover{opacity:.7}
+.back-link svg{width:18px;height:18px}
+.page-title{
+  font-family:'Noto Serif SC',serif;font-size:18px;
+  color:var(--bamboo-dark);font-weight:700;letter-spacing:1px;
+}
+.main-wrap{
+  flex:1;display:flex;flex-direction:column;
+  height:calc(100dvh - 48px);overflow:hidden;
+}
+.canvas-area{
+  flex:1;position:relative;min-height:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bamboo-mist);
+}
+canvas{display:block;width:100%;height:100%}
+
+/* Info overlay */
+.info-overlay{
+  position:absolute;top:12px;left:16px;
+  background:rgba(255,255,255,0.88);backdrop-filter:blur(8px);
+  border-radius:10px;padding:10px 14px;
+  border:1px solid rgba(91,140,90,0.12);
+  pointer-events:none;
+  max-width:220px;
+}
+.curve-label{
+  font-family:'Noto Serif SC',serif;font-size:17px;
+  color:var(--bamboo-dark);font-weight:700;
+  margin-bottom:2px;
+}
+.equation{
+  font-size:13px;color:var(--bamboo);font-style:italic;
+  word-break:break-all;line-height:1.4;
+}
+
+/* Control bar */
+.control-bar{
+  flex-shrink:0;
+  background:rgba(240,245,238,0.96);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid rgba(91,140,90,0.10);
+  padding:14px 20px 20px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.slider-row{
+  display:flex;align-items:center;gap:12px;
+}
+.slider-label{
+  font-size:13px;color:var(--bamboo-dark);white-space:nowrap;
+  min-width:32px;text-align:right;font-weight:600;
+}
+.slider-val{
+  font-size:14px;color:var(--bamboo-dark);font-weight:700;
+  min-width:42px;font-family:'Menlo','Consolas',monospace;
+}
+input[type=range]{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:6px;border-radius:3px;
+  background:linear-gradient(to right,var(--bamboo-light),var(--bamboo));
+  outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--bamboo);border:3px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--bamboo);border:3px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;
+}
+/* E markers */
+.e-markers{
+  display:flex;justify-content:space-between;
+  padding:0 2px;font-size:10px;color:rgba(45,74,50,.5);
+  font-family:'Menlo','Consolas',monospace;
+}
+.legend{
+  display:flex;justify-content:center;gap:14px;flex-wrap:wrap;
+  font-size:11px;color:var(--bamboo-dark);
+}
+.legend span{opacity:.7}
+.legend .active{opacity:1;font-weight:600}
+
+@media(max-width:480px){
+  .info-overlay{top:8px;left:10px;padding:8px 10px;max-width:180px}
+  .curve-label{font-size:15px}
+  .equation{font-size:12px}
+  .control-bar{padding:10px 14px 16px}
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <a href="index.html" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+    返回
+  </a>
+  <span class="page-title">圆锥曲线</span>
+</div>
+
+<div class="main-wrap">
+  <div class="canvas-area">
+    <canvas id="cv"></canvas>
+    <div class="info-overlay">
+      <div class="curve-label" id="curveLabel">圆</div>
+      <div class="equation" id="eqText">x² + y² = a²</div>
+    </div>
+  </div>
+
+  <div class="control-bar">
+    <div class="slider-row">
+      <span class="slider-label">e =</span>
+      <input type="range" id="eSlider" min="0" max="2.5" step="0.005" value="0">
+      <span class="slider-val" id="eVal">0.00</span>
+    </div>
+    <div class="e-markers">
+      <span>0</span><span>0.5</span><span>1</span><span>1.5</span><span>2</span><span>2.5</span>
+    </div>
+    <div class="legend" id="legend">
+      <span data-type="circle" class="active">圆 e=0</span>
+      <span data-type="ellipse">椭圆 0<e<1</span>
+      <span data-type="parabola">抛物线 e=1</span>
+      <span data-type="hyperbola">双曲线 e>1</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* === DOM === */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const slider = document.getElementById('eSlider');
+const eValEl = document.getElementById('eVal');
+const curveLabelEl = document.getElementById('curveLabel');
+const eqTextEl = document.getElementById('eqText');
+const legendEl = document.getElementById('legend');
+
+/* === Colors === */
+const C = {
+  bamboo: '#5B8C5A',
+  bambooDark: '#2D4A32',
+  bambooMist: '#F0F5EE',
+  bambooLight: '#D6E5D2',
+  woodGold: '#C5A96A',
+  grid: 'rgba(91,140,90,0.10)',
+  axis: 'rgba(45,74,50,0.25)',
+  fill: 'rgba(91,140,90,0.10)',
+  directrix: 'rgba(197,169,106,0.5)',
+};
+
+/* === State === */
+let W, H, dpr;
+let e = 0;           // current eccentricity
+let targetE = 0;     // target for smooth animation
+let a = 3;           // semi-major axis in math units
+let animFrame;
+
+/* === Resize === */
+function resize(){
+  const rect = cv.parentElement.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1;
+  W = rect.width; H = rect.height;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+/* === Math helpers === */
+function getCurveType(e){
+  if(e < 0.001) return 'circle';
+  if(e < 0.999) return 'ellipse';
+  if(e < 1.001) return 'parabola';
+  return 'hyperbola';
+}
+
+function getCurveName(type){
+  return {circle:'圆', ellipse:'椭圆', parabola:'抛物线', hyperbola:'双曲线'}[type];
+}
+
+function getEquation(e){
+  if(e < 0.001) return 'x² + y² = a²';
+  if(e < 0.999){
+    const b2 = (1 - e*e).toFixed(2);
+    return `x²/a² + y²/(${b2}·a²) = 1`;
+  }
+  if(e < 1.001) return 'y² = 4px';
+  return `x²/a² - y²/(${(e*e-1).toFixed(2)}·a²) = 1`;
+}
+
+/* === Coordinate transform === */
+// Map math coords to canvas: math units -> pixels
+// We want the viewport to show roughly [-viewR, viewR] in math space
+function getViewR(){
+  // Adaptive: show more for hyperbola
+  if(e > 1.3) return a * (e + 1.5);
+  if(e > 1.0) return a * 2.5;
+  return a * 1.8;
+}
+function m2p(mx, my){
+  const viewR = getViewR();
+  const scale = Math.min(W, H) / (2 * viewR);
+  const cx = W / 2, cy = H / 2;
+  return [cx + mx * scale, cy - my * scale];
+}
+function pScale(len){
+  const viewR = getViewR();
+  return len * Math.min(W, H) / (2 * viewR);
+}
+
+/* === Draw grid === */
+function drawGrid(){
+  const viewR = getViewR();
+  const step = a / 2;
+  ctx.strokeStyle = C.grid;
+  ctx.lineWidth = 1;
+  // Vertical lines
+  for(let x = -Math.ceil(viewR/step)*step; x <= viewR; x += step){
+    const [px] = m2p(x, 0);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+  }
+  // Horizontal lines
+  for(let y = -Math.ceil(viewR/step)*step; y <= viewR; y += step){
+    const [, py] = m2p(0, y);
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+  }
+}
+
+/* === Draw axes === */
+function drawAxes(){
+  const [x0, y0] = m2p(0, 0);
+  const viewR = getViewR();
+  ctx.strokeStyle = C.axis;
+  ctx.lineWidth = 1.2;
+  // x-axis
+  const [xl] = m2p(-viewR, 0), [xr] = m2p(viewR, 0);
+  ctx.beginPath(); ctx.moveTo(xl, y0); ctx.lineTo(xr, y0); ctx.stroke();
+  // y-axis
+  const [, yb] = m2p(0, -viewR), [, yt] = m2p(0, viewR);
+  ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x0, yt); ctx.stroke();
+
+  // Arrows
+  ctx.fillStyle = C.axis;
+  // x arrow
+  ctx.beginPath(); ctx.moveTo(xr, y0); ctx.lineTo(xr-6, y0-4); ctx.lineTo(xr-6, y0+4); ctx.fill();
+  // y arrow
+  ctx.beginPath(); ctx.moveTo(x0, yt); ctx.lineTo(x0-4, yt+6); ctx.lineTo(x0+4, yt+6); ctx.fill();
+
+  // Labels
+  ctx.fillStyle = C.bambooDark;
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  const [lx] = m2p(viewR - 0.15, 0);
+  ctx.fillText('x', lx - 10, y0 - 8);
+  ctx.textAlign = 'center';
+  const [, ly] = m2p(0, viewR - 0.15);
+  ctx.fillText('y', x0 + 14, ly + 4);
+  ctx.fillText('O', x0 - 14, y0 + 14);
+}
+
+/* === Draw conic === */
+function drawConic(){
+  const type = getCurveType(e);
+  const alpha = (e < 0.001) ? 0.15 : 0.10;
+  ctx.lineWidth = 2.5;
+
+  if(type === 'circle'){
+    // Draw circle: x² + y² = a²
+    const r = pScale(a);
+    const [cx, cy] = m2p(0, 0);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = C.fill; ctx.fill();
+    ctx.strokeStyle = C.bamboo; ctx.stroke();
+  }
+  else if(type === 'ellipse'){
+    // x²/a² + y²/b² = 1
+    const b = a * Math.sqrt(1 - e*e);
+    ctx.beginPath();
+    for(let i = 0; i <= 360; i++){
+      const t = i * Math.PI / 180;
+      const [px, py] = m2p(a * Math.cos(t), b * Math.sin(t));
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = C.fill; ctx.fill();
+    ctx.strokeStyle = C.bamboo; ctx.stroke();
+  }
+  else if(type === 'parabola'){
+    // y² = 4px, where p = a*e = a (since e≈1)
+    const p = a;
+    const viewR = getViewR();
+    const maxT = Math.sqrt(4 * p * viewR * 1.2);
+    // Fill first
+    ctx.fillStyle = C.fill;
+    ctx.beginPath();
+    const [topX, topY] = m2p(0, maxT);
+    ctx.moveTo(topX, topY);
+    for(let t = maxT; t >= -maxT; t -= 0.1){
+      const mx = t * t / (4 * p);
+      if(mx > viewR * 1.3) continue;
+      const [px, py] = m2p(mx, t);
+      ctx.lineTo(px, py);
+    }
+    const [botX, botY] = m2p(0, -maxT);
+    ctx.lineTo(botX, botY);
+    ctx.closePath();
+    ctx.fill();
+    // Stroke curve
+    ctx.beginPath();
+    let started = false;
+    for(let t = -maxT; t <= maxT; t += 0.1){
+      const mx = t * t / (4 * p);
+      if(mx > viewR * 1.3) continue;
+      const [px, py] = m2p(mx, t);
+      if(!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = C.bamboo; ctx.stroke();
+  }
+  else{ // hyperbola
+    // x²/a² - y²/b² = 1, b² = a²(e²-1)
+    const b = a * Math.sqrt(e*e - 1);
+    const viewR = getViewR();
+    // Right branch
+    ctx.beginPath();
+    let started = false;
+    for(let t = -Math.PI * 0.99; t <= Math.PI * 0.99; t += 0.005){
+      // parametric: x = a*cosh(u), y = b*sinh(u)
+      // or use angle parametrization
+    }
+    // Use hyperbolic functions: x = a*cosh(u), y = b*sinh(u)
+    ctx.beginPath();
+    started = false;
+    for(let u = -4; u <= 4; u += 0.01){
+      const mx = a * Math.cosh(u);
+      const my = b * Math.sinh(u);
+      const [px, py] = m2p(mx, my);
+      if(!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = C.bamboo; ctx.stroke();
+    // Left branch
+    ctx.beginPath();
+    started = false;
+    for(let u = -4; u <= 4; u += 0.01){
+      const mx = -a * Math.cosh(u);
+      const my = b * Math.sinh(u);
+      const [px, py] = m2p(mx, my);
+      if(!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    // Light fill between branches
+    ctx.fillStyle = C.fill;
+    // Right branch fill
+    ctx.beginPath();
+    for(let u = -4; u <= 4; u += 0.01){
+      const mx = a * Math.cosh(u);
+      const my = b * Math.sinh(u);
+      const [px, py] = m2p(mx, my);
+      u === -4 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.lineTo(m2p(0, 0)[0], m2p(0, 0)[1]);
+    ctx.closePath();
+    ctx.fill();
+    // Left branch fill
+    ctx.beginPath();
+    for(let u = -4; u <= 4; u += 0.01){
+      const mx = -a * Math.cosh(u);
+      const my = b * Math.sinh(u);
+      const [px, py] = m2p(mx, my);
+      u === -4 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.lineTo(m2p(0, 0)[0], m2p(0, 0)[1]);
+    ctx.closePath();
+    ctx.fill();
+    // Asymptotes
+    ctx.save();
+    ctx.setLineDash([6, 5]);
+    ctx.strokeStyle = 'rgba(197,169,106,0.35)';
+    ctx.lineWidth = 1.2;
+    const slope = b / a;
+    const axLen = viewR * 1.5;
+    const [ax1x, ax1y] = m2p(-axLen, -axLen * slope);
+    const [ax2x, ax2y] = m2p(axLen, axLen * slope);
+    ctx.beginPath(); ctx.moveTo(ax1x, ax1y); ctx.lineTo(ax2x, ax2y); ctx.stroke();
+    const [ax3x, ax3y] = m2p(-axLen, axLen * slope);
+    const [ax4x, ax4y] = m2p(axLen, -axLen * slope);
+    ctx.beginPath(); ctx.moveTo(ax3x, ax3y); ctx.lineTo(ax4x, ax4y); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* === Draw foci === */
+function drawFoci(){
+  if(e < 0.001) return; // circle has no separate foci shown
+  const type = getCurveType(e);
+  let f1x, f1y, f2x, f2y;
+  if(type === 'parabola'){
+    // Focus at (p, 0) where p = a*e = a
+    f1x = a * e; f1y = 0;
+    // Parabola has one focus
+    const [px, py] = m2p(f1x, f1y);
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = C.woodGold; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Label
+    ctx.fillStyle = C.bambooDark;
+    ctx.font = 'bold 13px serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('F', px + 8, py - 6);
+    return;
+  }
+  // For ellipse/hyperbola: foci at (±c, 0), c = ae
+  const c = a * e;
+  f1x = c; f1y = 0; f2x = -c; f2y = 0;
+  // Focus dots
+  [[f1x, f1y, 'F'], [f2x, f2y, "F'"]].forEach(([fx, fy, label]) => {
+    const [px, py] = m2p(fx, fy);
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = C.woodGold; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = C.bambooDark;
+    ctx.font = 'bold 13px serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, px + 8, py - 6);
+  });
+}
+
+/* === Draw directrix === */
+function drawDirectrix(){
+  if(e < 0.001) return;
+  const type = getCurveType(e);
+  const viewR = getViewR();
+  ctx.save();
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = C.directrix;
+  ctx.lineWidth = 1.3;
+
+  if(type === 'ellipse'){
+    // Directrices at x = ±a/e
+    [a / e, -a / e].forEach(dx => {
+      const [px] = m2p(dx, 0);
+      const [, py1] = m2p(0, viewR);
+      const [, py2] = m2p(0, -viewR);
+      ctx.beginPath(); ctx.moveTo(px, py1); ctx.lineTo(px, py2); ctx.stroke();
+    });
+    // Labels
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.woodGold;
+    ctx.font = '12px serif';
+    ctx.textAlign = 'center';
+    const [lx1] = m2p(a/e, 0);
+    ctx.fillText('d', lx1 - 8, m2p(0, viewR * 0.9)[1] + 4);
+    const [lx2] = m2p(-a/e, 0);
+    ctx.fillText("d'", lx2 + 8, m2p(0, viewR * 0.9)[1] + 4);
+  }
+  else if(type === 'parabola'){
+    // Directrix at x = -p = -a
+    const [px] = m2p(-a, 0);
+    const [, py1] = m2p(0, viewR);
+    const [, py2] = m2p(0, -viewR);
+    ctx.beginPath(); ctx.moveTo(px, py1); ctx.lineTo(px, py2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.woodGold;
+    ctx.font = '12px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('d', px - 8, m2p(0, viewR * 0.9)[1] + 4);
+  }
+  else if(type === 'hyperbola'){
+    // Directrices at x = ±a/e
+    [a / e, -a / e].forEach(dx => {
+      const [px] = m2p(dx, 0);
+      const [, py1] = m2p(0, viewR);
+      const [, py2] = m2p(0, -viewR);
+      ctx.beginPath(); ctx.moveTo(px, py1); ctx.lineTo(px, py2); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.woodGold;
+    ctx.font = '12px serif';
+    ctx.textAlign = 'center';
+    const [lx1] = m2p(a/e, 0);
+    ctx.fillText('d', lx1 - 8, m2p(0, viewR * 0.9)[1] + 4);
+    const [lx2] = m2p(-a/e, 0);
+    ctx.fillText("d'", lx2 + 8, m2p(0, viewR * 0.9)[1] + 4);
+  }
+  ctx.restore();
+}
+
+/* === Draw vertex markers === */
+function drawVertices(){
+  if(e < 0.001) return;
+  const type = getCurveType(e);
+  ctx.fillStyle = 'rgba(91,140,90,0.5)';
+  if(type === 'ellipse'){
+    const b = a * Math.sqrt(1 - e*e);
+    [[a, 0], [-a, 0], [0, b], [0, -b]].forEach(([vx, vy]) => {
+      const [px, py] = m2p(vx, vy);
+      ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+  else if(type === 'hyperbola'){
+    [[a, 0], [-a, 0]].forEach(([vx, vy]) => {
+      const [px, py] = m2p(vx, vy);
+      ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+}
+
+/* === Update info overlay === */
+function updateInfo(){
+  const type = getCurveType(e);
+  curveLabelEl.textContent = getCurveName(type);
+  eqTextEl.textContent = getEquation(e);
+  // Legend highlight
+  legendEl.querySelectorAll('span').forEach(sp => {
+    sp.className = sp.dataset.type === type ? 'active' : '';
+  });
+}
+
+/* === Main draw === */
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  drawGrid();
+  drawAxes();
+  drawDirectrix();
+  drawConic();
+  drawFoci();
+  drawVertices();
+  updateInfo();
+}
+
+/* === Animation loop === */
+function animate(){
+  // Smooth interpolation
+  const diff = targetE - e;
+  if(Math.abs(diff) > 0.0005){
+    e += diff * 0.15; // smooth easing
+  } else {
+    e = targetE;
+  }
+  draw();
+  animFrame = requestAnimationFrame(animate);
+}
+
+/* === Init === */
+resize();
+slider.addEventListener('input', () => {
+  targetE = parseFloat(slider.value);
+  eValEl.textContent = targetE.toFixed(2);
+});
+// Set initial
+eValEl.textContent = '0.00';
+
+// Start
+animate();
+
+})();
+</script>
+</body>
+</html>
