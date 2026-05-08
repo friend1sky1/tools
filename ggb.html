@@ -185,16 +185,16 @@ body {
 </div>
 
 <div class="shape-tabs">
-    <button class="shape-btn active" data-shape="cylinder" onclick="switchShape('cylinder')">
+    <button class="shape-btn active" data-shape="cylinder">
         <span class="dot" style="background:#5B8C5A"></span>圆柱
     </button>
-    <button class="shape-btn" data-shape="cone" onclick="switchShape('cone')">
+    <button class="shape-btn" data-shape="cone">
         <span class="dot" style="background:#C5A96A"></span>圆锥
     </button>
-    <button class="shape-btn" data-shape="frustum" onclick="switchShape('frustum')">
+    <button class="shape-btn" data-shape="frustum">
         <span class="dot" style="background:#7BA87A"></span>圆台
     </button>
-    <button class="shape-btn" data-shape="sphere" onclick="switchShape('sphere')">
+    <button class="shape-btn" data-shape="sphere">
         <span class="dot" style="background:#2D4A32"></span>球
     </button>
 </div>
@@ -203,23 +203,20 @@ body {
     <div class="param-group" id="pg-r1">
         <span class="param-label" id="lbl-r1">r</span>
         <input type="range" class="param-slider" id="sld-r1"
-               min="0.4" max="2.4" step="0.1" value="1.6"
-               oninput="onSliderInput()">
+               min="0.4" max="2.4" step="0.1" value="1.6">
         <span class="param-val" id="val-r1">1.6</span>
     </div>
     <div class="param-divider" id="div-mid"></div>
     <div class="param-group" id="pg-r2">
         <span class="param-label" id="lbl-r2">h</span>
         <input type="range" class="param-slider" id="sld-r2"
-               min="0.4" max="3.0" step="0.1" value="2.4"
-               oninput="onSliderInput()">
+               min="0.4" max="3.0" step="0.1" value="2.4">
         <span class="param-val" id="val-r2">2.4</span>
     </div>
     <div class="opacity-group">
         <span class="opacity-icon">◐</span>
         <input type="range" class="param-slider" id="sld-opacity"
-               min="0.1" max="0.9" step="0.05" value="0.45"
-               oninput="onOpacityInput()">
+               min="0.1" max="0.9" step="0.05" value="0.45">
     </div>
 </div>
 
@@ -604,6 +601,14 @@ function animate() {
     controls.update();
     renderer.render(scene, camera);
 }
+
+// ── 事件绑定 ──
+document.querySelectorAll('.shape-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchShape(btn.dataset.shape));
+});
+document.getElementById('sld-r1').addEventListener('input', onSliderInput);
+document.getElementById('sld-r2').addEventListener('input', onSliderInput);
+document.getElementById('sld-opacity').addEventListener('input', onOpacityInput);
 
 // ── 启动 ──
 onResize();
