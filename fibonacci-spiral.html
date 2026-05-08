@@ -123,13 +123,11 @@ const MORANDI = [
 /* ── State ── */
 let count = 8;
 let speed = 5;
-let progress = 0;       // 0 to 1, continuous smooth progress
+let progress = 0;
 let playing = true;
 let rafId = null;
 let lastTime = 0;
 let fibs = [];
-let rects = [];         // {x,y,w,h,fib,idx}
-let spiralPts = [];     // pre-computed spiral points for smooth drawing
 let canvas, ctx;
 
 /* ── Fibonacci ── */
@@ -139,85 +137,89 @@ function genFibs(n){
   return f;
 }
 
-/* ── Build layout (golden rectangles) ── */
+/* ── Build layout (classic Fibonacci tiling)
+   Each new square is placed against the current bounding box edge,
+   cycling: below → left → above → right. */
 function buildLayout(fibSeq){
+  const n = fibSeq.length;
   const rs = [];
-  rs.push({x:0,y:0,w:1,h:1,fib:fibSeq[0],idx:0});
-  if(fibSeq.length===1) return rs;
-  rs.push({x:1,y:0,w:1,h:1,fib:fibSeq[1],idx:1});
+  // Square 0: at origin
+  rs.push({x:0, y:0, w:fibSeq[0], h:fibSeq[0], fib:fibSeq[0], idx:0});
+  if(n===1) return rs;
+  // Square 1: to the right of square 0
+  rs.push({x:fibSeq[0], y:0, w:fibSeq[1], h:fibSeq[1], fib:fibSeq[1], idx:1});
+  if(n===2) return rs;
 
-  let rx=0,ry=0,rw=2,rh=1;
-  let dir=0;
-  for(let i=2;i<fibSeq.length;i++){
-    const s = fibSeq[i-1];
-    let sx,sy;
+  // Bounding box after first two squares
+  let bx=0, by=0, bw=fibSeq[0]+fibSeq[1], bh=fibSeq[1];
+  let dir = 0; // 0=below, 1=left, 2=above, 3=right
+
+  for(let i=2; i<n; i++){
+    const s = fibSeq[i];
+    let sx, sy;
     switch(dir){
-      case 0: sx=rx; sy=ry+rh; rh+=s; break;
-      case 1: sx=rx-s; sy=ry; rx=sx; rw+=s; break;
-      case 2: sx=rx; sy=ry-s; ry=sy; rh+=s; break;
-      case 3: sx=rx+rw; sy=ry; rw+=s; break;
+      case 0: // below
+        sx = bx;
+        sy = by + bh;
+        bh += s;
+        break;
+      case 1: // left
+        sx = bx - s;
+        sy = by;
+        bx = sx;
+        bw += s;
+        break;
+      case 2: // above
+        sx = bx;
+        sy = by - s;
+        by = sy;
+        bh += s;
+        break;
+      case 3: // right
+        sx = bx + bw;
+        sy = by;
+        bw += s;
+        break;
     }
-    rs.push({x:sx,y:sy,w:s,h:s,fib:fibSeq[i],idx:i});
-    dir=(dir+1)%4;
+    rs.push({x:sx, y:sy, w:s, h:s, fib:s, idx:i});
+    dir = (dir+1) % 4;
   }
   return rs;
 }
 
-/* ── Compute spiral points (logarithmic golden spiral) ── */
-function computeSpiral(layout, cw, ch){
-  // Find bounding box
-  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-  for(const r of layout){
-    minX=Math.min(minX,r.x); minY=Math.min(minY,r.y);
-    maxX=Math.max(maxX,r.x+r.w); maxY=Math.max(maxY,r.y+r.h);
+/* ── Build spiral as quarter-circle arcs matching each square ──
+   Arc i (for square i, i>=1) draws a quarter circle inside square i.
+   The arc connects from the corner shared with the previous square
+   to the corner shared with the next square.
+   Direction cycles: CW(right→down) → CW(down→left) → CW(left→up) → CW(up→right) */
+function buildSpiralArcs(layout){
+  const arcs = [];
+  for(let i=1; i<layout.length; i++){
+    const s = layout[i];
+    const dir = (i-1) % 4;
+    // Center and angles for quarter-circle arc in this square
+    let cx, cy, sA, eA;
+    switch(dir){
+      case 0: // arc center at bottom-left, sweep from top to right
+        cx = s.x;     cy = s.y + s.w;
+        sA = Math.PI/2;  eA = 0;
+        break;
+      case 1: // arc center at bottom-right, sweep from left to top
+        cx = s.x+s.w; cy = s.y + s.w;
+        sA = Math.PI;    eA = Math.PI/2;
+        break;
+      case 2: // arc center at top-right, sweep from bottom to left
+        cx = s.x+s.w; cy = s.y;
+        sA = 3*Math.PI/2; eA = Math.PI;
+        break;
+      case 3: // arc center at top-left, sweep from right to bottom
+        cx = s.x;     cy = s.y;
+        sA = 0;          eA = 3*Math.PI/2;
+        break;
+    }
+    arcs.push({cx, cy, r:s.w, sA, eA, idx:i});
   }
-  const lw=maxX-minX, lh=maxY-minY;
-  const pad=50;
-  const sx=(cw-pad*2)/lw, sy=(ch-pad*2)/lh;
-  const sc=Math.min(sx,sy);
-  const ox=(cw-lw*sc)/2-minX*sc;
-  const oy=(ch-lh*sc)/2-minY*sc;
-
-  // Scale rects
-  const sr = layout.map(r=>({
-    ...r,
-    sx: r.x*sc+ox, sy: r.y*sc+oy,
-    ss: r.w*sc
-  }));
-
-  // Build golden spiral as continuous logarithmic spiral
-  // φ = golden ratio, spiral: r = a·φ^(θ/(π/2))
-  const PHI = (1+Math.sqrt(5))/2;
-  const totalAngle = count * Math.PI/2; // each square = quarter turn
-  const numPts = 2000;
-
-  // Compute spiral center (approximate: center of all rects)
-  let cx=0, cy=0;
-  for(const r of sr){ cx+=r.sx+r.ss/2; cy+=r.sy+r.ss/2; }
-  cx/=sr.length; cy/=sr.length;
-
-  // Better: use the innermost square's corner as spiral center
-  // The spiral origin is at the intersection of the first two squares
-  const s0 = sr[0], s1 = sr[1];
-  const spiralCx = s0.sx + s0.ss;
-  const spiralCy = s0.sy + s0.ss;
-
-  // Compute points using golden spiral formula
-  // Scale: at θ=0, r = baseR; at θ=totalAngle, r = maxR
-  // r(θ) = baseR * φ^(2θ/π)
-  const baseR = sr[0].ss * 0.618; // start radius
-  const pts = [];
-  for(let i=0;i<=numPts;i++){
-    const t = i/numPts;
-    const theta = t * totalAngle;
-    const r = baseR * Math.pow(PHI, 2*theta/Math.PI);
-    // Spiral goes counterclockwise from right
-    const x = spiralCx + r * Math.cos(theta);
-    const y = spiralCy - r * Math.sin(theta);
-    pts.push({x,y,t});
-  }
-
-  return {rects:sr, points:pts, cx:spiralCx, cy:spiralCy};
+  return arcs;
 }
 
 /* ── Draw ── */
@@ -231,71 +233,107 @@ function draw(prog){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cw,ch);
 
-  if(!rects.length) return;
-
   const layout = buildLayout(fibs);
-  const sp = computeSpiral(layout, cw, ch);
-  const sr = sp.rects;
-  const pts = sp.points;
+  if(!layout.length) return;
 
-  // How many points to draw based on progress
-  const drawCount = Math.floor(prog * pts.length);
+  // Find bounding box
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  for(const r of layout){
+    minX = Math.min(minX, r.x);
+    minY = Math.min(minY, r.y);
+    maxX = Math.max(maxX, r.x + r.w);
+    maxY = Math.max(maxY, r.y + r.h);
+  }
+  const lw = maxX - minX, lh = maxY - minY;
+  const pad = 40;
+  const scX = (cw - pad*2) / lw;
+  const scY = (ch - pad*2) / lh;
+  const sc = Math.min(scX, scY);
+  const ox = (cw - lw*sc) / 2 - minX*sc;
+  const oy = (ch - lh*sc) / 2 - minY*sc;
 
-  // Draw rectangles (subtle background)
-  // Show only rectangles that the spiral has passed through
-  const anglePerRect = Math.PI/2;
-  const totalAngle = count * Math.PI/2;
-  const currentAngle = prog * totalAngle;
+  // Scale rectangles to canvas
+  const sr = layout.map(r => ({
+    ...r,
+    sx: r.x*sc + ox, sy: r.y*sc + oy,
+    ss: r.w * sc
+  }));
 
-  for(let i=0;i<sr.length;i++){
-    const rectAngle = (i+1)*anglePerRect;
-    if(currentAngle < (i)*anglePerRect) break; // not reached yet
+  // Build spiral arcs (one per square from index 1 onward)
+  const arcs = buildSpiralArcs(layout);
+  const totalArcs = arcs.length;
+  const currentArc = prog * totalArcs;
 
+  // --- Draw rectangles ---
+  for(let i=0; i<sr.length; i++){
     const r = sr[i];
-    // Fade in effect
-    const fadeIn = Math.min(1, (currentAngle - i*anglePerRect)/anglePerRect);
+    // Each rectangle fades in when the spiral enters it
+    const fadeIn = Math.min(1, Math.max(0, currentArc - i + 1));
+    if(fadeIn <= 0) continue;
 
-    ctx.fillStyle = MORANDI[i%MORANDI.length];
-    ctx.globalAlpha = 0.15 + 0.2*fadeIn;
+    ctx.globalAlpha = 0.12 + 0.18 * fadeIn;
+    ctx.fillStyle = MORANDI[i % MORANDI.length];
     ctx.fillRect(r.sx, r.sy, r.ss, r.ss);
     ctx.globalAlpha = 1;
 
-    // Border
     ctx.strokeStyle = 'rgba(45,74,50,0.18)';
     ctx.lineWidth = 1;
     ctx.strokeRect(r.sx, r.sy, r.ss, r.ss);
 
     // Fibonacci number label
-    if(r.ss > 30){
-      const fs = Math.min(r.ss*0.28, 22);
+    if(r.ss > 25){
+      const fs = Math.min(r.ss * 0.28, 22);
       ctx.font = `600 ${fs}px -apple-system,"PingFang SC",sans-serif`;
-      ctx.fillStyle = 'rgba(45,74,50,0.4)';
+      ctx.fillStyle = 'rgba(45,74,50,0.35)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(r.fib, r.sx+r.ss/2, r.sy+r.ss/2);
+      ctx.fillText(r.fib, r.sx + r.ss/2, r.sy + r.ss/2);
     }
   }
 
-  // Draw the golden spiral (smooth, continuous)
-  if(drawCount > 1){
-    // Glow layer
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<drawCount;i++){
-      ctx.lineTo(pts[i].x, pts[i].y);
+  // --- Draw spiral (quarter-circle arcs) ---
+  const fullArcs = Math.floor(currentArc);
+  const frac = currentArc - fullArcs;
+
+  if(fullArcs > 0 || frac > 0){
+    // Helper: draw partial spiral path
+    function spiralPath(){
+      ctx.beginPath();
+      let started = false;
+      for(let i=0; i<fullArcs && i<totalArcs; i++){
+        const a = arcs[i];
+        if(!started){
+          ctx.moveTo(
+            a.cx + a.r * Math.cos(a.sA),
+            a.cy - a.r * Math.sin(a.sA)
+          );
+          started = true;
+        }
+        ctx.arc(a.cx, a.cy, a.r, -a.sA, -a.eA, false);
+      }
+      if(frac > 0 && fullArcs < totalArcs){
+        const a = arcs[fullArcs];
+        const partialEnd = a.sA + frac * (a.eA - a.sA);
+        if(!started){
+          ctx.moveTo(
+            a.cx + a.r * Math.cos(a.sA),
+            a.cy - a.r * Math.sin(a.sA)
+          );
+        }
+        ctx.arc(a.cx, a.cy, a.r, -a.sA, -partialEnd, false);
+      }
     }
+
+    // Glow layer
+    spiralPath();
     ctx.strokeStyle = 'rgba(197,169,106,0.25)';
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Main spiral line
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<drawCount;i++){
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
+    // Main line
+    spiralPath();
     ctx.strokeStyle = '#C5A96A';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
@@ -303,14 +341,24 @@ function draw(prog){
     ctx.stroke();
 
     // Leading dot
-    if(drawCount > 0){
-      const p = pts[drawCount-1];
+    let dotX, dotY;
+    if(frac > 0 && fullArcs < totalArcs){
+      const a = arcs[fullArcs];
+      const partialEnd = a.sA + frac * (a.eA - a.sA);
+      dotX = a.cx + a.r * Math.cos(partialEnd);
+      dotY = a.cy - a.r * Math.sin(partialEnd);
+    } else if(fullArcs > 0){
+      const a = arcs[fullArcs-1];
+      dotX = a.cx + a.r * Math.cos(a.eA);
+      dotY = a.cy - a.r * Math.sin(a.eA);
+    }
+    if(dotX !== undefined){
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+      ctx.arc(dotX, dotY, 5, 0, Math.PI*2);
       ctx.fillStyle = '#C5A96A';
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
+      ctx.arc(dotX, dotY, 8, 0, Math.PI*2);
       ctx.strokeStyle = 'rgba(197,169,106,0.4)';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -318,7 +366,7 @@ function draw(prog){
   }
 
   // Update info
-  const fi = Math.min(Math.floor(currentAngle/anglePerRect), fibs.length-1);
+  const fi = Math.min(Math.floor(currentArc), fibs.length-1);
   document.getElementById('fnDisp').textContent = `F${fi+1} = ${fibs[fi]}`;
   if(fi>0){
     const ratio = (fibs[fi]/fibs[fi-1]).toFixed(6);
@@ -336,7 +384,7 @@ function animate(ts){
   const dt = (ts-lastTime)/1000;
   lastTime = ts;
 
-  const spd = 0.08 + speed*0.06; // progress per second
+  const spd = 0.08 + speed*0.06;
   progress += dt * spd;
 
   if(progress >= 1){
@@ -357,7 +405,6 @@ function updateBtn(){
 /* ── Rebuild ── */
 function rebuild(){
   fibs = genFibs(count);
-  rects = buildLayout(fibs);
   progress = 0;
   playing = false;
   if(rafId) cancelAnimationFrame(rafId);
@@ -403,7 +450,6 @@ function init(){
   });
 
   rebuild();
-  // Auto-play
   playing = true;
   lastTime = 0;
   updateBtn();
