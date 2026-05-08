@@ -104,8 +104,8 @@ canvas{display:block;width:100%;height:100%}
     <div class="ctrl-row">
       <span class="ctrl-label">谐波数量</span>
       <div class="slider-group">
-        <input type="range" id="sldN" min="1" max="15" value="1" step="1">
-        <span class="slider-val" id="valN">1</span>
+        <input type="range" id="sldN" min="1" max="15" value="3" step="1">
+        <span class="slider-val" id="valN">3</span>
       </div>
     </div>
     <div class="ctrl-row">
@@ -131,10 +131,10 @@ const COLORS = [
 const BAMBOO = '#5B8C5A';
 
 /* ── State ── */
-let harmonics = 1;          // 1-15
+let harmonics = 3;          // 1-15
 let speed = 40;             // 0-100
 let phase = 0;
-let enabled = new Set([1]); // which odd harmonics are on
+let enabled = new Set([1,3,5]); // which odd harmonics are on
 let badgeTimer = null;
 let badgeShown = false;
 
