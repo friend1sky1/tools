@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="gEll" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5B8C5A"/>
+      <stop offset="100%" stop-color="#7BA87A"/>
+    </linearGradient>
+    <linearGradient id="gPar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5A96A"/>
+      <stop offset="100%" stop-color="#D4B87A"/>
+    </linearGradient>
+    <linearGradient id="gHyp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7BA8B4"/>
+      <stop offset="100%" stop-color="#8BB8C4"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feOffset dx="0" dy="3" result="off"/>
+      <feFlood flood-color="#00000020"/>
+      <feComposite in2="off" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="320" height="200" fill="#F5F0EB" rx="6"/>
+
+  <!-- Coordinate axes -->
+  <line x1="160" y1="20" x2="160" y2="170" stroke="#C8C0B8" stroke-width="0.8"/>
+  <line x1="30" y1="95" x2="290" y2="95" stroke="#C8C0B8" stroke-width="0.8"/>
+
+  <!-- Ellipse (left, ~x:20-120) -->
+  <ellipse cx="60" cy="95" rx="42" ry="28" fill="none" stroke="url(#gEll)" stroke-width="2.2" filter="url(#shadow)"/>
+  <!-- Ellipse foci -->
+  <circle cx="40" cy="95" r="2.2" fill="#5B8C5A"/>
+  <circle cx="80" cy="95" r="2.2" fill="#5B8C5A"/>
+  <!-- Ellipse directrix (dashed) -->
+  <line x1="18" y1="50" x2="18" y2="140" stroke="#5B8C5A" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- Parabola (center, ~x:110-220) -->
+  <path d="M135,40 Q170,95 205,40" fill="none" stroke="url(#gPar)" stroke-width="2.2" filter="url(#shadow)"/>
+  <!-- Parabola focus -->
+  <circle cx="170" cy="68" r="2.2" fill="#C5A96A"/>
+  <!-- Parabola directrix -->
+  <line x1="120" y1="122" x2="220" y2="122" stroke="#C5A96A" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- Hyperbola (right, ~x:200-310) — two branches -->
+  <path d="M240,55 Q260,75 290,48" fill="none" stroke="url(#gHyp)" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M240,135 Q260,115 290,142" fill="none" stroke="url(#gHyp)" stroke-width="2.2"/>
+  <!-- Hyperbola asymptotes (thin dashed) -->
+  <line x1="225" y1="95" x2="300" y2="50" stroke="#7BA8B4" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.35"/>
+  <line x1="225" y1="95" x2="300" y2="140" stroke="#7BA8B4" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.35"/>
+  <!-- Hyperbola foci -->
+  <circle cx="255" cy="95" r="2.2" fill="#7BA8B4"/>
+  <circle cx="285" cy="95" r="2.2" fill="#7BA8B4"/>
+
+  <!-- Soft bottom shadow -->
+  <ellipse cx="160" cy="185" rx="140" ry="10" fill="#00000008"/>
+</svg>
