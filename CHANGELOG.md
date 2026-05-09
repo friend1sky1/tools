@@ -27,3 +27,8 @@
 - 修改：quadratic-cover.svg（曲线平滑优化）
 - 修改：index.html（hero-banner 引用更新）
 - 删除：hero-banner.jpg
+
+## 2026-05-10
+
+### 07:38 - 主智能体
+- 修改：unit-circle.html、quadratic.html（🎋 emoji → logo-36.png 图片，统一品牌 logo）
