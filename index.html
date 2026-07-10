@@ -33,6 +33,96 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
+/* ===== 欢迎横幅 ===== */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--bamboo-dark) 0%, var(--bamboo) 60%, #7DB87D 100%);
+    color: var(--white);
+    text-align: center;
+    padding: 18px 24px 16px;
+    position: relative;
+    overflow: hidden;
+}
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(255,255,255,0.04) 0%, transparent 50%);
+    animation: welcomeShimmer 4s ease-in-out infinite;
+}
+@keyframes welcomeShimmer {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(2%, 1%); }
+}
+.welcome-banner-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.welcome-banner .emoji-deco {
+    font-size: 28px;
+    display: inline-block;
+    animation: bounceEmoji 2s ease-in-out infinite;
+}
+.welcome-banner .emoji-deco:nth-child(1) { animation-delay: 0s; }
+.welcome-banner .emoji-deco:nth-child(3) { animation-delay: 0.5s; }
+@keyframes bounceEmoji {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.welcome-banner .greeting {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.9;
+    font-family: 'Noto Serif SC', serif;
+}
+.welcome-banner .names {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-family: 'Noto Serif SC', serif;
+}
+.welcome-banner .names .name-highlight {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    padding: 2px 14px;
+    border-radius: 8px;
+    margin: 0 4px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+}
+.welcome-banner .names .and {
+    font-size: 18px;
+    opacity: 0.7;
+    margin: 0 2px;
+}
+.welcome-banner .tagline {
+    font-size: 13px;
+    margin-top: 8px;
+    opacity: 0.8;
+    font-style: italic;
+    font-family: 'Noto Serif SC', serif;
+}
+.welcome-banner .tagline .tag-dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: var(--wood-gold);
+    border-radius: 50%;
+    margin: 0 6px;
+    vertical-align: middle;
+}
+@media (max-width: 768px) {
+    .welcome-banner { padding: 14px 16px 12px; }
+    .welcome-banner .greeting { font-size: 14px; }
+    .welcome-banner .names { font-size: 18px; }
+    .welcome-banner .names .name-highlight { padding: 1px 10px; margin: 0 2px; }
+    .welcome-banner .tagline { font-size: 12px; }
+    .welcome-banner .emoji-deco { font-size: 22px; }
+}
+/* ===== /欢迎横幅 ===== */
 .nav {
     position: sticky; top: 0; z-index: 100;
     background: rgba(240,245,238,0.85);
@@ -116,6 +206,23 @@ body {
 </head>
 <body>
 
+<!-- 欢迎横幅 -->
+<div class="welcome-banner">
+    <div class="welcome-banner-content">
+        <div class="greeting">
+            <span class="emoji-deco">🎉</span> 欢迎光临青竹数苑 <span class="emoji-deco">🎉</span>
+        </div>
+        <div class="names">
+            <span class="name-highlight">李雨芯</span>
+            <span class="and">&</span>
+            <span class="name-highlight">朱梓睿</span>
+        </div>
+        <div class="tagline">
+            二位大驾光临<span class="tag-dot"></span>本苑蓬荜生辉<span class="tag-dot"></span>数学之美今日特供
+        </div>
+    </div>
+</div>
+
 <nav class="nav">
     <div class="nav-inner">
         <a class="nav-brand" href="/">
@@ -187,6 +294,8 @@ body {
                 <span class="tool-card-tag">二次函数</span>
             </div>
         </div>
+    </a>
+
     <a class="tool-card" href="heart.html">
         <div class="tool-card-img"><img src="heart-cover.svg" alt="心形曲线" style="width:100%;height:100%;object-fit:cover;"></div>
         <div class="tool-card-body">
