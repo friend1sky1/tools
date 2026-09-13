@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 手拉手模型（全等三角形）</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bamboo:#5B8C5A; --bamboo-dark:#2D4A32; --bamboo-mist:#F0F5EE; --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A; --text-secondary:#6B7D6C; --text-muted:#9AAB9B; --white:#FFFFFF;
+  --accent:#D1495B; --accent-deep:#B32D42;
+  --shadow-sm:0 1px 3px rgba(45,74,50,.06); --shadow-md:0 4px 12px rgba(45,74,50,.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bamboo-mist); color:var(--bamboo-dark);
+  -webkit-font-smoothing:antialiased; padding-bottom:24px;
+}
+.app{max-width:1000px;margin:0 auto;padding:12px 12px 0;display:flex;flex-direction:column;gap:12px;}
+
+/* ── 顶部 ── */
+.topbar{display:flex;align-items:center;gap:10px;}
+.topbar .back{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--white);
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--bamboo-dark);font-size:18px;line-height:1;
+}
+.topbar .back:active{transform:scale(.94);}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.5px;}
+.topbar p{font-size:12px;color:var(--text-muted);margin-top:1px;}
+
+/* ── 主体布局 ── */
+.body{display:flex;flex-direction:column;gap:12px;}
+.stage-wrap{flex:1 1 auto;min-width:0;}
+.stage{
+  position:relative;background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);overflow:hidden;
+  aspect-ratio:1/1;max-height:66vh;
+}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+canvas.grabbing{cursor:grabbing;}
+.hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-size:12px;color:var(--text-muted);background:rgba(255,255,255,.86);
+  padding:4px 13px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  transition:opacity .45s;
+}
+.toast{
+  position:absolute;left:50%;top:12px;transform:translateX(-50%);
+  font-size:12.5px;font-weight:600;color:var(--accent-deep);
+  background:rgba(255,255,255,.94);border:1px solid rgba(209,73,91,.25);
+  padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  opacity:0;transition:opacity .3s;
+}
+.toast.on{opacity:1;}
+
+@media (min-width:880px){
+  .body{flex-direction:row;align-items:flex-start;}
+  .stage{aspect-ratio:auto;height:min(78vh,660px);max-height:none;}
+  .panel{width:346px;flex:0 0 346px;}
+}
+
+/* ── 控制面板 ── */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;}
+.card h2{
+  font-size:12.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.card h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--bamboo);}
+
+.seg{display:flex;gap:6px;margin-bottom:12px;}
+.chip{
+  flex:1;font-family:inherit;font-size:12px;padding:7px 4px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+  transition:all .2s;
+}
+.chip.active{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+
+.row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.row label{flex:0 0 88px;font-size:12.5px;color:var(--text-secondary);}
+.row input[type=range]{
+  flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;
+  background:var(--bamboo-light);outline:none;
+}
+.row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);box-shadow:0 1px 4px rgba(45,74,50,.25);cursor:pointer;
+}
+.row input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:#fff;border:2.5px solid var(--bamboo);cursor:pointer;
+}
+.row .val{flex:0 0 46px;text-align:right;font-size:12.5px;font-weight:600;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+
+.btns{display:flex;gap:7px;margin-top:12px;}
+.btn{
+  flex:1;font-family:inherit;font-size:12.5px;padding:9px 4px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--bamboo-dark);transition:all .2s;
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.btn.primary:active{background:var(--accent-deep);}
+.btn.on{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+.btn:active{transform:scale(.97);}
+
+/* ── 结论 ── */
+.conc .eq{
+  text-align:center;font-size:15px;font-weight:700;letter-spacing:.5px;
+  color:var(--accent-deep);padding:9px 0 11px;
+  font-family:'Times New Roman','Songti SC',serif;
+}
+.conc .eq .tag{
+  font-size:10.5px;font-weight:600;color:#fff;background:var(--accent);
+  padding:2px 7px;border-radius:8px;vertical-align:2px;margin-left:5px;
+  font-family:-apple-system,'PingFang SC',sans-serif;letter-spacing:.5px;
+}
+.conc ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.conc li{
+  font-size:12.5px;line-height:1.55;color:var(--text-secondary);
+  padding-left:13px;position:relative;
+}
+.conc li::before{
+  content:'';position:absolute;left:2px;top:7px;width:5px;height:5px;border-radius:50%;
+  background:var(--bamboo-light);
+}
+.conc b{color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+.conc b.red{color:var(--accent-deep);}
+.conc .ok{
+  display:inline-block;font-size:10px;color:#2E7D32;background:rgba(46,125,50,.1);
+  padding:1px 6px;border-radius:7px;margin-left:4px;font-weight:600;
+}
+.why{margin-top:11px;padding-top:10px;border-top:1px dashed var(--bamboo-light);font-size:12px;line-height:1.65;color:var(--text-muted);}
+.why b{color:var(--text-secondary);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <a class="back" href="index.html" aria-label="返回">‹</a>
+    <div>
+      <h1>手拉手模型</h1>
+      <p>共顶点的两个等腰三角形 · 全等三角形探索（八年级）</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="stage-wrap">
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <div class="toast" id="toast">△OAC 绕点 O 旋转 α 后，与 △OBD 完全重合</div>
+        <div class="hint" id="hint">✋ 按住图形拖动，即可旋转第二个三角形</div>
+      </div>
+    </div>
+
+    <aside class="panel">
+
+      <div class="card">
+        <h2>动手操作</h2>
+        <div class="seg" id="seg">
+          <button class="chip active" data-alpha="60">等边 60°</button>
+          <button class="chip" data-alpha="90">等腰直角 90°</button>
+          <button class="chip" data-alpha="120">顶角 120°</button>
+        </div>
+        <div class="row"><label>顶角 α</label><input type="range" id="sA" min="20" max="150" step="1" value="60"><span class="val" id="vA">60°</span></div>
+        <div class="row"><label>旋转角 θ</label><input type="range" id="sT" min="0" max="360" step="1" value="120"><span class="val" id="vT">120°</span></div>
+        <div class="row"><label>大三角形腰 r₁</label><input type="range" id="sR1" min="100" max="260" step="1" value="200"><span class="val" id="vR1">2.00</span></div>
+        <div class="row"><label>小三角形腰 r₂</label><input type="range" id="sR2" min="60" max="240" step="1" value="135"><span class="val" id="vR2">1.35</span></div>
+        <div class="btns">
+          <button class="btn primary" id="btnDemo">▶ 演示重合</button>
+          <button class="btn" id="btnAuto">自动旋转</button>
+          <button class="btn" id="btnReset">复位</button>
+        </div>
+      </div>
+
+      <div class="card conc">
+        <h2>核心结论</h2>
+        <div class="eq">△OAC ≌ △OBD <span class="tag">SAS</span></div>
+        <ul>
+          <li>OA = OB = <b id="vR1b">2.00</b>（△OAB 的两腰）</li>
+          <li>OC = OD = <b id="vR2b">1.35</b>（△OCD 的两腰）</li>
+          <li>∠AOC = ∠BOD = <b id="vAng">120°</b>（同加 ∠BOC）</li>
+          <li>∴ <b class="red">AC = BD = <span id="vAC">2.87</span></b><span class="ok" id="okLen">相等 ✓</span></li>
+          <li>∴ ∠AEB = <b class="red" id="vAEB">60°</b> <span id="noteAEB">= 顶角 α</span></li>
+        </ul>
+        <div class="why" id="whyText">
+          <b>为什么全等？</b> △OAB 与 △OCD 都是等腰三角形且顶角相等，
+          ∠AOC = ∠AOB + ∠BOC = ∠COD + ∠BOC = ∠BOD，
+          再由 OA = OB、OC = OD，用 <b>SAS</b> 即可判定 △OAC ≌ △OBD。
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var cv    = document.getElementById('cv');
+  var ctx   = cv.getContext('2d');
+  var hint  = document.getElementById('hint');
+  var toast = document.getElementById('toast');
+
+  var W = 0, H = 0, DPR = 1, SX = 0, SY = 0, scale = 1;   // SX/SY = 原点 O 的屏幕坐标
+
+  var S = {
+    alpha: 60,      // 顶角 α（度）
+    theta: 120,     // 第二个三角形绕 O 的旋转角 θ（度）
+    r1: 2.00,       // △OAB 腰长
+    r2: 1.35,       // △OCD 腰长
+    auto: false,
+    ghost: 0,       // 0 = 不显示；>0 = 演示进度
+    demoStart: -1
+  };
+
+  var COL = {
+    tan:   '#5B8C5A',
+    tanLt: '#D6E5D2',
+    gold:  '#C5A96A',
+    red:   '#D1495B',
+    redDp: '#B32D42',
+    grey:  '#9AAB9B'
+  };
+
+  var rad = function(d){ return d * Math.PI / 180; };
+  var dist = function(p,q){ return Math.hypot(p[0]-q[0], p[1]-q[1]); };
+  var toS = function(p){ return [SX + p[0]*scale, SY - p[1]*scale]; };
+  var rot = function(p, d){
+    var c = Math.cos(rad(d)), s = Math.sin(rad(d));
+    return [p[0]*c - p[1]*s, p[0]*s + p[1]*c];
+  };
+  var fmt = function(n){ return n.toFixed(2); };
+
+  /* ───────── 视图 ───────── */
+  function resize(){
+    var rect = cv.getBoundingClientRect();
+    if(!rect.width || !rect.height) return;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width; H = rect.height;
+    cv.width  = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    var maxR = Math.max(S.r1, S.r2);
+    scale = Math.min(W, H) / (2 * (maxR + 0.62));
+    SX = W / 2; SY = H / 2;
+  }
+
+  /* ───────── 几何 ───────── */
+  function geom(){
+    var a = rad(S.alpha), t = rad(S.theta);
+    var O = [0,0];
+    var A = [S.r1, 0];
+    var B = [S.r1*Math.cos(a), S.r1*Math.sin(a)];
+    var C = [S.r2*Math.cos(t), S.r2*Math.sin(t)];
+    var D = [S.r2*Math.cos(t+a), S.r2*Math.sin(t+a)];
+
+    var ac = dist(A,C), bd = dist(B,D);
+
+    /* 求 AC 与 BD 的交点 E（仅当两线段真正相交） */
+    var rx = C[0]-A[0], ry = C[1]-A[1];
+    var sx = D[0]-B[0], sy = D[1]-B[1];
+    var den = rx*sy - ry*sx;
+    var E = null;
+    if(Math.abs(den) > 1e-9){
+      var tt = ((B[0]-A[0])*sy - (B[1]-A[1])*sx) / den;
+      var ss = ((B[0]-A[0])*ry - (B[1]-A[1])*rx) / den;
+      if(tt >= 0 && tt <= 1 && ss >= 0 && ss <= 1){
+        E = [A[0] + tt*rx, A[1] + tt*ry];
+      }
+    }
+    return { O:O, A:A, B:B, C:C, D:D, E:E, ac:ac, bd:bd };
+  }
+
+  /* ───────── 绘图小工具 ───────── */
+  function seg(p, q, color, lw, dash){
+    var a = toS(p), b = toS(q);
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function poly(pts, fill, stroke, lw, dash){
+    ctx.save();
+    ctx.beginPath();
+    for(var i=0;i<pts.length;i++){
+      var s = toS(pts[i]);
+      if(i===0) ctx.moveTo(s[0], s[1]); else ctx.lineTo(s[0], s[1]);
+    }
+    ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){
+      ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1.5;
+      if(dash) ctx.setLineDash(dash);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function dot(p, color, r){
+    var s = toS(p);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(s[0], s[1], r||4, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+    ctx.restore();
+  }
+  function text(str, x, y, color, size, align, weight){
+    ctx.save();
+    ctx.font = (weight || 600) + ' ' + (size || 13) + 'px "Times New Roman","Songti SC",Georgia,serif';
+    ctx.textAlign = align || 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(255,255,255,.94)';
+    ctx.strokeText(str, x, y);
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
+    ctx.restore();
+  }
+  /* 等长标记：在 p-q 中点画 n 条短垂直刻线 */
+  function ticks(p, q, n, color){
+    var a = toS(p), b = toS(q);
+    var mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    var dx = b[0]-a[0], dy = b[1]-a[1];
+    var L = Math.hypot(dx, dy); if(L < 1) return;
+    dx /= L; dy /= L;
+    var px = -dy, py = dx;
+    var gap = 4, half = 4.5;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    for(var i=1;i<=n;i++){
+      var off = (i - (n+1)/2) * gap;
+      var cxp = mx + dx*off, cyp = my + dy*off;
+      ctx.beginPath();
+      ctx.moveTo(cxp - px*half, cyp - py*half);
+      ctx.lineTo(cxp + px*half, cyp + py*half);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* 角弧：顶点 v，两边过 p1、p2，半径 rPx */
+  function arcAt(v, p1, p2, rPx, color, lw, dash){
+    var c  = toS(v), q1 = toS(p1), q2 = toS(p2);
+    var a1 = Math.atan2(q1[1]-c[1], q1[0]-c[0]);
+    var a2 = Math.atan2(q2[1]-c[1], q2[0]-c[0]);
+    var d  = a2 - a1;
+    while(d >  Math.PI) d -= Math.PI*2;
+    while(d < -Math.PI) d += Math.PI*2;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw || 1.6;
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.arc(c[0], c[1], rPx, a1, a1+d, d < 0); ctx.stroke();
+    ctx.restore();
+    var mid = a1 + d/2;
+    return { x: c[0] + Math.cos(mid)*(rPx+15), y: c[1] + Math.sin(mid)*(rPx+15) };
+  }
+
+  /* ───────── 主绘制 ───────── */
+  function draw(){
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    var g = geom();
+    var maxR = Math.max(S.r1, S.r2);
+
+    /* 参考圆 */
+    ctx.save();
+    ctx.beginPath(); ctx.arc(SX, SY, maxR*scale, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(91,140,90,.16)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4,5]); ctx.stroke();
+    ctx.restore();
+
+    /* 两个原始等腰三角形（虚线轮廓） */
+    poly([g.O, g.A, g.B], 'rgba(91,140,90,.07)',  COL.tan,  1.3, [6,5]);
+    poly([g.O, g.C, g.D], 'rgba(197,169,106,.10)', COL.gold, 1.3, [6,5]);
+
+    /* 两个全等三角形（高亮填充） */
+    poly([g.O, g.A, g.C], 'rgba(209,73,91,.15)', COL.red, 1.6);
+    poly([g.O, g.B, g.D], 'rgba(209,73,91,.15)', COL.red, 1.6);
+
+    /* 手拉手两条线：AC、BD —— 加粗强调 */
+    seg(g.A, g.C, COL.redDp, 3.2);
+    seg(g.B, g.D, COL.redDp, 3.2);
+
+    /* 等长标记 */
+    ticks(g.O, g.A, 1, COL.tan);
+    ticks(g.O, g.B, 1, COL.tan);
+    ticks(g.O, g.C, 2, COL.gold);
+    ticks(g.O, g.D, 2, COL.gold);
+    ticks(g.A, g.C, 3, COL.redDp);
+    ticks(g.B, g.D, 3, COL.redDp);
+
+    /* 顶点 O 处相等的两个角 */
+    var R1 = Math.min(30, S.r1*scale*0.42);
+    var m1 = arcAt(g.O, g.A, g.C, R1, COL.red, 1.5);
+    var m2 = arcAt(g.O, g.B, g.D, R1, COL.red, 1.5);
+
+    /* 交点 E 与 ∠AEB */
+    if(g.E){
+      var R2 = 26;
+      var mE = arcAt(g.E, g.A, g.B, R2, COL.redDp, 1.8);
+      text(S.alpha + '°', mE.x, mE.y, COL.redDp, 12.5);
+      dot(g.E, COL.redDp, 3.4);
+      text('E', toS(g.E)[0] + 14, toS(g.E)[1] - 13, COL.redDp, 13);
+    }
+
+    /* 长度标注 */
+    var midAC = [(g.A[0]+g.C[0])/2, (g.A[1]+g.C[1])/2];
+    var midBD = [(g.B[0]+g.D[0])/2, (g.B[1]+g.D[1])/2];
+    var sAC = toS(midAC), sBD = toS(midBD);
+    var push = function(m){                       // 沿远离 O 的方向外推
+      var L = Math.hypot(m[0], m[1]) || 1;
+      return [m[0]/L*16, -m[1]/L*16];
+    };
+    var oAC = push(midAC), oBD = push(midBD);
+    text('AC = ' + fmt(g.ac), sAC[0] + oAC[0], sAC[1] + oAC[1], COL.redDp, 12.5);
+    text('BD = ' + fmt(g.bd), sBD[0] + oBD[0], sBD[1] + oBD[1], COL.redDp, 12.5);
+
+    /* 顶点与字母 */
+    var pts = [
+      { p:g.O, t:'O', c:COL.tan },
+      { p:g.A, t:'A', c:COL.tan },
+      { p:g.B, t:'B', c:COL.tan },
+      { p:g.C, t:'C', c:COL.gold },
+      { p:g.D, t:'D', c:COL.gold }
+    ];
+    var cxm = (g.A[0]+g.B[0]+g.C[0]+g.D[0])/4;
+    var cym = (g.A[1]+g.B[1]+g.C[1]+g.D[1])/4;
+    for(var i=0;i<pts.length;i++){
+      var it = pts[i];
+      dot(it.p, it.c, it.t === 'O' ? 4.4 : 4);
+      var sPt = toS(it.p);
+      var vx = it.p[0]-cxm, vy = it.p[1]-cym;
+      var Lv = Math.hypot(vx, vy) || 1;
+      text(it.t, sPt[0] + vx/Lv*18, sPt[1] - vy/Lv*18, it.c, 13.5);
+    }
+
+    /* 演示：△OAC 绕 O 旋转 α 后与 △OBD 重合 */
+    if(S.ghost > 0.001){
+      var u = S.ghost;
+      var A2 = rot(g.A, S.alpha*u);
+      var C2 = rot(g.C, S.alpha*u);
+      poly([g.O, A2, C2], 'rgba(209,73,91,' + (0.10 - 0.04*u).toFixed(3) + ')', COL.red, 1.8, [7,5]);
+      dot(A2, COL.red, 3.4);
+      dot(C2, COL.red, 3.4);
+      /* 旋转路径弧 */
+      var ra = Math.min(S.r1, S.r2) * scale * 0.5;
+      arcAt(g.O, g.A, A2, ra, 'rgba(209,73,91,.75)', 1.6, [4,4]);
+      var mr = arcAt(g.O, g.A, A2, ra + 7, 'rgba(209,73,91,.75)', 1.6, [4,4]);
+      if(u > 0.15) text(fmt(S.alpha*u) + '°', mr.x, mr.y, COL.red, 11.5);
+    }
+
+    /* 同步数据 */
+    updateReadout(g);
+  }
+
+  /* ───────── 面板数据 ───────── */
+  var $ = function(id){ return document.getElementById(id); };
+  function updateReadout(g){
+    var aoc = ((S.theta % 360) + 360) % 360;
+    var same = Math.abs(g.ac - g.bd) < 0.005;
+    $('vR1b').textContent = fmt(S.r1);
+    $('vR2b').textContent = fmt(S.r2);
+    $('vAng').textContent = Math.round(aoc) + '°';
+    $('vAC').textContent   = fmt(g.ac);
+    $('okLen').textContent = same ? '相等 ✓' : '—';
+    $('okLen').style.opacity = same ? 1 : .35;
+    if(g.E){
+      var u = [g.A[0]-g.E[0], g.A[1]-g.E[1]];
+      var v = [g.B[0]-g.E[0], g.B[1]-g.E[1]];
+      var cosv = (u[0]*v[0] + u[1]*v[1]) / (Math.hypot(u[0],u[1]) * Math.hypot(v[0],v[1]));
+      var ang = Math.acos(Math.max(-1, Math.min(1, cosv))) * 180 / Math.PI;
+      $('vAEB').textContent = ang.toFixed(1) + '°';
+      $('noteAEB').textContent = Math.abs(ang - S.alpha) < 0.4 ? '= 顶角 α' : '（与 α 互为补角）';
+    }else{
+      $('vAEB').textContent = '—';
+      $('noteAEB').textContent = 'AC 与 BD 暂未相交，转动图形试试';
+    }
+  }
+
+  /* ───────── 交互 ───────── */
+  var dragging = false, lastAng = 0, moved = 0;
+
+  function pointerAngle(e){
+    var r = cv.getBoundingClientRect();
+    return Math.atan2(SY - (e.clientY - r.top), (e.clientX - r.left) - SX) * 180 / Math.PI;
+  }
+  cv.addEventListener('pointerdown', function(e){
+    dragging = true; moved = 0;
+    lastAng = pointerAngle(e);
+    cv.setPointerCapture(e.pointerId);
+    cv.classList.add('grabbing');
+    hint.style.opacity = '0';
+    S.auto = false; $('btnAuto').classList.remove('on');
+  });
+  cv.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var ang = pointerAngle(e);
+    var d = ang - lastAng;
+    while(d >  180) d -= 360;
+    while(d < -180) d += 360;
+    lastAng = ang;
+    moved += Math.abs(d);
+    setTheta(S.theta + d);
+  });
+  function endDrag(e){
+    if(!dragging) return;
+    dragging = false;
+    cv.classList.remove('grabbing');
+    if(cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId);
+  }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  function setTheta(v){
+    var t = ((v % 360) + 360) % 360;
+    S.theta = t;
+    $('sT').value = Math.round(t);
+    $('vT').textContent = Math.round(t) + '°';
+  }
+
+  /* 滑块 */
+  $('sA').addEventListener('input', function(e){ setAlpha(parseFloat(e.target.value)); });
+  $('sT').addEventListener('input', function(e){ setTheta(parseFloat(e.target.value)); });
+  $('sR1').addEventListener('input', function(e){
+    S.r1 = parseInt(e.target.value, 10) / 100;
+    $('vR1').textContent = fmt(S.r1);
+    resize();
+  });
+  $('sR2').addEventListener('input', function(e){
+    S.r2 = parseInt(e.target.value, 10) / 100;
+    $('vR2').textContent = fmt(S.r2);
+    resize();
+  });
+
+  function setAlpha(a){
+    S.alpha = a;
+    $('sA').value = Math.round(a);
+    $('vA').textContent = Math.round(a) + '°';
+    var chips = document.querySelectorAll('#seg .chip');
+    for(var i=0;i<chips.length;i++){
+      chips[i].classList.toggle('active', Math.abs(parseFloat(chips[i].dataset.alpha) - a) < 0.5);
+    }
+    $('whyText').innerHTML =
+      '<b>为什么全等？</b> △OAB 与 △OCD 都是等腰三角形且顶角相等，' +
+      '∠AOC = ∠AOB + ∠BOC = ∠COD + ∠BOC = ∠BOD，' +
+      '再由 OA = OB、OC = OD，用 <b>SAS</b> 即可判定 △OAC ≌ △OBD。';
+  }
+
+  document.querySelectorAll('#seg .chip').forEach(function(b){
+    b.addEventListener('click', function(){
+      setAlpha(parseFloat(b.dataset.alpha));
+      if(b.dataset.alpha === '60')  setTheta(120);
+      if(b.dataset.alpha === '90')  setTheta(135);
+      if(b.dataset.alpha === '120') setTheta(150);
+    });
+  });
+
+  /* 按钮 */
+  var btnAuto = $('btnAuto');
+  btnAuto.addEventListener('click', function(){
+    S.auto = !S.auto;
+    btnAuto.classList.toggle('on', S.auto);
+    hint.style.opacity = '0';
+  });
+  $('btnDemo').addEventListener('click', function(){
+    S.auto = false; btnAuto.classList.remove('on');
+    S.demoStart = performance.now();
+    S.ghost = 0.001;
+    toast.textContent = '△OAC 绕点 O 旋转 ' + Math.round(S.alpha) + '° 后，与 △OBD 完全重合';
+  });
+  $('btnReset').addEventListener('click', function(){
+    S.auto = false; btnAuto.classList.remove('on');
+    S.demoStart = -1; S.ghost = 0;
+    S.r1 = 2.0; S.r2 = 1.35;
+    $('sR1').value = 200; $('sR2').value = 135;
+    $('vR1').textContent = '2.00'; $('vR2').textContent = '1.35';
+    setTheta(120); setAlpha(60);
+    resize();
+  });
+
+  /* ───────── 动画循环 ───────── */
+  var D1 = 1500, D2 = 900;   // 旋转时长 / 停留时长
+  function loop(now){
+    if(S.auto){
+      S.theta = (S.theta + 0.42) % 360;
+      $('sT').value = Math.round(S.theta);
+      $('vT').textContent = Math.round(S.theta) + '°';
+    }
+    if(S.demoStart >= 0){
+      var el = now - S.demoStart;
+      if(el < D1){
+        var t = el / D1;
+        S.ghost = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;   // easeInOutCubic
+        toast.classList.add('on');
+      }else if(el < D1 + D2){
+        S.ghost = 1;
+        toast.classList.add('on');
+      }else{
+        S.demoStart = -1; S.ghost = 0;
+        toast.classList.remove('on');
+      }
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ───────── 启动 ───────── */
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ resize(); }).observe(cv);
+  }
+  resize();
+  setAlpha(60);
+  setTheta(120);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
