@@ -247,6 +247,7 @@ canvas.grabbing{cursor:grabbing;}
             <li>由外角定理：∠A = ∠DPC = <b id="vPair">45.0°</b></li>
             <li>∴ 两角对应相等 ⇒ <b>△ABP ∽ △PCD</b></li>
             <li>当 <b>AB = PC</b> 时 ⇒ <b class="red" id="vJudge">相似</b></li>
+            <li id="liShape" style="display:none">形状：<b id="vShape">—</b></li>
           </ul>
           <div class="why" id="whyText">
             <b>为什么成立？</b> ∠APC 既是 △ABP 的外角（∠APC = ∠A + ∠ABP），
@@ -479,6 +480,40 @@ canvas.grabbing{cursor:grabbing;}
     ctx.restore();
     return { x: c[0] + Math.cos(mid)*(rPx+17), y: c[1] + Math.sin(mid)*(rPx+17) };
   }
+  var isRight = function(a){ return isFinite(a) && Math.abs(a - 90) < 0.6; };
+  /* 直角符号（口）——夹在两条边的内侧 */
+  function rightAngleMark(v, p1, p2, size, color){
+    var c = toS(v), q1 = toS(p1), q2 = toS(p2);
+    var a1 = Math.atan2(q1[1]-c[1], q1[0]-c[0]);
+    var a2 = Math.atan2(q2[1]-c[1], q2[0]-c[0]);
+    var d = a2 - a1;
+    while(d >  Math.PI) d -= Math.PI*2;
+    while(d < -Math.PI) d += Math.PI*2;
+    var step = d >= 0 ? Math.PI/2 : -Math.PI/2;
+    var r = size;
+    var pA = [c[0]+Math.cos(a1)*r,        c[1]+Math.sin(a1)*r];
+    var pB = [c[0]+Math.cos(a1+step)*r*Math.SQRT2, c[1]+Math.sin(a1+step)*r*Math.SQRT2];
+    var pC = [c[0]+Math.cos(a2)*r,        c[1]+Math.sin(a2)*r];
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineJoin = 'miter';
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pA[0],pA[1]); ctx.lineTo(pB[0],pB[1]); ctx.lineTo(pC[0],pC[1]);
+    ctx.stroke();
+    ctx.restore();
+    var bis = a1 + d/2;
+    return { x: c[0]+Math.cos(bis)*(r*2.1), y: c[1]+Math.sin(bis)*(r*2.1), right: true };
+  }
+  /* 角标记：直角画「口」，其他角画弧 + 等角刻线；返回标签位置 */
+  function markAngle(v, p1, p2, rPx, color, label){
+    var ang = angleAt(v, p1, p2), lp;
+    if(isRight(ang)){
+      lp = rightAngleMark(v, p1, p2, Math.max(11, Math.min(19, rPx*0.55)), color);
+    }else{
+      lp = angleArc(v, p1, p2, rPx, color, 1.7);
+    }
+    if(label) text(label, lp.x, lp.y, color, 13);
+    return lp;
+  }
 
   /* ───────── 主绘制 ───────── */
   function draw(now){
@@ -494,22 +529,27 @@ canvas.grabbing{cursor:grabbing;}
     poly([g.A, g.B, g.P], 'rgba(91,140,90,.11)', COL.tan, 1.7);
     if(g.D) poly([g.P, g.C, g.D], 'rgba(197,169,106,.15)', COL.gold, 1.7);
 
-    /* 三个等角（已知条件，始终显示） */
+    /* 三个等角（已知条件，始终显示；α=90° 时自动改画直角符号） */
     var rB = Math.min(34, g.AB*view.s*0.32, g.BP*view.s*0.32);
-    var lB = angleArc(g.B, g.A, g.P, Math.max(16, rB), COL.red, 1.7);
-    text('α', lB.x, lB.y, COL.red, 13);
+    var lB = markAngle(g.B, g.A, g.P, Math.max(16, rB), COL.red, 'α');
 
     if(g.D){
       var rP = Math.max(16, Math.min(34, g.AP*view.s*0.30, g.PD*view.s*0.30));
-      var lP = angleArc(g.P, g.A, g.D, rP, COL.red, 1.7);
-      text('α', lP.x, lP.y, COL.red, 13);
+      markAngle(g.P, g.A, g.D, rP, COL.red, 'α');
 
       var rC = Math.max(16, Math.min(34, g.PC*view.s*0.30, g.CD*view.s*0.30));
-      var lC = angleArc(g.C, g.P, g.D, rC, COL.red, 1.7);
-      text('α', lC.x, lC.y, COL.red, 13);
+      markAngle(g.C, g.P, g.D, rC, COL.red, 'α');
     }
-    /* α 数值只标一次（在 B 处弧外侧） */
-    text(S.alpha + '°', lB.x, lB.y + 17, COL.red, 11.5, 600);
+    /* α 数值只标一次（在 B 处标记外侧） */
+    text(S.alpha + '°', lB.x, lB.y + (lB.right ? 15 : 17), COL.red, 11.5, 600);
+
+    /* 派生直角（如 45° 预设下 ∠A = ∠DPC = 90°）：蓝色直角符号 */
+    if(isRight(angleAt(g.A, g.B, g.P))){
+      rightAngleMark(g.A, g.B, g.P, 15, COL.slate);
+    }
+    if(g.D && isRight(angleAt(g.P, g.D, g.C))){
+      rightAngleMark(g.P, g.D, g.C, 15, COL.slate);
+    }
 
     /* ═════ 以下为「答案」部分，可一键隐藏 ═════ */
     if(!S.hide){
@@ -593,6 +633,7 @@ canvas.grabbing{cursor:grabbing;}
       $('vAlpha').textContent = '？';
       $('vPair').textContent = '？';
       $('vJudge').textContent = '？';
+      $('liShape').style.display = 'none';
       $('badge').textContent = '答案已隐藏';
       $('badge').className = 'badge hide';
       $('r1').className = ''; $('r2').className = ''; $('r3').className = '';
@@ -600,6 +641,13 @@ canvas.grabbing{cursor:grabbing;}
     }
     $('vAlpha').textContent = Math.round(S.alpha) + '°';
     $('vPair').textContent = isFinite(g.angA) ? g.angA.toFixed(1) + '°' : '—';
+    /* 特殊形状提示 */
+    var eq = function(x,y){ return isFinite(x) && isFinite(y) && Math.abs(x-y) < 0.012; };
+    var shape = '';
+    if(isRight(g.angA) && eq(g.AB, g.AP)) shape = '△ABP 与 △PCD 都是等腰直角三角形（直角在 A 与 P）';
+    else if(eq(g.AB,g.BP) && eq(g.BP,g.AP)) shape = '△ABP 与 △PCD 都是等边三角形';
+    $('liShape').style.display = shape ? '' : 'none';
+    $('vShape').textContent = shape;
     $('vJudge').textContent = cong ? '全等 △ABP ≌ △PCD' : '相似 △ABP ∽ △PCD';
     $('badge').textContent = cong ? '形状、大小都相同 → 全等 ✓' : '形状相同、大小不同 → 相似';
     $('badge').className = cong ? 'badge cong' : 'badge';
@@ -661,11 +709,15 @@ canvas.grabbing{cursor:grabbing;}
   Array.prototype.forEach.call(document.querySelectorAll('#seg .chip'), function(b){
     b.addEventListener('click', function(){
       setAlpha(parseFloat(b.dataset.alpha));
-      if(b.dataset.alpha === '90'){ S.p = 2.5; S.r1 = 3.0; }
-      if(b.dataset.alpha === '60'){ S.p = 2.6; S.r1 = 2.4; }
-      if(b.dataset.alpha === '45'){ S.p = 2.7; S.r1 = 2.0; }
+      applyPreset(parseFloat(b.dataset.alpha));
     });
   });
+  /* 预设 = 让图形真的长成它名字对应的特殊形状 */
+  function applyPreset(a){
+    if(a === 90){ S.r1 = 3.0; S.p = 2.5; }                    /* 三垂直：∠B=∠P=∠C=90° */
+    else if(a === 60){ S.r1 = 2.4; S.p = S.r1; }              /* 等边：AB=BP=AP */
+    else if(a === 45){ S.r1 = 2.0; S.p = S.r1*Math.SQRT2; }   /* 等腰直角：AB ⟂ AP 且 AB=AP */
+  }
 
   /* 按钮 */
   function tuneCongruent(animate, then){
@@ -736,7 +788,8 @@ canvas.grabbing{cursor:grabbing;}
     '拖动 P 的时候，三组对应边的比值变了吗？为什么？',
     '什么时候这两个三角形会全等？（看看 AB 和 PC 的关系）',
     '∠A 与 ∠DPC 为什么一定相等？（提示：找 △ABP 的外角）',
-    '把 α 拖到 90°，图形变成了什么熟悉的模型？',
+    '把 α 拖到 90°，图形变成了什么熟悉的模型？（看看三个直角符号）',
+    '切到 45° 预设：两个三角形各是什么形状？直角符号标在哪儿？',
     '拖动 A 改变形状，三个角还相等吗？相似还成立吗？'
   ];
   var qi = 0;
