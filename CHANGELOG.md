@@ -32,3 +32,15 @@
 
 ### 07:38 - 主智能体
 - 修改：unit-circle.html、quadratic.html（🎋 emoji → logo-36.png 图片，统一品牌 logo）
+
+## 2026-09-13
+
+### 13:55 - qingniao
+- 新增：handshake-model.html（手拉手模型 · 全等三角形，八年级平面几何）
+  - 共顶点两个等腰三角形，拖动/滑块旋转第二个三角形
+  - 高亮显示全等三角形 △OAC ≌ △OBD，标注 AC=BD、∠AEB=顶角 α
+  - 演示动画：△OAC 绕 O 旋转 α 后与 △OBD 重合（easeInOutCubic）
+  - 预设：等边 60° / 等腰直角 90° / 顶角 120°；可调 α、θ、r₁、r₂
+  - 已做像素级与数据级自检（无 JS 报错 / 360·390·844 三种视口无横向溢出 / 拖动旋转生效）
+- 新增：handshake-model-cover.svg（首页卡片封面，640x400）
+- 修改：index.html（工具网格首位置加入「手拉手模型」卡片；分类标签新增「平面几何」）
