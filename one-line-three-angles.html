@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 一线三等角（相似与全等）</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bamboo:#5B8C5A; --bamboo-dark:#2D4A32; --bamboo-mist:#F0F5EE; --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A; --text-secondary:#6B7D6C; --text-muted:#9AAB9B; --white:#FFFFFF;
+  --accent:#D1495B; --accent-deep:#B32D42; --slate:#4E6E8E;
+  --shadow-sm:0 1px 3px rgba(45,74,50,.06); --shadow-md:0 4px 12px rgba(45,74,50,.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bamboo-mist); color:var(--bamboo-dark);
+  -webkit-font-smoothing:antialiased; padding-bottom:24px;
+}
+.app{max-width:1000px;margin:0 auto;padding:12px 12px 0;display:flex;flex-direction:column;gap:12px;}
+
+/* ── 顶部 ── */
+.topbar{display:flex;align-items:center;gap:10px;}
+.topbar .back{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--white);
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--bamboo-dark);font-size:18px;line-height:1;
+}
+.topbar .back:active{transform:scale(.94);}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.5px;}
+.topbar p{font-size:12px;color:var(--text-muted);margin-top:1px;}
+
+/* ── 主体布局 ── */
+.body{display:flex;flex-direction:column;gap:12px;}
+.stage-wrap{flex:1 1 auto;min-width:0;}
+.stage{
+  position:relative;background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);overflow:hidden;
+  aspect-ratio:1/1;max-height:66vh;
+}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+canvas.grabbing{cursor:grabbing;}
+.hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-size:12px;color:var(--text-muted);background:rgba(255,255,255,.86);
+  padding:4px 13px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  transition:opacity .45s;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;
+}
+.toast{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  font-size:12.5px;font-weight:600;color:var(--accent-deep);
+  background:rgba(255,255,255,.94);border:1px solid rgba(209,73,91,.25);
+  padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .3s;
+}
+.toast.on{opacity:1;}
+
+/* ── 小灯泡与提问气泡 ── */
+.bulb{
+  position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(197,169,106,.55);background:rgba(255,255,255,.94);
+  font-size:19px;line-height:1;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(45,74,50,.13);transition:transform .18s, box-shadow .25s, border-color .25s;
+}
+.bulb:active{transform:scale(.92);}
+.bulb.lit{border-color:var(--wood-gold);box-shadow:0 0 0 4px rgba(197,169,106,.20),0 2px 10px rgba(45,74,50,.16);}
+.bulb.glow{animation:bulbGlow 2.6s ease-in-out infinite;}
+@keyframes bulbGlow{
+  0%,100%{box-shadow:0 2px 8px rgba(45,74,50,.13);}
+  50%{box-shadow:0 0 0 5px rgba(197,169,106,.22),0 2px 10px rgba(45,74,50,.16);}
+}
+.qbox{
+  position:absolute;top:56px;right:10px;max-width:80%;
+  background:rgba(255,255,255,.975);border:1px solid rgba(197,169,106,.5);
+  border-radius:12px;padding:11px 13px 9px;box-shadow:0 8px 24px rgba(45,74,50,.16);
+  opacity:0;transform:translateY(-6px) scale(.97);pointer-events:none;
+  transition:opacity .22s, transform .22s;
+}
+.qbox.on{opacity:1;transform:none;pointer-events:auto;}
+.qtext{font-size:13px;line-height:1.6;color:var(--bamboo-dark);text-align:left;}
+.qtext::before{content:'💡 ';}
+.qrow{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+.qbtn{
+  font-family:inherit;font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+}
+.qbtn:active{transform:scale(.96);}
+
+@media (min-width:880px){
+  .body{flex-direction:row;align-items:flex-start;}
+  .stage{aspect-ratio:auto;height:min(76vh,640px);max-height:none;}
+  .panel{width:350px;flex:0 0 350px;}
+}
+
+/* ── 控制面板 ── */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;}
+.card h2{
+  font-size:12.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.card h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--bamboo);}
+
+.seg{display:flex;gap:6px;margin-bottom:12px;}
+.chip{
+  flex:1;font-family:inherit;font-size:12px;padding:7px 4px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+  transition:all .2s;
+}
+.chip.active{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+
+.row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.row label{flex:0 0 88px;font-size:12.5px;color:var(--text-secondary);}
+.row input[type=range]{
+  flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;
+  background:var(--bamboo-light);outline:none;
+}
+.row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);box-shadow:0 1px 4px rgba(45,74,50,.25);cursor:pointer;
+}
+.row input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:#fff;border:2.5px solid var(--bamboo);cursor:pointer;
+}
+.row .val{flex:0 0 46px;text-align:right;font-size:12.5px;font-weight:600;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+
+.btns{display:flex;gap:7px;margin-top:12px;}
+.btn{
+  flex:1;font-family:inherit;font-size:12.5px;padding:9px 4px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--bamboo-dark);transition:all .2s;
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.btn.primary:active{background:var(--accent-deep);}
+.btn.on{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+.btn:active{transform:scale(.97);}
+
+/* ── 结论 ── */
+.conc .eq{
+  text-align:center;font-size:15px;font-weight:700;letter-spacing:.5px;
+  color:var(--accent-deep);padding:8px 0 10px;
+  font-family:'Times New Roman','Songti SC',serif;
+}
+.conc .eq .tag{
+  font-size:10.5px;font-weight:600;color:#fff;background:var(--accent);
+  padding:2px 7px;border-radius:8px;vertical-align:2px;margin-left:5px;
+  font-family:-apple-system,'PingFang SC',sans-serif;letter-spacing:.5px;
+}
+.conc ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.conc li{font-size:12.5px;line-height:1.55;color:var(--text-secondary);padding-left:13px;position:relative;}
+.conc li::before{
+  content:'';position:absolute;left:2px;top:7px;width:5px;height:5px;border-radius:50%;
+  background:var(--bamboo-light);
+}
+.conc b{color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+.conc b.red{color:var(--accent-deep);}
+.why{margin-top:11px;padding-top:10px;border-top:1px dashed var(--bamboo-light);font-size:12px;line-height:1.65;color:var(--text-muted);}
+.why b{color:var(--text-secondary);}
+
+/* ── 对应边比例表 ── */
+.ratio{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;}
+.ratio th{font-size:11px;font-weight:600;color:var(--text-muted);text-align:right;padding:0 0 6px;letter-spacing:.3px;}
+.ratio th:first-child{text-align:left;}
+.ratio td{padding:5px 0;text-align:right;color:var(--bamboo-dark);border-top:1px dashed rgba(214,229,210,.9);}
+.ratio td:first-child{text-align:left;color:var(--text-secondary);font-size:12px;}
+.ratio tr.hit td{color:var(--accent-deep);font-weight:600;}
+.badge{
+  margin-top:11px;text-align:center;font-size:12.5px;font-weight:600;padding:8px;border-radius:9px;
+  background:rgba(91,140,90,.10);color:var(--bamboo-dark);transition:all .3s;
+}
+.badge.cong{background:rgba(209,73,91,.13);color:var(--accent-deep);}
+.badge.hide{background:rgba(197,169,106,.15);color:#8A6D2F;}
+
+/* ── 先猜后验 ── */
+.conc-body{transition:filter .35s ease;}
+.conc.masked .conc-body{filter:blur(5.5px);opacity:.75;pointer-events:none;user-select:none;}
+.card.masked .ratio, .card.masked .badge{filter:blur(5px);opacity:.6;pointer-events:none;user-select:none;}
+.maskbar{display:none;}
+.masked .maskbar{
+  display:block;font-size:12px;font-weight:600;color:#8A6D2F;
+  background:rgba(197,169,106,.16);border:1px dashed rgba(197,169,106,.65);
+  border-radius:9px;padding:7px 10px;margin-bottom:10px;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <a class="back" href="index.html" aria-label="返回">‹</a>
+    <div>
+      <h1>一线三等角</h1>
+      <p>共线的三个等角 · 相似与全等（八年级）</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="stage-wrap">
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <div class="toast" id="toast">△ABP 旋转后与 △PCD 重合</div>
+        <button class="bulb glow" id="bulb" aria-label="想一想">💡</button>
+        <div class="qbox" id="qbox">
+          <div class="qtext" id="qtext"></div>
+          <div class="qrow">
+            <button class="qbtn" id="qNext">↻ 换一题</button>
+            <button class="qbtn" id="qClose">收起</button>
+          </div>
+        </div>
+        <div class="hint" id="hint">✋ 拖动 P（沿直线滑动）或 A（沿射线滑动）</div>
+      </div>
+    </div>
+
+    <aside class="panel">
+
+      <div class="card">
+        <h2>动手操作</h2>
+        <div class="seg" id="seg">
+          <button class="chip active" data-alpha="90">三垂直 90°</button>
+          <button class="chip" data-alpha="60">等边 60°</button>
+          <button class="chip" data-alpha="45">等腰直角 45°</button>
+        </div>
+        <div class="row"><label>等角 α</label><input type="range" id="sA" min="30" max="90" step="1" value="90"><span class="val" id="vA">90°</span></div>
+        <div class="btns">
+          <button class="btn primary" id="btnTune">🎯 调成全等</button>
+          <button class="btn" id="btnDemo">▶ 演示重合</button>
+        </div>
+        <div class="btns">
+          <button class="btn" id="btnHide">🙈 隐藏辅助线</button>
+          <button class="btn" id="btnReset">复位</button>
+        </div>
+      </div>
+
+      <div class="card conc" id="concCard">
+        <h2>核心结论</h2>
+        <div class="maskbar">🙈 答案已隐藏 · 点「揭晓答案」查看</div>
+        <div class="conc-body">
+          <div class="eq">△ABP ∽ △PCD <span class="tag">AA</span></div>
+          <ul>
+            <li>已知：∠ABP = ∠APD = ∠PCD = <b id="vAlpha">90°</b></li>
+            <li>由外角定理：∠A = ∠DPC = <b id="vPair">45.0°</b></li>
+            <li>∴ 两角对应相等 ⇒ <b>△ABP ∽ △PCD</b></li>
+            <li>当 <b>AB = PC</b> 时 ⇒ <b class="red" id="vJudge">相似</b></li>
+          </ul>
+          <div class="why" id="whyText">
+            <b>为什么成立？</b> ∠APC 既是 △ABP 的外角（∠APC = ∠A + ∠ABP），
+            又被平角拆成 ∠APD + ∠DPC。两边都减去那个相等的角 α，
+            剩下的必然相等 —— 这就是"一线三等角"的全部秘密。
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="ratioCard">
+        <h2>对应边比例</h2>
+        <div class="maskbar">🙈 答案已隐藏 · 点「揭晓答案」查看</div>
+        <div class="ratio-wrap">
+          <table class="ratio">
+            <thead><tr><th>对应边</th><th>△ABP</th><th>△PCD</th><th>比</th></tr></thead>
+            <tbody>
+              <tr id="r1"><td>AB ↔ PC</td><td id="ab">3.50</td><td id="pc">3.50</td><td id="k1">1.00</td></tr>
+              <tr id="r2"><td>BP ↔ CD</td><td id="bp">2.50</td><td id="cd">2.50</td><td id="k2">1.00</td></tr>
+              <tr id="r3"><td>AP ↔ PD</td><td id="ap">4.30</td><td id="pd">4.30</td><td id="k3">1.00</td></tr>
+            </tbody>
+          </table>
+          <div class="badge" id="badge">形状相同（相似）</div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var cv    = document.getElementById('cv');
+  var ctx   = cv.getContext('2d');
+  var hint  = document.getElementById('hint');
+  var toast = document.getElementById('toast');
+  var $ = function(id){ return document.getElementById(id); };
+
+  var W = 0, H = 0, DPR = 1;
+  var L = 6;                       // BC 长度（固定）
+  var P_MIN = 1.0, P_MAX = 4.8;    // P 活动范围
+  var R_MIN = 1.2, R_MAX = 5.2;    // AB 范围
+
+  var S = {
+    alpha: 90,
+    p: 2.5,
+    r1: 3.0,
+    hide: false,
+    ghost: 0,
+    demoStart: -1,
+    tune: null
+  };
+
+  /* 视图（世界→屏幕）：X = cx + x*s , Y = cy - y*s */
+  var view = { s: 60, cx: 0, cy: 0, ready: false };
+
+  var COL = {
+    tan:   '#5B8C5A',
+    tanDk: '#2D4A32',
+    gold:  '#C5A96A',
+    goldDk:'#8A6D2F',
+    red:   '#D1495B',
+    redDp: '#B32D42',
+    slate: '#4E6E8E',
+    grey:  '#9AAB9B'
+  };
+
+  var rad = function(d){ return d * Math.PI / 180; };
+  var deg = function(r){ return r * 180 / Math.PI; };
+  var dist = function(p,q){ return Math.hypot(p[0]-q[0], p[1]-q[1]); };
+  var cross = function(u,v){ return u[0]*v[1] - u[1]*v[0]; };
+  var toS = function(p){ return [view.cx + p[0]*view.s, view.cy - p[1]*view.s]; };
+  var fmt = function(n){ return n.toFixed(2); };
+  var clamp = function(v,a,b){ return v < a ? a : (v > b ? b : v); };
+
+  /* ───────── 几何 ───────── */
+  function geom(){
+    var a = rad(S.alpha);
+    var B = [0,0], C = [L,0], P = [S.p,0];
+    var A = [S.r1*Math.cos(a), S.r1*Math.sin(a)];
+
+    /* P 处 ∠APD = α ⇒ PD 方向 = PA 方向 − α */
+    var thPA = Math.atan2(A[1]-P[1], A[0]-P[0]);
+    var thPD = thPA - a;
+    var d1 = [Math.cos(thPD), Math.sin(thPD)];
+    var d2 = [Math.cos(Math.PI-a), Math.sin(Math.PI-a)];   // C 处射线方向
+    var den = cross(d1, d2);
+    var D = null;
+    if(Math.abs(den) > 1e-9){
+      var w = [C[0]-P[0], C[1]-P[1]];
+      var t = cross(w, d2)/den, s = cross(w, d1)/den;
+      if(t > 0 && s > 0) D = [P[0] + t*d1[0], P[1] + t*d1[1]];
+    }
+
+    var g = { A:A, B:B, C:C, D:D, P:P, alpha: S.alpha };
+    g.AB = dist(A,B); g.PC = dist(P,C); g.BP = dist(B,P);
+    g.CD = D ? dist(C,D) : NaN;
+    g.AP = dist(A,P); g.PD = D ? dist(P,D) : NaN;
+    g.k1 = g.PC ? g.AB/g.PC : NaN;
+    g.k2 = g.CD ? g.BP/g.CD : NaN;
+    g.k3 = g.PD ? g.AP/g.PD : NaN;
+    g.cong = Math.abs(g.AB - g.PC) < 0.006;
+
+    /* 两组派生等角 */
+    g.angA = angleAt(A, B, P);
+    g.angDPC = D ? angleAt(D, P, C) : NaN;
+    return g;
+  }
+  function angleAt(v, p1, p2){
+    var u = [p1[0]-v[0], p1[1]-v[1]], w = [p2[0]-v[0], p2[1]-v[1]];
+    var lu = Math.hypot(u[0],u[1]), lw = Math.hypot(w[0],w[1]);
+    if(!lu || !lw) return NaN;
+    return deg(Math.acos(clamp((u[0]*w[0]+u[1]*w[1])/(lu*lw), -1, 1)));
+  }
+
+  /* ───────── 视图自适应（带平滑） ───────── */
+  function fitTarget(g){
+    var xs = [g.B[0], g.C[0], g.A[0], g.P[0]], ys = [g.B[1], g.C[1], g.A[1], g.P[1]];
+    if(g.D){ xs.push(g.D[0]); ys.push(g.D[1]); }
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var padX = 0.9, padY = 0.75;
+    minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+    var s = Math.min(W/(maxX-minX), H/(maxY-minY));
+    var mx = (minX+maxX)/2, my = (minY+maxY)/2;
+    return { s: s, cx: W/2 - mx*s, cy: H/2 + my*s };
+  }
+  function updateView(g, snap){
+    var t = fitTarget(g);
+    if(snap || !view.ready){
+      view.s = t.s; view.cx = t.cx; view.cy = t.cy; view.ready = true;
+    }else{
+      view.s  += (t.s  - view.s ) * 0.14;
+      view.cx += (t.cx - view.cx) * 0.14;
+      view.cy += (t.cy - view.cy) * 0.14;
+    }
+  }
+  function resize(){
+    var rect = cv.getBoundingClientRect();
+    if(!rect.width || !rect.height) return;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width; H = rect.height;
+    cv.width  = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+    updateView(geom(), true);
+  }
+
+  /* ───────── 绘图工具 ───────── */
+  function seg(p, q, color, lw, dash){
+    var a = toS(p), b = toS(q);
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function poly(pts, fill, stroke, lw, dash){
+    ctx.save();
+    ctx.beginPath();
+    for(var i=0;i<pts.length;i++){
+      if(!pts[i]) continue;
+      var s = toS(pts[i]);
+      if(i===0) ctx.moveTo(s[0],s[1]); else ctx.lineTo(s[0],s[1]);
+    }
+    ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){
+      ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1.6;
+      if(dash) ctx.setLineDash(dash);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function dot(p, color, r){
+    var s = toS(p);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(s[0], s[1], r || 4, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+    ctx.restore();
+  }
+  function text(str, x, y, color, size, weight){
+    ctx.save();
+    ctx.font = (weight || 600) + ' ' + (size || 13) + 'px "Times New Roman","Songti SC",Georgia,serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3.4; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.strokeText(str, x, y);
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
+    ctx.restore();
+  }
+  function ticks(p, q, n, color){
+    var a = toS(p), b = toS(q);
+    var mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    var dx = b[0]-a[0], dy = b[1]-a[1];
+    var len = Math.hypot(dx,dy); if(len < 1) return;
+    dx /= len; dy /= len;
+    var px = -dy, py = dx, gap = 4, half = 4.6;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.9; ctx.lineCap = 'round';
+    for(var i=1;i<=n;i++){
+      var off = (i-(n+1)/2)*gap;
+      var cxp = mx + dx*off, cyp = my + dy*off;
+      ctx.beginPath();
+      ctx.moveTo(cxp - px*half, cyp - py*half);
+      ctx.lineTo(cxp + px*half, cyp + py*half);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* 角弧 + 一道等角刻线；返回标签位置 */
+  function angleArc(v, p1, p2, rPx, color, lw){
+    var c = toS(v), q1 = toS(p1), q2 = toS(p2);
+    var a1 = Math.atan2(q1[1]-c[1], q1[0]-c[0]);
+    var a2 = Math.atan2(q2[1]-c[1], q2[0]-c[0]);
+    var d = a2 - a1;
+    while(d >  Math.PI) d -= Math.PI*2;
+    while(d < -Math.PI) d += Math.PI*2;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw || 1.7;
+    ctx.beginPath(); ctx.arc(c[0], c[1], rPx, a1, a1+d, d < 0); ctx.stroke();
+    /* 等角刻线：弧中点处一道短线 */
+    var mid = a1 + d/2;
+    var tx = c[0] + Math.cos(mid)*rPx, ty = c[1] + Math.sin(mid)*rPx;
+    var nx = Math.cos(mid+Math.PI/2), ny = Math.sin(mid+Math.PI/2);
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(tx - nx*5.5, ty - ny*5.5);
+    ctx.lineTo(tx + nx*5.5, ty + ny*5.5);
+    ctx.stroke();
+    ctx.restore();
+    return { x: c[0] + Math.cos(mid)*(rPx+17), y: c[1] + Math.sin(mid)*(rPx+17) };
+  }
+
+  /* ───────── 主绘制 ───────── */
+  function draw(now){
+    var g = geom();
+    updateView(g, false);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,W,H);
+
+    /* 直线 l */
+    seg([-0.85, 0], [L+0.85, 0], 'rgba(107,125,108,.55)', 2);
+
+    /* 两个三角形 */
+    poly([g.A, g.B, g.P], 'rgba(91,140,90,.11)', COL.tan, 1.7);
+    if(g.D) poly([g.P, g.C, g.D], 'rgba(197,169,106,.15)', COL.gold, 1.7);
+
+    /* 三个等角（已知条件，始终显示） */
+    var rB = Math.min(34, g.AB*view.s*0.32, g.BP*view.s*0.32);
+    var lB = angleArc(g.B, g.A, g.P, Math.max(16, rB), COL.red, 1.7);
+    text('α', lB.x, lB.y, COL.red, 13);
+
+    if(g.D){
+      var rP = Math.max(16, Math.min(34, g.AP*view.s*0.30, g.PD*view.s*0.30));
+      var lP = angleArc(g.P, g.A, g.D, rP, COL.red, 1.7);
+      text('α', lP.x, lP.y, COL.red, 13);
+
+      var rC = Math.max(16, Math.min(34, g.PC*view.s*0.30, g.CD*view.s*0.30));
+      var lC = angleArc(g.C, g.P, g.D, rC, COL.red, 1.7);
+      text('α', lC.x, lC.y, COL.red, 13);
+    }
+    /* α 数值只标一次（在 B 处弧外侧） */
+    text(S.alpha + '°', lB.x, lB.y + 17, COL.red, 11.5, 600);
+
+    /* ═════ 以下为「答案」部分，可一键隐藏 ═════ */
+    if(!S.hide){
+      /* 对应边刻线 */
+      ticks(g.B, g.A, 1, COL.slate);   // AB
+      ticks(g.P, g.C, 1, COL.slate);   // PC
+      ticks(g.B, g.P, 2, COL.slate);   // BP
+      if(g.D) ticks(g.C, g.D, 2, COL.slate);  // CD
+      ticks(g.P, g.A, 3, COL.slate);   // AP
+      if(g.D) ticks(g.P, g.D, 3, COL.slate);  // PD
+
+      /* 关键等长对：AB 与 PC 加粗提示 */
+      if(g.cong){
+        seg(g.B, g.A, COL.redDp, 3);
+        seg(g.P, g.C, COL.redDp, 3);
+      }
+    }
+
+    /* 顶点与字母 */
+    var lbl = [
+      { p:g.B, t:'B' }, { p:g.P, t:'P' }, { p:g.C, t:'C' }, { p:g.A, t:'A' }
+    ];
+    if(g.D) lbl.push({ p:g.D, t:'D' });
+
+    /* 可拖动手柄光环 */
+    [[g.P, COL.tanDk], [g.A, COL.tanDk]].forEach(function(it){
+      var s = toS(it[0]);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(s[0], s[1], 9.5, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(91,140,90,.35)'; ctx.lineWidth = 1.6;
+      ctx.setLineDash([3,3]); ctx.stroke();
+      ctx.restore();
+    });
+
+    lbl.forEach(function(o){
+      dot(o.p, o.t === 'A' ? COL.tan : (o.t === 'D' ? COL.gold : COL.tanDk), 4.2);
+      var s = toS(o.p);
+      var dx = 0, dy = 0;
+      if(o.t === 'B'){ dx = -4; dy = 20; }
+      else if(o.t === 'C'){ dx = 6; dy = 20; }
+      else if(o.t === 'A'){ dx = 0; dy = -19; }
+      else if(o.t === 'D'){ dx = 16; dy = -14; }
+      else { dx = 0; dy = 20; }
+      text(o.t, s[0]+dx, s[1]+dy, o.t === 'D' ? COL.goldDk : COL.tanDk, 14, 700);
+    });
+
+    /* 演示：△ABP → △PCD（旋转 + 缩放 + 平移） */
+    if(S.ghost > 0.001 && !S.hide){
+      var u = S.ghost;
+      var k = 1 + (g.k1 - 1)*u;               // 缩放（全等时 k≡1）
+      var th = (Math.PI - rad(S.alpha))*u;    // 旋转（把 BA 转到 CP）
+      var px = u*L, py = 0;                   // 平移锚点 B → C
+      var T = function(v){
+        var x = (v[0]-g.B[0])*k, y = (v[1]-g.B[1])*k;
+        var c = Math.cos(th), s = Math.sin(th);
+        return [px + x*c - y*s, py + x*s + y*c];
+      };
+      var gA = T(g.A), gB = T(g.B), gP = T(g.P);
+      poly([gA, gB, gP], 'rgba(209,73,91,'+(0.16-0.06*u).toFixed(3)+')', COL.red, 2, [7,5]);
+      dot(gA, COL.red, 3.6); dot(gP, COL.red, 3.6);
+      if(u > 0.12 && u < 0.98 && Math.abs(k-1) > 0.005){
+        var mid = T([(g.A[0]+g.P[0])/2, (g.A[1]+g.P[1])/2]);
+        text('×' + fmt(k), toS(mid)[0], toS(mid)[1] - 14, COL.red, 12);
+      }
+    }
+
+    updateReadout(g);
+  }
+
+  /* ───────── 面板数据 ───────── */
+  function updateReadout(g){
+    var cong = g.cong;
+    $('ab').textContent = fmt(g.AB); $('pc').textContent = fmt(g.PC);
+    $('bp').textContent = fmt(g.BP); $('cd').textContent = isFinite(g.CD) ? fmt(g.CD) : '—';
+    $('ap').textContent = fmt(g.AP); $('pd').textContent = isFinite(g.PD) ? fmt(g.PD) : '—';
+    $('k1').textContent = isFinite(g.k1) ? fmt(g.k1) : '—';
+    $('k2').textContent = isFinite(g.k2) ? fmt(g.k2) : '—';
+    $('k3').textContent = isFinite(g.k3) ? fmt(g.k3) : '—';
+
+    if(S.hide){
+      $('vAlpha').textContent = '？';
+      $('vPair').textContent = '？';
+      $('vJudge').textContent = '？';
+      $('badge').textContent = '答案已隐藏';
+      $('badge').className = 'badge hide';
+      $('r1').className = ''; $('r2').className = ''; $('r3').className = '';
+      return;
+    }
+    $('vAlpha').textContent = Math.round(S.alpha) + '°';
+    $('vPair').textContent = isFinite(g.angA) ? g.angA.toFixed(1) + '°' : '—';
+    $('vJudge').textContent = cong ? '全等 △ABP ≌ △PCD' : '相似 △ABP ∽ △PCD';
+    $('badge').textContent = cong ? '形状、大小都相同 → 全等 ✓' : '形状相同、大小不同 → 相似';
+    $('badge').className = cong ? 'badge cong' : 'badge';
+    $('r1').className = cong ? 'hit' : '';
+    $('r2').className = cong ? 'hit' : '';
+    $('r3').className = cong ? 'hit' : '';
+  }
+
+  /* ───────── 交互 ───────── */
+  var drag = null;
+
+  function pointerWorld(e){
+    var r = cv.getBoundingClientRect();
+    return [ (e.clientX - r.left - view.cx)/view.s, (view.cy - (e.clientY - r.top))/view.s ];
+  }
+  cv.addEventListener('pointerdown', function(e){
+    var w = pointerWorld(e), g = geom();
+    var dP = dist(w, g.P), dA = dist(w, g.A);
+    drag = (dA < dP) ? 'A' : 'P';
+    cv.setPointerCapture(e.pointerId);
+    cv.classList.add('grabbing');
+    hint.style.opacity = '0';
+    applyDrag(w);
+  });
+  cv.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    applyDrag(pointerWorld(e));
+  });
+  function applyDrag(w){
+    var a = rad(S.alpha);
+    if(drag === 'P'){
+      S.p = clamp(w[0], P_MIN, P_MAX);
+    }else{
+      var v = [w[0], w[1]];
+      S.r1 = clamp(v[0]*Math.cos(a) + v[1]*Math.sin(a), R_MIN, R_MAX);
+    }
+  }
+  function endDrag(e){
+    if(!drag) return;
+    drag = null;
+    cv.classList.remove('grabbing');
+    if(cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId);
+  }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  /* 滑块与预设 */
+  $('sA').addEventListener('input', function(e){ setAlpha(parseFloat(e.target.value)); });
+
+  function setAlpha(a){
+    S.alpha = a;
+    $('sA').value = Math.round(a);
+    $('vA').textContent = Math.round(a) + '°';
+    var chips = document.querySelectorAll('#seg .chip');
+    for(var i=0;i<chips.length;i++){
+      chips[i].classList.toggle('active', Math.abs(parseFloat(chips[i].dataset.alpha) - a) < 0.5);
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#seg .chip'), function(b){
+    b.addEventListener('click', function(){
+      setAlpha(parseFloat(b.dataset.alpha));
+      if(b.dataset.alpha === '90'){ S.p = 2.5; S.r1 = 3.0; }
+      if(b.dataset.alpha === '60'){ S.p = 2.6; S.r1 = 2.4; }
+      if(b.dataset.alpha === '45'){ S.p = 2.7; S.r1 = 2.0; }
+    });
+  });
+
+  /* 按钮 */
+  function tuneCongruent(animate, then){
+    var target = clamp(L - S.p, R_MIN, R_MAX);
+    if(Math.abs(S.r1 - target) < 0.005){
+      S.r1 = target;
+      if(then) then();
+      return;
+    }
+    S.tune = { from: S.r1, to: target, dur: 480, t0: performance.now(), then: then || null };
+    if(!animate){ S.r1 = target; S.tune = null; if(then) then(); }
+  }
+  $('btnTune').addEventListener('click', function(){
+    tuneCongruent(true, function(){
+      toast.textContent = '已把 AB 调到 = PC = ' + fmt(L - S.p) + '，两个三角形全等';
+      toast.classList.add('on');
+      clearTimeout(tuneToastTimer);
+      tuneToastTimer = setTimeout(function(){ if(S.demoStart < 0) toast.classList.remove('on'); }, 2600);
+    });
+  });
+  var tuneToastTimer = null;
+
+  $('btnDemo').addEventListener('click', function(){
+    if(S.hide) setHide(false);
+    startDemo();
+  });
+  function startDemo(){
+    if(!geom().cong){
+      tuneCongruent(true, function(){ beginGhost(); });
+      toast.textContent = '先把 AB 调到 = PC（此时全等），再看它们如何重合';
+      toast.classList.add('on');
+    }else{
+      beginGhost();
+    }
+  }
+  function beginGhost(){
+    S.demoStart = performance.now();
+    S.ghost = 0.001;
+  }
+
+  $('btnReset').addEventListener('click', function(){
+    S.alpha = 90; S.p = 2.5; S.r1 = 3.0;
+    S.ghost = 0; S.demoStart = -1; S.tune = null;
+    $('sA').value = 90; $('vA').textContent = '90°';
+    toast.classList.remove('on');
+    setAlpha(90);
+    resize();
+  });
+
+  /* 隐藏辅助线 */
+  function setHide(v){
+    S.hide = !!v;
+    var b = $('btnHide');
+    b.textContent = S.hide ? '👀 揭晓答案' : '🙈 隐藏辅助线';
+    b.classList.toggle('on', S.hide);
+    $('concCard').classList.toggle('masked', S.hide);
+    $('ratioCard').classList.toggle('masked', S.hide);
+    if(S.hide){
+      S.demoStart = -1; S.ghost = 0; toast.classList.remove('on');
+      hint.style.opacity = '0';
+    }
+  }
+  $('btnHide').addEventListener('click', function(){ setHide(!S.hide); });
+
+  /* 小灯泡 */
+  var QS = [
+    '三个角都相等时，△ABP 和 △PCD 是什么关系？先猜，再拖动 P 验证。',
+    '拖动 P 的时候，三组对应边的比值变了吗？为什么？',
+    '什么时候这两个三角形会全等？（看看 AB 和 PC 的关系）',
+    '∠A 与 ∠DPC 为什么一定相等？（提示：找 △ABP 的外角）',
+    '把 α 拖到 90°，图形变成了什么熟悉的模型？',
+    '拖动 A 改变形状，三个角还相等吗？相似还成立吗？'
+  ];
+  var qi = 0;
+  var bulb = $('bulb'), qbox = $('qbox');
+  $('qtext').style.transition = 'opacity .18s';
+  function showQ(i){
+    qi = ((i % QS.length) + QS.length) % QS.length;
+    var t = $('qtext');
+    t.style.opacity = '0';
+    setTimeout(function(){ t.textContent = QS[qi]; t.style.opacity = '1'; }, 90);
+  }
+  bulb.addEventListener('click', function(){
+    var open = qbox.classList.toggle('on');
+    bulb.classList.toggle('lit', open);
+    if(open){ bulb.classList.remove('glow'); showQ(qi); }
+    else { bulb.classList.add('glow'); }
+  });
+  $('qNext').addEventListener('click', function(){ showQ(qi+1); });
+  $('qClose').addEventListener('click', function(){
+    qbox.classList.remove('on'); bulb.classList.remove('lit'); bulb.classList.add('glow');
+  });
+
+  /* ───────── 动画循环 ───────── */
+  var D1 = 1700, D2 = 950;
+  function loop(now){
+    if(S.tune){
+      var t = clamp((now - S.tune.t0)/S.tune.dur, 0, 1);
+      var e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+      S.r1 = S.tune.from + (S.tune.to - S.tune.from)*e;
+      if(t >= 1){
+        var cb = S.tune.then; S.tune = null; if(cb) cb();
+      }
+    }
+    if(S.demoStart >= 0){
+      var el = now - S.demoStart;
+      if(el < D1){
+        var u = el/D1;
+        S.ghost = u < 0.5 ? 4*u*u*u : 1 - Math.pow(-2*u+2, 3)/2;
+        toast.classList.add('on');
+      }else if(el < D1 + D2){
+        S.ghost = 1;
+        toast.textContent = geom().cong ? '△ABP 与 △PCD 完全重合' : '△ABP 缩放后与 △PCD 重合';
+        toast.classList.add('on');
+      }else{
+        S.demoStart = -1; S.ghost = 0;
+        toast.classList.remove('on');
+      }
+    }
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  /* ───────── 启动 ───────── */
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver){ new ResizeObserver(function(){ resize(); }).observe(cv); }
+  resize();
+  setAlpha(90);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
