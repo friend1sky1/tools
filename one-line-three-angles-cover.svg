@@ -46,7 +46,7 @@
     <text x="54.0" y="338.0" fill="#2D4A32">B</text>
     <text x="201.0" y="340.0" fill="#2D4A32">P</text>
     <text x="404.0" y="340.0" fill="#2D4A32">C</text>
-    <text x="408.0" y="177.0" fill="#C5A96A">D</text>
+    <text x="402.0" y="206.0" fill="#C5A96A">D</text>
   </g>
 
   <g font-family="Noto Serif SC, Songti SC, SimSun, serif">
@@ -55,5 +55,4 @@
     <text x="426" y="214" font-size="16" font-weight="700" fill="#B32D42">&#9651;ABP &#8764; &#9651;PCD</text>
     <text x="426" y="242" font-size="12.5" fill="#9AAB9B">AA 相似 · AB = PC 时全等</text>
   </g>
-  <line x1="426" y1="128" x2="586" y2="128" stroke="#D1495B" stroke-width="2.6" stroke-linecap="round"/>
 </svg>
