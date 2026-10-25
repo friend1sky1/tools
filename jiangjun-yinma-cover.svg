@@ -64,5 +64,4 @@
     <text x="438" y="230" font-size="13" fill="#5B8C5A">= A′B（三点共线时取到）</text>
     <text x="438" y="262" font-size="11.5" fill="#9AAB9B">作对称点 → 连成直线 → 交点即最优</text>
   </g>
-  <line x1="438" y1="120" x2="588" y2="120" stroke="#C5A96A" stroke-width="2.6" stroke-linecap="round"/>
 </svg>
