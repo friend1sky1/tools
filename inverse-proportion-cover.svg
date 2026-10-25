@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="ibg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2F7F0"/><stop offset="100%" stop-color="#E3ECE1"/>
+    </linearGradient>
+    <radialGradient id="iglow" cx="34%" cy="52%" r="56%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ifill" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C0703A" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#2E7D6E" stop-opacity="0.20"/>
+    </linearGradient>
+    <clipPath id="iplot"><rect x="18" y="20" width="368" height="362"/></clipPath>
+  </defs>
+
+  <rect width="640" height="400" fill="url(#ibg)"/>
+
+  <!-- 淡网格 -->
+  <g stroke="#D6E5D2" stroke-width="0.6" opacity="0.5" clip-path="url(#iplot)">
+    <line x1="70" y1="20" x2="70" y2="382"/><line x1="122" y1="20" x2="122" y2="382"/>
+    <line x1="174" y1="20" x2="174" y2="382"/><line x1="226" y1="20" x2="226" y2="382"/>
+    <line x1="278" y1="20" x2="278" y2="382"/><line x1="330" y1="20" x2="330" y2="382"/>
+    <line x1="382" y1="20" x2="382" y2="382"/>
+    <line x1="18" y1="54" x2="386" y2="54"/><line x1="18" y1="106" x2="386" y2="106"/>
+    <line x1="18" y1="158" x2="386" y2="158"/><line x1="18" y1="236" x2="386" y2="236"/>
+    <line x1="18" y1="288" x2="386" y2="288"/><line x1="18" y1="340" x2="386" y2="340"/>
+  </g>
+  <ellipse cx="200" cy="205" rx="210" ry="168" fill="url(#iglow)"/>
+
+  <g clip-path="url(#iplot)">
+    <!-- 坐标轴 -->
+    <line x1="18" y1="210" x2="386" y2="210" stroke="#4E6E8E" stroke-width="1.3" opacity="0.72"/>
+    <line x1="200" y1="382" x2="200" y2="22" stroke="#4E6E8E" stroke-width="1.3" opacity="0.72"/>
+
+    <!-- 面积填充 △AOB -->
+    <path d="M200,210 L226,54 L44,236 Z" fill="url(#ifill)"/>
+
+    <!-- 双曲线 y = 6/x ：一象限 + 三象限各一支 -->
+    <path d="M222,20 C228,60 236,95 252,132 C270,168 310,182 386,189"
+          fill="none" stroke="#2E7D6E" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M178,382 C172,342 164,307 148,270 C130,234 90,220 14,213"
+          fill="none" stroke="#2E7D6E" stroke-width="2.8" stroke-linecap="round"/>
+
+    <!-- 直线 y = x + 5 -->
+    <line x1="6" y1="264" x2="272" y2="-2" stroke="#C0703A" stroke-width="2.6" stroke-linecap="round"/>
+
+    <!-- 三角形两腰 -->
+    <line x1="200" y1="210" x2="226" y2="54" stroke="#2E7D6E" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.85"/>
+    <line x1="200" y1="210" x2="44" y2="236" stroke="#C0703A" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.85"/>
+  </g>
+
+  <!-- 交点 -->
+  <circle cx="226" cy="54" r="6.5" fill="#D1495B" stroke="#FFFFFF" stroke-width="2.4"/>
+  <circle cx="44" cy="236" r="6.5" fill="#D1495B" stroke="#FFFFFF" stroke-width="2.4"/>
+  <circle cx="200" cy="210" r="4" fill="#4E6E8E" stroke="#FFFFFF" stroke-width="1.8"/>
+
+  <g font-family="Times New Roman, Georgia, serif" font-size="14.5" font-weight="700" font-style="italic">
+    <text x="236" y="49" fill="#B32D42">A</text>
+    <text x="20" y="257" fill="#B32D42">B</text>
+    <text x="206" y="227" fill="#4E6E8E">O</text>
+    <text x="378" y="228" fill="#4E6E8E">x</text>
+    <text x="208" y="38" fill="#4E6E8E">y</text>
+  </g>
+
+  <text x="302" y="158" font-family="Noto Serif SC, Songti SC, SimSun, serif" font-size="12.5" fill="#2E7D6E">y = k/x</text>
+  <text x="282" y="70" font-family="Noto Serif SC, Songti SC, SimSun, serif" font-size="12.5" fill="#C0703A">y = mx+b</text>
+
+  <!-- 右侧文字 -->
+  <g font-family="Noto Serif SC, Songti SC, SimSun, serif">
+    <text x="426" y="118" font-size="26" font-weight="700" fill="#2D4A32" letter-spacing="2">反比例函数</text>
+    <text x="428" y="146" font-size="13" fill="#6B7D6C">双曲线 × 直线</text>
+    <text x="428" y="168" font-size="13" fill="#6B7D6C">交点 · 面积 · 九年级</text>
+
+    <text x="428" y="208" font-size="13" font-weight="700" fill="#2E7D6E">y = k/x ∩ y = mx+b</text>
+    <text x="428" y="234" font-size="12.5" fill="#C0703A">S△AOB = ½·OC·|x₁−x₂|</text>
+
+    <text x="428" y="272" font-size="11.5" fill="#9AAB9B">联立 → 韦达定理 → 面积</text>
+    <text x="428" y="294" font-size="11.5" fill="#9AAB9B">矩形 = |k|，三角形 = |k|/2</text>
+  </g>
+</svg>
