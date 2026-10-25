@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 反比例函数与直线（求面积）</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bamboo:#5B8C5A; --bamboo-dark:#2D4A32; --bamboo-mist:#F0F5EE; --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A; --text-secondary:#6B7D6C; --text-muted:#9AAB9B; --white:#FFFFFF;
+  --accent:#D1495B; --accent-deep:#B32D42;
+  --shadow-sm:0 1px 3px rgba(45,74,50,.06); --shadow-md:0 4px 12px rgba(45,74,50,.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bamboo-mist); color:var(--bamboo-dark);
+  -webkit-font-smoothing:antialiased; padding-bottom:24px; overflow-x:hidden;
+}
+.app{max-width:1080px;margin:0 auto;padding:12px 12px 0;display:flex;flex-direction:column;gap:12px;}
+
+/* ── 顶部 ── */
+.topbar{display:flex;align-items:center;gap:10px;}
+.topbar .back{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--white);
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--bamboo-dark);font-size:18px;line-height:1;
+}
+.topbar .back:active{transform:scale(.94);}
+.topbar h1{
+  font-size:17px;font-weight:700;letter-spacing:.5px;
+  font-family:'Songti SC','Source Han Serif SC','Noto Serif SC',serif;
+}
+.topbar p{font-size:12px;color:var(--text-muted);margin-top:1px;}
+
+/* ── 布局 ── */
+.body{display:flex;flex-direction:column;gap:12px;}
+.stage-wrap{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:10px;}
+.stage{
+  position:relative;background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);overflow:hidden;
+  aspect-ratio:1.1/1;max-height:66vh;
+}
+canvas#cv{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+canvas#cv.grabbing{cursor:grabbing;}
+.hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-size:11.5px;color:var(--text-muted);background:rgba(255,255,255,.88);
+  padding:4px 13px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;
+}
+.toast{
+  position:absolute;left:50%;top:12px;transform:translateX(-50%);
+  font-size:12.5px;font-weight:600;color:var(--accent-deep);
+  background:rgba(255,255,255,.96);border:1px solid rgba(209,73,91,.25);
+  padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  opacity:0;transition:opacity .3s;
+}
+.toast.on{opacity:1;}
+
+/* ── 算式条 ── */
+.formula{
+  background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  padding:11px 14px;font-size:13px;line-height:1.85;color:var(--bamboo-dark);
+}
+.formula .lbl{
+  font-size:11.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  display:block;margin-bottom:4px;
+}
+.formula .fx{font-family:'Songti SC',Georgia,serif;font-size:13.5px;}
+.formula b{color:var(--accent-deep);font-weight:700;}
+.formula .mut{color:var(--text-muted);font-size:12px;}
+
+/* ── 小灯泡与提问气泡 ── */
+.bulb{
+  position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(197,169,106,.55);background:rgba(255,255,255,.94);
+  font-size:19px;line-height:1;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(45,74,50,.13);transition:transform .18s, box-shadow .25s;
+}
+.bulb:active{transform:scale(.92);}
+.bulb.glow{animation:bulbGlow 2.6s ease-in-out infinite;}
+@keyframes bulbGlow{
+  0%,100%{box-shadow:0 2px 8px rgba(45,74,50,.13);}
+  50%{box-shadow:0 0 0 5px rgba(197,169,106,.22),0 2px 10px rgba(45,74,50,.16);}
+}
+.qbox{
+  position:absolute;top:56px;right:10px;max-width:84%;
+  background:rgba(255,255,255,.98);border:1px solid rgba(197,169,106,.5);
+  border-radius:12px;padding:11px 13px 9px;box-shadow:0 8px 24px rgba(45,74,50,.16);
+  opacity:0;transform:translateY(-6px) scale(.97);pointer-events:none;
+  transition:opacity .22s, transform .22s;
+}
+.qbox.on{opacity:1;transform:none;pointer-events:auto;}
+.qtext{font-size:13px;line-height:1.62;text-align:left;}
+.qtext::before{content:'💡 ';}
+.ans{margin-top:7px;font-size:12.5px;color:var(--accent-deep);font-weight:600;display:none;}
+.ans.on{display:block;}
+.qrow{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+.qbtn{
+  font-family:inherit;font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+}
+.qbtn:active{transform:scale(.96);}
+
+/* ── 控制面板 ── */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;}
+.card h2{
+  font-size:12.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.card h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--bamboo);}
+
+.seg{display:flex;gap:6px;margin-bottom:11px;flex-wrap:wrap;}
+.chip{
+  flex:1 1 auto;min-width:88px;font-family:inherit;font-size:12px;padding:8px 4px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+  transition:all .2s;
+}
+.chip.active{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+
+.row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.row label{flex:0 0 70px;font-size:12.5px;color:var(--text-secondary);}
+.row .val{flex:0 0 44px;text-align:right;font-size:12.5px;font-weight:700;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+.row input[type=range]{
+  flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;
+  background:var(--bamboo-light);outline:none;
+}
+.row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);box-shadow:0 1px 4px rgba(45,74,50,.25);cursor:pointer;
+}
+.row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);cursor:pointer;
+}
+
+.presets{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap;}
+.pbtn{
+  font-family:inherit;font-size:11.5px;padding:6px 10px;border-radius:8px;cursor:pointer;
+  border:1px dashed rgba(91,140,90,.5);background:#FCFDFB;color:var(--bamboo);
+}
+.pbtn:active{transform:scale(.96);}
+
+/* 配色 */
+.swatches{display:flex;gap:9px;}
+.sw{
+  flex:1;height:34px;border-radius:9px;cursor:pointer;position:relative;
+  border:2px solid transparent;transition:all .2s;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.sw span{font-size:10.5px;color:#fff;font-weight:600;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.25);}
+.sw.active{border-color:var(--bamboo-dark);box-shadow:0 0 0 3px rgba(91,140,90,.16);}
+
+/* 小抄 */
+.tips{list-style:none;font-size:12.5px;line-height:1.75;color:var(--text-secondary);}
+.tips li{padding-left:16px;position:relative;margin-bottom:6px;}
+.tips li::before{content:'›';position:absolute;left:2px;color:var(--wood-gold);font-weight:700;}
+.tips li:last-child{margin-bottom:0;}
+.tips b{color:var(--bamboo-dark);}
+.kbd{
+  display:inline-block;padding:0 4px;border-radius:4px;background:var(--bamboo-mist);
+  color:var(--bamboo);font-size:11.5px;font-weight:700;
+}
+
+@media (min-width:900px){
+  .body{flex-direction:row;align-items:flex-start;}
+  .stage-wrap{flex:1 1 auto;}
+  .panel{flex:0 0 320px;position:sticky;top:12px;}
+  .stage{aspect-ratio:1.12/1;max-height:74vh;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <a class="back" href="index.html">‹</a>
+    <div>
+      <h1>反比例函数与直线</h1>
+      <p>交点 · 解析式 · 求面积</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="stage-wrap">
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <button class="bulb glow" id="bulb">💡</button>
+        <div class="qbox" id="qbox">
+          <div class="qtext" id="qtext"></div>
+          <div class="ans" id="qans"></div>
+          <div class="qrow">
+            <button class="qbtn" id="qshow">看答案</button>
+            <button class="qbtn" id="qnext">下一题</button>
+          </div>
+        </div>
+        <div class="hint" id="hint">拖金色方块改截距 b，拖紫色方块改斜率 m</div>
+        <div class="toast" id="toast"></div>
+      </div>
+      <div class="formula" id="formula"></div>
+    </div>
+
+    <div class="panel">
+
+      <div class="card">
+        <h2>看哪个面积</h2>
+        <div class="seg" id="modes">
+          <button class="chip active" data-mode="tri">△AOB</button>
+          <button class="chip" data-mode="rect">矩形 |k|</button>
+          <button class="chip" data-mode="cod">△COD</button>
+        </div>
+        <div class="row"><label>k</label><input type="range" id="sk" min="1" max="12" step="0.5" value="6"><span class="val" id="vk">6</span></div>
+        <div class="row"><label>斜率 m</label><input type="range" id="sm" min="0.3" max="3" step="0.1" value="1"><span class="val" id="vm">1</span></div>
+        <div class="row"><label>截距 b</label><input type="range" id="sb" min="-6" max="6" step="0.5" value="5"><span class="val" id="vb">5</span></div>
+        <div class="presets">
+          <button class="pbtn" data-k="6"  data-m="1" data-b="5">大三角  (1,6)(−6,−1)</button>
+          <button class="pbtn" data-k="6"  data-m="1" data-b="1">经典题  (2,3)(−3,−2)</button>
+          <button class="pbtn" data-k="4"  data-m="2" data-b="2">整点  (1,4)(−2,−2)</button>
+          <button class="pbtn" data-k="12" data-m="1" data-b="4">大k  (2,6)(−6,−2)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>配色</h2>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="card">
+        <h2>中考常见考法</h2>
+        <ul class="tips">
+          <li><b>①求解析式</b>：交点坐标代入 <span class="kbd">y=k/x</span> 得 k，代入 <span class="kbd">y=mx+b</span> 得 b。</li>
+          <li><b>②求交点</b>：联立得 <span class="kbd">mx²+bx−k=0</span>，韦达定理 <span class="kbd">x₁+x₂=−b/m</span>，<span class="kbd">x₁x₂=−k/m</span>。</li>
+          <li><b>③原点三角形</b>：<span class="kbd">S△AOB = ½·|b|·|x₁−x₂|</span>（铅垂高 × 水平宽 ÷2）。</li>
+          <li><b>④坐标轴三角形</b>：<span class="kbd">S△COD = b²/(2m)</span>。</li>
+          <li><b>⑤|k| 的几何意义</b>：双曲线上任一点作两轴垂线，矩形面积 = <span class="kbd">|k|</span>，三角形 = <span class="kbd">|k|/2</span>。</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ══════════ 配色主题 ══════════ */
+var THEMES = [
+  { name:'竹青', dot:'#2E7D6E',
+    curve:'#2E7D6E', line:'#C0703A',
+    area1:'rgba(46,125,110,.20)', area1s:'#2E7D6E',
+    area2:'rgba(192,112,58,.20)', area2s:'#C0703A',
+    pt:'#D1495B', accent:'#B32D42' },
+  { name:'靛蓝', dot:'#33568C',
+    curve:'#33568C', line:'#D08A2C',
+    area1:'rgba(51,86,140,.20)', area1s:'#33568C',
+    area2:'rgba(208,138,44,.22)', area2s:'#D08A2C',
+    pt:'#C63A5B', accent:'#9E2C46' },
+  { name:'赭陶', dot:'#A8542F',
+    curve:'#A8542F', line:'#3F6B4A',
+    area1:'rgba(168,84,47,.20)', area1s:'#A8542F',
+    area2:'rgba(63,107,74,.20)', area2s:'#3F6B4A',
+    pt:'#8C4A8E', accent:'#7A3C7C' },
+  { name:'墨紫', dot:'#5B4B8A',
+    curve:'#5B4B8A', line:'#B08A2E',
+    area1:'rgba(91,75,138,.20)', area1s:'#5B4B8A',
+    area2:'rgba(176,138,46,.22)', area2s:'#B08A2E',
+    pt:'#C0504D', accent:'#A03A37' }
+];
+
+/* ══════════ 状态 ══════════ */
+var ST = { k:6, m:1, b:5, mode:'tri', theme:0, px:2.2 };
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W=600, H=545, SC=34, CX=300, CY=272;
+
+var X = function(x){ return CX + x*SC; };
+var Y = function(y){ return CY - y*SC; };
+var invX = function(px){ return (px - CX)/SC; };
+var invY = function(py){ return (CY - py)/SC; };
+
+/* ══════════ 数学 ══════════ */
+function solveAB(k,m,b){
+  var disc = b*b + 4*m*k;
+  if(disc <= 0) return null;
+  var s = Math.sqrt(disc);
+  var x1 = (-b + s)/(2*m);   // 第一象限（m>0 时 x1>0）
+  var x2 = (-b - s)/(2*m);   // 第三象限
+  return [ {x:x1, y:k/x1}, {x:x2, y:k/x2} ];
+}
+function sTri(k,m,b,pts){
+  if(!pts) return 0;
+  return 0.5*Math.abs(b)*Math.abs(pts[0].x - pts[1].x);
+}
+function sCod(m,b){
+  return (b*b)/(2*Math.abs(m));
+}
+
+/* ══════════ 格式化 ══════════ */
+function fmt(n){
+  if(!isFinite(n)) return '—';
+  var r = Math.round(n*10)/10;
+  if(Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
+  return r.toFixed(1);
+}
+function co(p){ return '(' + fmt(p.x) + ', ' + fmt(p.y) + ')'; }
+
+/* ══════════ 布局 ══════════ */
+function layout(){
+  var r = cv.getBoundingClientRect();
+  W = Math.max(240, Math.round(r.width));
+  H = Math.max(240, Math.round(r.height));
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W*dpr);
+  cv.height = Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  SC = Math.min(W/17.2, H/17.2);
+  CX = W/2;
+  CY = H/2;
+}
+
+/* ══════════ 绘制 ══════════ */
+function T(){ return THEMES[ST.theme]; }
+
+function drawGrid(){
+  var th = T();
+  var halfX = W/2/SC, halfY = H/2/SC;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(45,74,50,.055)';
+  ctx.beginPath();
+  var i;
+  for(i = Math.ceil(-halfX); i <= Math.floor(halfX); i++){
+    if(i === 0) continue;
+    ctx.moveTo(X(i), 0); ctx.lineTo(X(i), H);
+  }
+  for(i = Math.ceil(-halfY); i <= Math.floor(halfY); i++){
+    if(i === 0) continue;
+    ctx.moveTo(0, Y(i)); ctx.lineTo(W, Y(i));
+  }
+  ctx.stroke();
+}
+
+function drawAxes(){
+  var halfX = W/2/SC, halfY = H/2/SC;
+  var i;
+  ctx.strokeStyle = 'rgba(45,74,50,.55)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(0, Y(0)); ctx.lineTo(W, Y(0));
+  ctx.moveTo(X(0), H); ctx.lineTo(X(0), 0);
+  ctx.stroke();
+
+  // 箭头
+  ctx.fillStyle = 'rgba(45,74,50,.55)';
+  ctx.beginPath(); ctx.moveTo(W-1, Y(0)); ctx.lineTo(W-9, Y(0)-4.5); ctx.lineTo(W-9, Y(0)+4.5); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(X(0), 1); ctx.lineTo(X(0)-4.5, 9); ctx.lineTo(X(0)+4.5, 9); ctx.closePath(); ctx.fill();
+
+  // 轴名
+  ctx.font = 'italic 600 13px Georgia, serif';
+  ctx.fillStyle = 'rgba(45,74,50,.7)';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText('x', W-6, Y(0)+6);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('y', X(0)+7, 16);
+
+  // 原点
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(45,74,50,.62)';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText('O', X(0)-5, Y(0)+4);
+
+  // 刻度
+  ctx.font = '10.5px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(45,74,50,.45)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for(i = -6; i <= 6; i += 2){
+    if(i === 0) continue;
+    if(Math.abs(i) > halfX-0.6) continue;
+    ctx.beginPath();
+    ctx.moveTo(X(i), Y(0)); ctx.lineTo(X(i), Y(0)+3.5);
+    ctx.strokeStyle = 'rgba(45,74,50,.35)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillText(String(i), X(i), Y(0)+6);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for(i = -6; i <= 6; i += 2){
+    if(i === 0) continue;
+    if(Math.abs(i) > halfY-0.6) continue;
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(i)); ctx.lineTo(X(0)-3.5, Y(i));
+    ctx.strokeStyle = 'rgba(45,74,50,.35)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillText(String(i), X(0)-6, Y(i));
+  }
+}
+
+function drawCurve(){
+  var th = T();
+  var halfX = W/2/SC + 0.2;
+  var halfY = H/2/SC + 0.5;
+  var clipTop = halfY, clipBot = -halfY;   // clipTop 为数学坐标上界
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  ctx.strokeStyle = th.curve;
+  ctx.lineWidth = 2.6;
+  ctx.lineJoin = 'round';
+  [[0.0001, halfX], [-halfX, -0.0001]].forEach(function(br){
+    var a = br[0], bnd = br[1];
+    ctx.beginPath();
+    var started = false;
+    var steps = 420;
+    for(var i = 0; i <= steps; i++){
+      var x = a + (bnd - a)*i/steps;
+      if(Math.abs(x) < 0.06) continue;
+      var y = ST.k/x;
+      if(y > clipTop || y < clipBot){ started = false; continue; }
+      if(!started){ ctx.moveTo(X(x), Y(y)); started = true; }
+      else ctx.lineTo(X(x), Y(y));
+    }
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // 曲线标签
+  ctx.font = '600 12.5px Georgia, serif';
+  ctx.fillStyle = th.curve;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  var lx = Math.max(0.9, Math.min(halfX*0.55, 3.4));
+  var ly = ST.k/lx;
+  if(Y(ly) > 24) ctx.fillText('y = ' + fmt(ST.k) + '/x', X(lx)+6, Y(ly)-2);
+}
+
+function linePts(){
+  // 返回直线在视口内的两端点（数学坐标）
+  var halfX = W/2/SC + 0.3;
+  return [ {x:-halfX, y:ST.m*(-halfX)+ST.b}, {x:halfX, y:ST.m*halfX+ST.b} ];
+}
+
+function drawLine(){
+  var th = T();
+  var L = linePts();
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  ctx.strokeStyle = th.line;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(X(L[0].x), Y(L[0].y));
+  ctx.lineTo(X(L[1].x), Y(L[1].y));
+  ctx.stroke();
+  ctx.restore();
+
+  // 直线标签
+  ctx.font = '600 12.5px Georgia, serif';
+  ctx.fillStyle = th.line;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  var tx = Math.min(W/2/SC*0.62, 4.2);
+  var ty = ST.m*tx + ST.b;
+  if(Y(ty) > 20 && Y(ty) < H-6) ctx.fillText('y = ' + lineEq(), X(tx)+6, Y(ty)-3);
+}
+
+function lineEq(){
+  var m = ST.m, b = ST.b;
+  var ms;
+  if(Math.abs(m-1) < 1e-9) ms = 'x';
+  else ms = fmt(m) + 'x';
+  if(Math.abs(b) < 1e-9) return 'y = ' + ms;
+  return 'y = ' + ms + (b > 0 ? ' + ' + fmt(b) : ' − ' + fmt(Math.abs(b)));
+}
+
+function dot(x, y, r, fill, stroke){
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = fill; ctx.fill();
+  if(stroke){ ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+
+function label(text, x, y, color, dx, dy, align, baseline, weight, size){
+  ctx.font = (weight||'700') + ' ' + (size||12.5) + 'px -apple-system, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = baseline || 'middle';
+  // 白色描边提高可读性
+  ctx.lineWidth = 3.2;
+  ctx.strokeStyle = 'rgba(255,255,255,.92)';
+  ctx.strokeText(text, x + (dx||0), y + (dy||0));
+  ctx.fillText(text, x + (dx||0), y + (dy||0));
+}
+
+function drawModeTri(AB){
+  var th = T();
+  var O = {x:0, y:0};
+  var C = {x:0, y:ST.b};
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+
+  // 两个小三角形填充（以 y 轴上的 C 分割）
+  ctx.fillStyle = th.area1;
+  ctx.beginPath();
+  ctx.moveTo(X(O.x), Y(O.y)); ctx.lineTo(X(AB[0].x), Y(AB[0].y)); ctx.lineTo(X(C.x), Y(C.y));
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = th.area2;
+  ctx.beginPath();
+  ctx.moveTo(X(O.x), Y(O.y)); ctx.lineTo(X(AB[1].x), Y(AB[1].y)); ctx.lineTo(X(C.x), Y(C.y));
+  ctx.closePath(); ctx.fill();
+
+  // 三角形外框
+  ctx.setLineDash([6,4]);
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = th.area1s;
+  ctx.beginPath();
+  ctx.moveTo(X(AB[0].x), Y(AB[0].y));
+  ctx.lineTo(X(O.x), Y(O.y));
+  ctx.lineTo(X(AB[1].x), Y(AB[1].y));
+  ctx.stroke();
+
+  // 铅垂分割线 OC
+  ctx.strokeStyle = 'rgba(45,74,50,.5)';
+  ctx.beginPath();
+  ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), Y(ST.b));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // OC 标注
+  if(Math.abs(ST.b) > 0.3){
+    var midY = Y(ST.b/2);
+    label('OC = ' + fmt(Math.abs(ST.b)), X(0), midY, 'rgba(45,74,50,.75)', -8, 0, 'right', 'middle', '600', 11.5);
+  }
+}
+
+function drawModeRect(){
+  var th = T();
+  var px = Math.max(0.5, Math.min(ST.px, 6.5));
+  var py = ST.k/px;
+  var P = {x:px, y:py};
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+
+  // 矩形 PMON：M(px,0) N(0,py)
+  ctx.fillStyle = th.area1;
+  ctx.fillRect(X(0), Y(py), X(px)-X(0), Y(0)-Y(py));
+  ctx.strokeStyle = th.area1s;
+  ctx.lineWidth = 1.6;
+  ctx.strokeRect(X(0), Y(py), X(px)-X(0), Y(0)-Y(py));
+
+  // 三角形 POM
+  ctx.fillStyle = th.area2;
+  ctx.beginPath();
+  ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(px), Y(0)); ctx.lineTo(X(px), Y(py));
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = th.area2s;
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([5,4]);
+  ctx.beginPath();
+  ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(px), Y(py));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // 点 P 与标注
+  dot(X(P.x), Y(P.y), 6.5, th.pt, '#fff');
+  label('P' + co(P), X(P.x), Y(P.y), th.pt, 10, -13, 'left', 'middle', '700', 12.5);
+  label('M', X(px), Y(0), 'rgba(45,74,50,.72)', 0, 12, 'center', 'top', '600', 11.5);
+  label('N', X(0), Y(py), 'rgba(45,74,50,.72)', -7, 0, 'right', 'middle', '600', 11.5);
+  label('矩形 ' + fmt(ST.k), X(px/2), Y(py), th.area1s, 0, -12, 'center', 'bottom', '700', 11.5);
+}
+
+function drawModeCod(){
+  var th = T();
+  var C = {x:0, y:ST.b};
+  var D = {x:-ST.b/ST.m, y:0};
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  ctx.fillStyle = th.area2;
+  ctx.beginPath();
+  ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(C.x), Y(C.y)); ctx.lineTo(X(D.x), Y(D.y));
+  ctx.closePath(); ctx.fill();
+  ctx.setLineDash([6,4]);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = th.area2s;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  dot(X(C.x), Y(C.y), 5.5, th.line, '#fff');
+  label('C(0, ' + fmt(ST.b) + ')', X(C.x), Y(C.y), th.line, -11, -6, 'right', 'middle', '700', 12);
+  dot(X(D.x), Y(D.y), 5.5, th.line, '#fff');
+  label('D(' + fmt(D.x) + ', 0)', X(D.x), Y(D.y), th.line, -9, 16, 'right', 'middle', '700', 12);
+  label('△COD', X(D.x*0.62), Y(ST.b*0.55), th.area2s, 0, 0, 'center', 'middle', '700', 12);
+}
+
+function drawAB(AB){
+  var th = T();
+  var A = AB[0], B = AB[1];
+  // 虚线到坐标轴
+  ctx.setLineDash([3,4]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(45,74,50,.22)';
+  ctx.beginPath();
+  ctx.moveTo(X(A.x), Y(A.y)); ctx.lineTo(X(A.x), Y(0));
+  ctx.moveTo(X(B.x), Y(B.y)); ctx.lineTo(X(B.x), Y(0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  dot(X(A.x), Y(A.y), 7, th.pt, '#fff');
+  dot(X(B.x), Y(B.y), 7, th.pt, '#fff');
+  label('A' + co(A), X(A.x), Y(A.y), th.pt, 10, -13, 'left', 'middle', '700', 12.5);
+  label('B' + co(B), X(B.x), Y(B.y), th.pt, -10, 15, 'right', 'middle', '700', 12.5);
+}
+
+function mHandleX(){
+  var halfY = H/2/SC, lim = halfY*0.8;
+  var AB = solveAB(ST.k, ST.m, ST.b);
+  var cands = [3.6, 2.6, 1.8, -1.8, -2.6, -3.6];
+  for(var i=0;i<cands.length;i++){
+    var x = cands[i], y = ST.m*x + ST.b;
+    if(Math.abs(y) > lim) continue;
+    if(Math.abs(y - ST.b) < 1.0) continue;
+    var ok = true;
+    if(AB){
+      for(var j=0;j<AB.length;j++){
+        if(Math.hypot(x-AB[j].x, y-AB[j].y) < 1.4){ ok = false; break; }
+      }
+    }
+    if(ok) return x;
+  }
+  return 1.8;
+}
+
+function drawHandles(){
+  var th = T();
+  // b 手柄：直线与 y 轴交点
+  var cx = X(0), cyH = Y(ST.b);
+  ctx.fillStyle = 'rgba(197,169,106,.95)';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.rect(cx-6, cyH-6, 12, 12);
+  ctx.fill(); ctx.stroke();
+  if(ST.mode !== 'cod') label('b', cx+12, cyH, '#A8894A', 0, 0, 'left', 'middle', '700', 11.5);
+
+  // m 手柄：直线在自适应处的点
+  var hx = mHandleX(), hy = ST.m*hx + ST.b;
+  ctx.fillStyle = 'rgba(120,96,168,.95)';
+  ctx.beginPath();
+  ctx.arc(X(hx), Y(hy), 6.5, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  label('m', X(hx)+11, Y(hy), '#7860A8', 0, 0, 'left', 'middle', '700', 11.5);
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0,0,W,H);
+
+  drawGrid();
+  var AB = solveAB(ST.k, ST.m, ST.b);
+
+  if(ST.mode === 'tri' && AB) drawModeTri(AB);
+  if(ST.mode === 'rect') drawModeRect();
+  if(ST.mode === 'cod') drawModeCod();
+
+  drawAxes();
+  drawCurve();
+  drawLine();
+  if(AB && ST.mode === 'tri') drawAB(AB);
+  if(ST.mode === 'rect'){
+    // 只在矩形模式下画曲线上的 P（drawModeRect 已画）
+  }
+  drawHandles();
+  updateFormula(AB);
+}
+
+/* ══════════ 算式条 ══════════ */
+function updateFormula(AB){
+  var el = document.getElementById('formula');
+  var html = '';
+  if(ST.mode === 'tri'){
+    if(!AB){ el.innerHTML = '<span class="lbl">计算</span><span class="fx">直线与双曲线不相交</span>'; return; }
+    var s = sTri(ST.k, ST.m, ST.b, AB);
+    var w = Math.abs(AB[0].x - AB[1].x);
+    html = '<span class="lbl">△AOB 面积</span>'
+      + '<div class="fx">S<sub>△AOB</sub> = ½ × OC × |x<sub>A</sub> − x<sub>B</sub>|'
+      + ' = ½ × ' + fmt(Math.abs(ST.b)) + ' × ' + fmt(w)
+      + ' = <b>' + fmt(s) + '</b></div>'
+      + '<div class="mut">OC 是直线在 y 轴上的截距，|x_A − x_B| 是水平宽；A' + co(AB[0]) + '，B' + co(AB[1]) + '</div>';
+  } else if(ST.mode === 'rect'){
+    var px = Math.max(0.5, Math.min(ST.px, 6.5));
+    var py = ST.k/px;
+    html = '<span class="lbl">|k| 的几何意义</span>'
+      + '<div class="fx">S<sub>矩形 PMON</sub> = x · y = ' + fmt(px) + ' × ' + fmt(py) + ' = <b>' + fmt(ST.k) + '</b>'
+      + '　　S<sub>△POM</sub> = ½ S<sub>矩形</sub> = <b>' + fmt(ST.k/2) + '</b></div>'
+      + '<div class="mut">不管 P 在双曲线上怎么移动，矩形面积永远等于 k = ' + fmt(ST.k) + '，三角形永远是一半。拖动 P 试试。</div>';
+  } else {
+    html = '<span class="lbl">△COD 面积</span>'
+      + '<div class="fx">C(0, ' + fmt(ST.b) + ')，D(' + fmt(-ST.b/ST.m) + ', 0)'
+      + '　S<sub>△COD</sub> = ½ × |b| × |b/m| = b²/(2m) = <b>' + fmt(sCod(ST.m, ST.b)) + '</b></div>'
+      + '<div class="mut">这两个点就是直线与两条坐标轴的交点，中考常与 △AOB 一起出现。</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* ══════════ 交互 ══════════ */
+var drag = null;
+var dragHX = 1.8;
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('on'); }, 1200);
+}
+
+function near(px, py, tx, ty, r){
+  return Math.hypot(px-tx, py-ty) <= r;
+}
+
+function pickHandle(px, py){
+  // b 手柄
+  if(near(px, py, X(0), Y(ST.b), 24)) return 'b';
+  // m 手柄
+  var hx = mHandleX(), hy = ST.m*hx + ST.b;
+  if(near(px, py, X(hx), Y(hy), 24)) return 'm';
+  // rect 模式下的 P
+  if(ST.mode === 'rect'){
+    var pxx = Math.max(0.5, Math.min(ST.px, 6.5));
+    if(near(px, py, X(pxx), Y(ST.k/pxx), 24)) return 'P';
+  }
+  return null;
+}
+
+function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+
+function onDown(e){
+  var r = cv.getBoundingClientRect();
+  var px = e.clientX - r.left, py = e.clientY - r.top;
+  var h = pickHandle(px, py);
+  if(!h) return;
+  drag = h;
+  dragHX = mHandleX();
+  cv.classList.add('grabbing');
+  try{ if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+}
+
+function onMove(e){
+  if(!drag) return;
+  var r = cv.getBoundingClientRect();
+  var px = e.clientX - r.left, py = e.clientY - r.top;
+  var mx = invX(px), my = invY(py);
+
+  if(drag === 'b'){
+    var nb = clamp(Math.round(my*2)/2, -6, 6);
+    ST.b = nb;
+    document.getElementById('sb').value = String(nb);
+    document.getElementById('vb').textContent = fmt(nb);
+    toast('b = ' + fmt(nb));
+  } else if(drag === 'm'){
+    var nm = clamp((my - ST.b)/dragHX, 0.3, 3);
+    nm = Math.round(nm*10)/10;
+    ST.m = nm;
+    document.getElementById('sm').value = String(nm);
+    document.getElementById('vm').textContent = fmt(nm);
+    toast('m = ' + fmt(nm));
+  } else if(drag === 'P'){
+    ST.px = clamp(mx, 0.5, 6.5);
+    toast('P 的横坐标 = ' + fmt(ST.px));
+  }
+  render();
+  e.preventDefault();
+}
+
+function onUp(){
+  if(!drag) return;
+  drag = null;
+  cv.classList.remove('grabbing');
+}
+
+cv.addEventListener('pointerdown', onDown);
+cv.addEventListener('pointermove', onMove);
+cv.addEventListener('pointerup', onUp);
+cv.addEventListener('pointercancel', onUp);
+
+/* 滑块 */
+function bindSlider(id, key, valId, store){
+  var el = document.getElementById(id);
+  el.addEventListener('input', function(){
+    ST[key] = parseFloat(el.value);
+    document.getElementById(valId).textContent = fmt(ST[key]);
+    if(store) localStorage.setItem(store, el.value);
+    render();
+  });
+  return el;
+}
+bindSlider('sk','k','vk','ip_k');
+bindSlider('sm','m','vm','ip_m');
+bindSlider('sb','b','vb','ip_b');
+
+/* 模式 */
+var modeWrap = document.getElementById('modes');
+modeWrap.addEventListener('click', function(e){
+  var btn = e.target.closest('.chip');
+  if(!btn) return;
+  var ms = modeWrap.querySelectorAll('.chip');
+  for(var i=0;i<ms.length;i++) ms[i].classList.remove('active');
+  btn.classList.add('active');
+  ST.mode = btn.getAttribute('data-mode');
+  document.getElementById('hint').textContent =
+    ST.mode === 'rect' ? '拖动曲线上的 P 点，看矩形面积为什么永远等于 k'
+    : ST.mode === 'cod' ? '拖金色方块改截距 b，看 △COD 怎么变'
+    : '拖金色方块改截距 b，拖紫色方块改斜率 m';
+  render();
+});
+
+/* 预设 */
+document.querySelectorAll('.pbtn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    ST.k = parseFloat(btn.getAttribute('data-k'));
+    ST.m = parseFloat(btn.getAttribute('data-m'));
+    ST.b = parseFloat(btn.getAttribute('data-b'));
+    document.getElementById('sk').value = String(ST.k);
+    document.getElementById('sm').value = String(ST.m);
+    document.getElementById('sb').value = String(ST.b);
+    document.getElementById('vk').textContent = fmt(ST.k);
+    document.getElementById('vm').textContent = fmt(ST.m);
+    document.getElementById('vb').textContent = fmt(ST.b);
+    render();
+  });
+});
+
+/* 配色 */
+function buildSwatches(){
+  var wrap = document.getElementById('swatches');
+  wrap.innerHTML = '';
+  THEMES.forEach(function(t, i){
+    var d = document.createElement('div');
+    d.className = 'sw' + (i === ST.theme ? ' active' : '');
+    d.style.background = 'linear-gradient(135deg,' + t.curve + ' 0%,' + t.curve + ' 55%,' + t.line + ' 55%,' + t.line + ' 100%)';
+    d.innerHTML = '<span>' + t.name + '</span>';
+    d.addEventListener('click', function(){
+      ST.theme = i;
+      localStorage.setItem('ip_theme', String(i));
+      buildSwatches();
+      render();
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* 引导题 */
+var QUESTIONS = [
+  { q:'直线 y = x + 1 与双曲线 y = k/x 交于点 A(2, 3)，求 k。', a:'k = x·y = 2 × 3 = 6' },
+  { q:'y = 6/x 与 y = x + 1 的两个交点坐标是？', a:'联立 x² + x − 6 = 0 → x = 2 或 −3，得 A(2,3)、B(−3,−2)' },
+  { q:'直线交 y 轴于 C(0, 1)，与双曲线交于 A、B，且 |x_A − x_B| = 5。求 S△AOB。', a:'S = ½ × OC × |x_A − x_B| = ½ × 1 × 5 = 2.5' },
+  { q:'反比例函数图象上一点 P 向两坐标轴作垂线，围成矩形面积是 6。它的三角形（P 与原点、垂足）面积是多少？', a:'矩形 = |k| = 6，三角形 = ½ |k| = 3' },
+  { q:'直线 y = 2x + 4 与两坐标轴围成的三角形面积是？', a:'C(0,4)、D(−2,0)，S = ½ × 4 × 2 = 4' }
+];
+var qi = 0;
+var bulb = document.getElementById('bulb');
+var qbox = document.getElementById('qbox');
+var qtext = document.getElementById('qtext');
+var qans = document.getElementById('qans');
+
+function showQ(){
+  qtext.textContent = QUESTIONS[qi].q;
+  qans.textContent = '答：' + QUESTIONS[qi].a;
+  qans.classList.remove('on');
+}
+bulb.addEventListener('click', function(){
+  var on = qbox.classList.toggle('on');
+  if(on) showQ();
+});
+document.getElementById('qshow').addEventListener('click', function(){
+  qans.classList.toggle('on');
+});
+document.getElementById('qnext').addEventListener('click', function(){
+  qi = (qi + 1) % QUESTIONS.length;
+  showQ();
+});
+
+/* 初始化：读本地存储 */
+(function init(){
+  try{
+    var k = localStorage.getItem('ip_k'), m = localStorage.getItem('ip_m'),
+        b = localStorage.getItem('ip_b'), th = localStorage.getItem('ip_theme');
+    if(k) ST.k = parseFloat(k);
+    if(m) ST.m = parseFloat(m);
+    if(b) ST.b = parseFloat(b);
+    if(th) ST.theme = parseInt(th, 10) % THEMES.length;
+  }catch(err){}
+  document.getElementById('sk').value = String(ST.k);
+  document.getElementById('sm').value = String(ST.m);
+  document.getElementById('sb').value = String(ST.b);
+  document.getElementById('vk').textContent = fmt(ST.k);
+  document.getElementById('vm').textContent = fmt(ST.m);
+  document.getElementById('vb').textContent = fmt(ST.b);
+
+  // 支持 #rect / #cod 直达（也方便截图自检）
+  var hm = (location.hash || '').replace('#','');
+  if(['tri','rect','cod'].indexOf(hm) >= 0){
+    ST.mode = hm;
+    var chips = document.querySelectorAll('#modes .chip');
+    for(var ci=0; ci<chips.length; ci++){
+      chips[ci].classList.toggle('active', chips[ci].getAttribute('data-mode') === hm);
+    }
+    document.getElementById('hint').textContent =
+      hm === 'rect' ? '拖动曲线上的 P 点，看矩形面积为什么永远等于 k'
+      : hm === 'cod' ? '拖金色方块改截距 b，看 △COD 怎么变'
+      : '拖金色方块改截距 b，拖紫色方块改斜率 m';
+  }
+
+  buildSwatches();
+  layout();
+  render();
+})();
+
+var rt = null;
+window.addEventListener('resize', function(){
+  clearTimeout(rt);
+  rt = setTimeout(function(){ layout(); render(); }, 120);
+});
+
+/* 暴露给自检 */
+window.__IP = { ST:ST, solveAB:solveAB, sTri:sTri, sCod:sCod, render:render,
+  handles:function(){
+    var pxr = Math.max(0.5, Math.min(ST.px, 6.5));
+    var hx = mHandleX();
+    return {
+      b:{ x:X(0), y:Y(ST.b) },
+      m:{ x:X(hx), y:Y(ST.m*hx + ST.b) },
+      P:{ x:X(pxr), y:Y(ST.k/pxr) }
+    };
+  }
+};
+})();
+</script>
+</body>
+</html>
