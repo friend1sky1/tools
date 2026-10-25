@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 将军饮马（最短路径问题）</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bamboo:#5B8C5A; --bamboo-dark:#2D4A32; --bamboo-mist:#F0F5EE; --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A; --text-secondary:#6B7D6C; --text-muted:#9AAB9B; --white:#FFFFFF;
+  --accent:#D1495B; --accent-deep:#B32D42; --slate:#4E6E8E; --water:#8FB4C8;
+  --shadow-sm:0 1px 3px rgba(45,74,50,.06); --shadow-md:0 4px 12px rgba(45,74,50,.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bamboo-mist); color:var(--bamboo-dark);
+  -webkit-font-smoothing:antialiased; padding-bottom:24px;
+}
+.app{max-width:1040px;margin:0 auto;padding:12px 12px 0;display:flex;flex-direction:column;gap:12px;}
+
+/* ── 顶部 ── */
+.topbar{display:flex;align-items:center;gap:10px;}
+.topbar .back{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--white);
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--bamboo-dark);font-size:18px;line-height:1;
+}
+.topbar .back:active{transform:scale(.94);}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.5px;}
+.topbar p{font-size:12px;color:var(--text-muted);margin-top:1px;}
+
+/* ── 布局 ── */
+.body{display:flex;flex-direction:column;gap:12px;}
+.stage-wrap{flex:1 1 auto;min-width:0;}
+.stage{
+  position:relative;background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);overflow:hidden;
+  aspect-ratio:1.19/1;max-height:70vh;
+}
+canvas#cv{display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+canvas#cv.grabbing{cursor:grabbing;}
+.hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-size:12px;color:var(--text-muted);background:rgba(255,255,255,.86);
+  padding:4px 13px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;
+}
+.toast{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  font-size:12.5px;font-weight:600;color:var(--accent-deep);
+  background:rgba(255,255,255,.95);border:1px solid rgba(209,73,91,.25);
+  padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .3s;
+}
+.toast.on{opacity:1;}
+
+/* ── 小灯泡与提问气泡 ── */
+.bulb{
+  position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(197,169,106,.55);background:rgba(255,255,255,.94);
+  font-size:19px;line-height:1;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(45,74,50,.13);transition:transform .18s, box-shadow .25s, border-color .25s;
+}
+.bulb:active{transform:scale(.92);}
+.bulb.lit{border-color:var(--wood-gold);box-shadow:0 0 0 4px rgba(197,169,106,.20),0 2px 10px rgba(45,74,50,.16);}
+.bulb.glow{animation:bulbGlow 2.6s ease-in-out infinite;}
+@keyframes bulbGlow{
+  0%,100%{box-shadow:0 2px 8px rgba(45,74,50,.13);}
+  50%{box-shadow:0 0 0 5px rgba(197,169,106,.22),0 2px 10px rgba(45,74,50,.16);}
+}
+.qbox{
+  position:absolute;top:56px;right:10px;max-width:82%;
+  background:rgba(255,255,255,.975);border:1px solid rgba(197,169,106,.5);
+  border-radius:12px;padding:11px 13px 9px;box-shadow:0 8px 24px rgba(45,74,50,.16);
+  opacity:0;transform:translateY(-6px) scale(.97);pointer-events:none;
+  transition:opacity .22s, transform .22s;
+}
+.qbox.on{opacity:1;transform:none;pointer-events:auto;}
+.qtext{font-size:13px;line-height:1.6;color:var(--bamboo-dark);text-align:left;}
+.qtext::before{content:'💡 ';}
+.qrow{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+.qbtn{
+  font-family:inherit;font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+}
+.qbtn:active{transform:scale(.96);}
+
+/* ── 控制面板 ── */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;}
+.card h2{
+  font-size:12.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.card h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--bamboo);}
+
+.seg{display:flex;gap:6px;margin-bottom:12px;}
+.chip{
+  flex:1;font-family:inherit;font-size:12px;padding:8px 4px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+  transition:all .2s;
+}
+.chip.active{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+
+.row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.row label{flex:0 0 74px;font-size:12.5px;color:var(--text-secondary);}
+.row input[type=range]{
+  flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;
+  background:var(--bamboo-light);outline:none;
+}
+.row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);box-shadow:0 1px 4px rgba(45,74,50,.25);cursor:pointer;
+}
+.row input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:#fff;border:2.5px solid var(--bamboo);cursor:pointer;
+}
+.row .val{flex:0 0 48px;text-align:right;font-size:12.5px;font-weight:600;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+
+.btns{display:flex;gap:7px;margin-top:9px;}
+.btn{
+  flex:1;font-family:inherit;font-size:12.5px;padding:9px 4px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--bamboo-dark);transition:all .2s;
+}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+.btn.primary:active{background:var(--accent-deep);}
+.btn.on{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+.btn:active{transform:scale(.97);}
+
+/* ── 数据 ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px;}
+.stat{
+  background:#FBFDFA;border:1px solid rgba(91,140,90,.12);border-radius:10px;
+  padding:7px 8px;display:flex;flex-direction:column;gap:2px;
+}
+.stat span{font-size:10.5px;color:var(--text-muted);letter-spacing:.5px;}
+.stat b{font-size:15px;font-weight:700;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+.total{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 11px;border-radius:10px;background:#F7FAF5;border:1px solid rgba(91,140,90,.12);
+  margin-bottom:7px;
+}
+.total span{font-size:12px;color:var(--text-secondary);}
+.total b{font-size:17px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
+.total.best{background:rgba(91,140,90,.07);}
+.total.best b{color:var(--bamboo);}
+.gap{
+  font-size:11.5px;color:var(--text-muted);text-align:right;margin-bottom:10px;
+  font-variant-numeric:tabular-nums;
+}
+.gap.ok{color:var(--bamboo);font-weight:700;}
+canvas#chart{display:block;width:100%;height:108px;border-radius:9px;background:#FBFDFA;}
+
+/* ── 结论 ── */
+.conc-wrap{position:relative;}
+.conc-body{transition:filter .25s,opacity .25s;}
+.conc-body.masked{filter:blur(5px);opacity:.5;pointer-events:none;user-select:none;}
+.masktip{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;
+  font-size:12.5px;font-weight:600;color:#8A6D2F;background:rgba(255,255,255,.5);border-radius:9px;padding:0 10px;
+}
+.masktip.on{display:flex;}
+.steps{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.steps li{
+  position:relative;padding-left:22px;font-size:12.8px;line-height:1.62;color:var(--text-secondary);
+}
+.steps li::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;
+  background:rgba(91,140,90,.12);color:var(--bamboo);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.steps{counter-reset:step;}
+.steps b{color:var(--bamboo-dark);}
+.why{
+  margin-top:10px;padding:9px 11px;border-radius:9px;background:rgba(197,169,106,.10);
+  font-size:12.3px;line-height:1.65;color:#7A6330;
+}
+.why b{color:#8A6D2F;}
+.eq{
+  font-size:14px;font-weight:700;color:var(--bamboo-dark);margin-bottom:9px;
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+}
+.eq .tag{
+  font-size:10px;font-weight:600;color:var(--bamboo);background:rgba(91,140,90,.12);
+  padding:2px 8px;border-radius:999px;
+}
+.red{color:var(--accent-deep);}
+
+@media (min-width:900px){
+  .body{flex-direction:row;align-items:flex-start;}
+  .stage{aspect-ratio:auto;height:min(78vh,620px);max-height:none;}
+  .panel{width:352px;flex:0 0 352px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <a class="back" href="index.html" aria-label="返回">←</a>
+    <div>
+      <h1>将军饮马 · 最短路径</h1>
+      <p>轴对称的妙用 · 八年级</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="stage-wrap">
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <div class="toast" id="toast"></div>
+        <button class="bulb glow" id="bulb" aria-label="想一想">💡</button>
+        <div class="qbox" id="qbox">
+          <div class="qtext" id="qtext"></div>
+          <div class="qrow">
+            <button class="qbtn" id="qNext">↻ 换一题</button>
+            <button class="qbtn" id="qClose">收起</button>
+          </div>
+        </div>
+        <div class="hint" id="hint">✋ 拖动 A、B 换位置，拖动 P 沿河岸走，河岸也能上下拖</div>
+      </div>
+    </div>
+
+    <aside class="panel">
+
+      <div class="card">
+        <h2>动手操作</h2>
+        <div class="seg" id="seg">
+          <button class="chip active" data-mode="single">单河 · 将军饮马</button>
+          <button class="chip" data-mode="double">双河 · 进阶</button>
+        </div>
+        <div class="row">
+          <label>P 的位置</label>
+          <input type="range" id="sP" min="-8.4" max="8.4" step="0.01" value="-0.4">
+          <span class="val" id="vP">0.0</span>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="btnBest">🎯 一键最短</button>
+          <button class="btn" id="btnHide">🙈 先别看答案</button>
+        </div>
+        <div class="btns">
+          <button class="btn" id="btnReset">复位</button>
+          <button class="btn" id="btnDemo">▶ 自动走一遍</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>实时数据</h2>
+        <div class="stats">
+          <div class="stat"><span>AP</span><b id="vAP">—</b></div>
+          <div class="stat"><span id="lblMid">PB</span><b id="vMid">—</b></div>
+          <div class="stat"><span id="lblEnd">—</span><b id="vEnd">—</b></div>
+        </div>
+        <div class="total"><span>当前总路程</span><b id="vSum">—</b></div>
+        <div class="total best"><span>理论最短</span><b id="vBest">—</b></div>
+        <div class="gap" id="vGap">—</div>
+        <canvas id="chart"></canvas>
+      </div>
+
+      <div class="card" id="concCard">
+        <h2>思路与结论</h2>
+        <div class="conc-wrap">
+          <div class="conc-body" id="concBody"></div>
+          <div class="masktip" id="maskTip">🙈 答案已隐藏 · 点「揭晓答案」查看思路</div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $('cv'), ctx = cv.getContext('2d');
+  var chartCv = $('chart'), cctx = chartCv.getContext('2d');
+  var hint = $('hint'), toastEl = $('toast');
+
+  /* ── 世界坐标范围（固定视角，便于比较）── */
+  var V = { x0: -8.2, x1: 8.2, y0: -6.3, y1: 7.4 };
+  var view = { s: 40, cx: 0, cy: 0, W: 0, H: 0, DPR: 1 };
+
+  var COL = {
+    bamboo: '#5B8C5A', bambooDark: '#2D4A32', gold: '#C5A96A', goldDk: '#8A6D2F',
+    red: '#D1495B', redDeep: '#B32D42', slate: '#4E6E8E', grey: '#9AAB9B',
+    water: '#DCEBF3', waterLine: '#8FB4C8', grid: '#EFF4ED', orange: '#E08A3C'
+  };
+
+  /* ── 状态 ── */
+  var ST = {
+    mode: 'single',
+    showAnswer: true,
+    single: { k: 0.0, A: { x: -4.8, y: 3.6 }, B: { x: 4.6, y: 2.3 }, p: -0.4 },
+    double: { k1: 1.5, k2: -1.9, A: { x: -4.9, y: 4.7 }, B: { x: 4.7, y: -3.7 }, p: -1.0 }
+  };
+  var DEF = JSON.parse(JSON.stringify({ single: ST.single, double: ST.double }));
+
+  var clamp = function(v, a, b){ return v < a ? a : (v > b ? b : v); };
+  var dist = function(p, q){ return Math.hypot(p.x - q.x, p.y - q.y); };
+  var fmt = function(n){ return (isFinite(n) ? n : 0).toFixed(2); };
+
+  /* ── 坐标变换 ── */
+  function toS(p){ return [view.cx + p.x * view.s, view.cy - p.y * view.s]; }
+  function toW(sx, sy){ return { x: (sx - view.cx) / view.s, y: (view.cy - sy) / view.s }; }
+
+  function fitView(){
+    var rect = cv.getBoundingClientRect();
+    if(!rect.width || !rect.height) return;
+    view.DPR = Math.min(window.devicePixelRatio || 1, 2);
+    view.W = rect.width; view.H = rect.height;
+    cv.width = Math.round(rect.width * view.DPR);
+    cv.height = Math.round(rect.height * view.DPR);
+    ctx.setTransform(view.DPR, 0, 0, view.DPR, 0, 0);
+    var s = Math.min(view.W / (V.x1 - V.x0), view.H / (V.y1 - V.y0));
+    view.s = s;
+    view.cx = view.W / 2 - ((V.x0 + V.x1) / 2) * s;
+    view.cy = view.H / 2 + ((V.y0 + V.y1) / 2) * s;
+  }
+
+  /* ── 直线求交（求 y = Y 时的 x）── */
+  function intersectX(P1, P2, Y){
+    var dy = P2.y - P1.y;
+    if(Math.abs(dy) < 1e-9) return P1.x;
+    var t = (Y - P1.y) / dy;
+    return P1.x + t * (P2.x - P1.x);
+  }
+
+  /* ── 核心几何计算 ── */
+  function compute(){
+    if(ST.mode === 'single'){
+      var s = ST.single, k = s.k, A = s.A, B = s.B;
+      var P = { x: s.p, y: k };
+      var AP = dist(A, P), PB = dist(P, B);
+      var same = (A.y - k) * (B.y - k) > 0;
+      var Ar = { x: A.x, y: 2 * k - A.y };
+      var pStar, best;
+      if(same){
+        pStar = intersectX(Ar, B, k);
+        best = dist(Ar, B);
+      }else{
+        pStar = intersectX(A, B, k);
+        best = dist(A, B);
+      }
+      return {
+        kind: same ? 'same' : 'opposite', k: k, h: 0,
+        A: A, B: B, P: P, Q: null,
+        AP: AP, Mid: PB, End: null,
+        sum: AP + PB, best: best, pStar: pStar,
+        Ar: Ar, Br: null, Bpp: null
+      };
+    }
+
+    /* 双河：两条平行河岸 k1（上）、k2（下），P 在 k1，Q 由 P 垂直下移到 k2 */
+    var d = ST.double, k1 = d.k1, k2 = d.k2, h = k1 - k2;
+    var A2 = d.A, B2 = d.B;
+    var f = function(p){
+      return Math.hypot(p - A2.x, A2.y - k1) + h + Math.hypot(p - B2.x, k2 - B2.y);
+    };
+    var lo = V.x0, hi = V.x1, i, m1, m2;
+    for(i = 0; i < 160; i++){
+      m1 = lo + (hi - lo) / 3; m2 = hi - (hi - lo) / 3;
+      if(f(m1) < f(m2)) hi = m2; else lo = m1;
+    }
+    var pStar2 = (lo + hi) / 2, best2 = f(pStar2);
+    var P2 = { x: d.p, y: k1 }, Q2 = { x: d.p, y: k2 };
+    return {
+      kind: 'double', k: k1, k1: k1, k2: k2, h: h,
+      A: A2, B: B2, P: P2, Q: Q2,
+      AP: dist(A2, P2), Mid: h, End: dist(Q2, B2),
+      sum: dist(A2, P2) + h + dist(Q2, B2), best: best2, pStar: pStar2,
+      Ar: { x: A2.x, y: 2 * k1 - A2.y },
+      Br: { x: B2.x, y: 2 * k2 - B2.y },
+      Bpp: { x: B2.x, y: k1 + k2 - B2.y }
+    };
+  }
+
+  /* ── 绘图基础 ── */
+  function line(p, q, color, lw, dash){
+    var a = toS(p), b = toS(q);
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    ctx.restore();
+  }
+  function label(text, p, dx, dy, color, size, weight){
+    var s = toS(p);
+    ctx.save();
+    ctx.font = (weight || 700) + ' ' + (size || 13) + 'px "Times New Roman","Songti SC",Georgia,serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3.6; ctx.strokeStyle = 'rgba(255,255,255,.94)';
+    ctx.strokeText(text, s[0] + dx, s[1] + dy);
+    ctx.fillStyle = color;
+    ctx.fillText(text, s[0] + dx, s[1] + dy);
+    ctx.restore();
+  }
+  function plain(text, sx, sy, color, size, align){
+    ctx.save();
+    ctx.font = '600 ' + (size || 11) + 'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3.4; ctx.strokeStyle = 'rgba(255,255,255,.94)';
+    ctx.strokeText(text, sx, sy);
+    ctx.fillStyle = color;
+    ctx.fillText(text, sx, sy);
+    ctx.restore();
+  }
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+  function labelChip(text, p, dx, dy, color, size){
+    var s = toS(p), x = s[0] + dx, y = s[1] + dy;
+    ctx.save();
+    ctx.font = '700 ' + (size || 12) + 'px "Times New Roman","Songti SC",Georgia,serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var w = ctx.measureText(text).width + 8, h = (size || 12) + 7;
+    ctx.fillStyle = 'rgba(255,255,255,.93)';
+    roundRect(x - w / 2, y - h / 2, w, h, 4); ctx.fill();
+    ctx.fillStyle = color; ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+  function dot(p, r, fill, stroke){
+    var s = toS(p);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, Math.PI * 2);
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke();
+    ctx.restore();
+  }
+  function midText(text, p, q, color, off){
+    var m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    var dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1;
+    var nx = -dy / L * (off || 0), ny = dx / L * (off || 0);
+    var s = toS({ x: m.x + nx, y: m.y + ny });
+    plain(text, s[0], s[1], color, 11, 'center');
+  }
+
+  /* ── 背景：网格 + 河水 ── */
+  function drawBackground(){
+    ctx.clearRect(0, 0, view.W, view.H);
+
+    ctx.save();
+    ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+    var gx;
+    for(gx = Math.ceil(V.x0); gx <= V.x1; gx++){
+      var a = toS({ x: gx, y: V.y0 }), b = toS({ x: gx, y: V.y1 });
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    for(gx = Math.ceil(V.y0); gx <= V.y1; gx++){
+      var c = toS({ x: V.x0, y: gx }), e = toS({ x: V.x1, y: gx });
+      ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawRiver(k, name){
+    var half = 0.34;
+    var tl = toS({ x: V.x0, y: k + half }), br = toS({ x: V.x1, y: k - half });
+    ctx.save();
+    ctx.fillStyle = COL.water;
+    ctx.fillRect(tl[0], tl[1], br[0] - tl[0], br[1] - tl[1]);
+    ctx.strokeStyle = COL.waterLine; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(tl[0], tl[1]); ctx.lineTo(br[0], tl[1]); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tl[0], br[1]); ctx.lineTo(br[0], br[1]); ctx.stroke();
+
+    /* 水波（画在河带中线上下，幅度按河带高度缩放） */
+    ctx.strokeStyle = 'rgba(143,180,200,.7)'; ctx.lineWidth = 1.2;
+    var yMid = toS({ x: 0, y: k })[1];
+    var amp = Math.max(2, Math.min(5, (br[1] - tl[1]) * 0.22));
+    for(var x = V.x0 + 0.8; x < V.x1 - 0.6; x += 2.4){
+      var p0 = toS({ x: x, y: k });
+      ctx.beginPath();
+      ctx.moveTo(p0[0], yMid);
+      ctx.quadraticCurveTo(p0[0] + 8, yMid - amp, p0[0] + 16, yMid);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    var lp = toS({ x: V.x0 + 0.35, y: k + half + 0.42 });
+    plain(name || '河岸 l', lp[0], lp[1], COL.waterLine, 11.5, 'left');
+  }
+
+  /* ── 主绘制 ── */
+  function draw(){
+    var g = compute();
+    drawBackground();
+
+    if(g.kind === 'double'){
+      drawRiver(g.k1, '河岸 l₁');
+      drawRiver(g.k2, '河岸 l₂');
+    }else{
+      drawRiver(g.k, '河岸 l');
+    }
+
+    if(g.kind === 'same' && ST.showAnswer){
+      /* 对称点与辅助线 */
+      line(g.A, g.Ar, 'rgba(78,110,142,.75)', 1.6, [5, 4]);
+      line(g.Ar, g.B, COL.slate, 1.8, [7, 5]);
+      /* 直角符号 */
+      var foot = { x: g.A.x, y: g.k };
+      var fs = toS(foot);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(78,110,142,.85)'; ctx.lineWidth = 1.4;
+      ctx.strokeRect(fs[0], fs[1] - 9, 9, 9);
+      ctx.restore();
+      dot(g.Ar, 5, '#fff', COL.slate);
+      label('A′', g.Ar, -13, 15, COL.slate, 14, 700);
+    }
+
+    if(g.kind === 'opposite' && ST.showAnswer){
+      line(g.A, g.B, COL.slate, 1.8, [7, 5]);
+    }
+
+    if(g.kind === 'double' && ST.showAnswer){
+      line(g.A, g.Ar, 'rgba(78,110,142,.7)', 1.5, [5, 4]);
+      line(g.B, g.Br, 'rgba(78,110,142,.7)', 1.5, [5, 4]);
+      line(g.Ar, g.Bpp, COL.slate, 1.8, [7, 5]);
+      line({ x: g.Br.x, y: g.Br.y }, { x: g.Bpp.x, y: g.Bpp.y }, 'rgba(78,110,142,.55)', 1.3, [4, 4]);
+      dot(g.Ar, 4.6, '#fff', COL.slate); dot(g.Br, 4.6, '#fff', COL.slate); dot(g.Bpp, 4.6, '#fff', COL.slate);
+      label('A′', g.Ar, -13, 14, COL.slate, 13.5, 700);
+      label('B′', g.Br, 14, 6, COL.slate, 13.5, 700);
+      label('B″', g.Bpp, 15, -8, COL.slate, 13.5, 700);
+    }
+
+    /* 最优位置（绿色虚线 = 理论最省路线） */
+    if(ST.showAnswer){
+      var Ps = { x: g.pStar, y: g.kind === 'double' ? g.k1 : g.k };
+      line(g.A, Ps, 'rgba(91,140,90,.9)', 2.2, [6, 5]);
+      if(g.kind === 'double'){
+        var Qs = { x: g.pStar, y: g.k2 };
+        line(Ps, Qs, 'rgba(91,140,90,.9)', 2.2, [4, 4]);
+        line(Qs, g.B, 'rgba(91,140,90,.9)', 2.2, [6, 5]);
+        dot(Qs, 6.5, '#fff', COL.bamboo);
+        labelChip('Q*', Qs, 20, 17, COL.bamboo, 12.5);
+      }else{
+        line(Ps, g.B, 'rgba(91,140,90,.9)', 2.2, [6, 5]);
+      }
+      dot(Ps, 6.5, '#fff', COL.bamboo);
+      var nearP = Math.abs(Ps.x - g.P.x) < 1.0;
+      labelChip('P*', Ps, nearP ? 23 : -21, 20, COL.bamboo, 12.5);
+    }
+
+    /* 当前路线 A → P → B */
+    line(g.A, g.P, COL.orange, 2.6, null);
+    if(g.kind === 'double'){
+      line(g.P, g.Q, COL.orange, 2.6, null);
+      line(g.Q, g.B, COL.orange, 2.6, null);
+    }else{
+      line(g.P, g.B, COL.orange, 2.6, null);
+    }
+    midText(fmt(g.AP), g.A, g.P, '#A9631F', 0.3);
+    if(g.kind === 'double'){
+      midText(fmt(g.Mid), g.P, g.Q, '#A9631F', -0.55);
+      midText(fmt(g.End), g.Q, g.B, '#A9631F', 0.3);
+    }else{
+      midText(fmt(g.Mid), g.P, g.B, '#A9631F', 0.3);
+    }
+
+    /* 点与标签 */
+    dot(g.A, 6.5, '#fff', COL.bambooDark);
+    label('A', g.A, -14, -12, COL.bambooDark, 15, 700);
+    plain('将军', toS(g.A)[0] - 14, toS(g.A)[1] + 11, COL.grey, 10, 'center');
+
+    dot(g.B, 6.5, '#fff', COL.redDeep);
+    label('B', g.B, 14, -12, COL.redDeep, 15, 700);
+    plain('营地', toS(g.B)[0] + 14, toS(g.B)[1] + 12, COL.grey, 10, 'center');
+
+    dot(g.P, 8, COL.orange, '#fff');
+    var pOff = (ST.showAnswer && Math.abs(g.pStar - g.P.x) < 1.0) ? -16 : 15;
+    label('P', g.P, pOff, 17, '#A9631F', 14, 700);
+
+    if(!ST.showAnswer){
+      var ts = toS({ x: 0, y: V.y1 - 0.55 });
+      plain('答案已隐藏：自己拖动 P 找一找最省路线的位置', ts[0], ts[1], COL.goldDk, 12, 'center');
+    }
+
+    drawChart();
+  }
+
+  /* ── 折线图：总路程随 P 变化 ── */
+  function drawChart(){
+    var rect = chartCv.getBoundingClientRect();
+    if(!rect.width) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = rect.width, H = rect.height;
+    chartCv.width = Math.round(W * dpr); chartCv.height = Math.round(H * dpr);
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cctx.clearRect(0, 0, W, H);
+
+    var g = compute();
+    if(!ST.showAnswer){
+      cctx.save();
+      cctx.font = '600 11.5px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+      cctx.fillStyle = '#9AAB9B'; cctx.textAlign = 'center'; cctx.textBaseline = 'middle';
+      cctx.fillText('揭晓答案后，这里会画出总路程随 P 变化的曲线', W / 2, H / 2);
+      cctx.restore();
+      return;
+    }
+    var f = function(p){
+      if(g.kind === 'double'){
+        return Math.hypot(p - g.A.x, g.A.y - g.k1) + g.h + Math.hypot(p - g.B.x, g.k2 - g.B.y);
+      }
+      return Math.hypot(p - g.A.x, g.A.y - g.k) + Math.hypot(p - g.B.x, g.B.y - g.k);
+    };
+
+    var N = 140, pts = [], lo = Infinity, hi = -Infinity, i, x, y;
+    for(i = 0; i <= N; i++){
+      x = V.x0 + (V.x1 - V.x0) * i / N;
+      y = f(x);
+      pts.push({ x: x, y: y });
+      if(y < lo) lo = y;
+      if(y > hi) hi = y;
+    }
+    var padT = 20, padB = 16, padL = 6, padR = 8;
+    var span = Math.max(hi - lo, 1e-6);
+    var mapX = function(v){ return padL + (v - V.x0) / (V.x1 - V.x0) * (W - padL - padR); };
+    var mapY = function(v){ return padT + (hi - v) / span * (H - padT - padB); };
+
+    /* 基线 */
+    cctx.strokeStyle = 'rgba(91,140,90,.16)'; cctx.lineWidth = 1;
+    cctx.beginPath(); cctx.moveTo(padL, H - padB + 4); cctx.lineTo(W - padR, H - padB + 4); cctx.stroke();
+
+    /* 曲线 */
+    cctx.beginPath();
+    cctx.moveTo(mapX(pts[0].x), mapY(pts[0].y));
+    for(i = 1; i <= N; i++) cctx.lineTo(mapX(pts[i].x), mapY(pts[i].y));
+    cctx.strokeStyle = COL.bamboo; cctx.lineWidth = 1.8; cctx.lineJoin = 'round';
+    cctx.stroke();
+
+    /* 填充 */
+    cctx.lineTo(mapX(V.x1), H - padB + 4); cctx.lineTo(mapX(V.x0), H - padB + 4);
+    cctx.closePath();
+    cctx.fillStyle = 'rgba(91,140,90,.07)'; cctx.fill();
+
+    /* 最优点 */
+    if(ST.showAnswer){
+      cctx.beginPath();
+      cctx.arc(mapX(g.pStar), mapY(g.best), 3.6, 0, Math.PI * 2);
+      cctx.fillStyle = COL.bamboo; cctx.fill();
+    }
+
+    /* 当前点 */
+    cctx.save();
+    cctx.setLineDash([3, 3]);
+    cctx.strokeStyle = 'rgba(224,138,60,.6)'; cctx.lineWidth = 1;
+    cctx.beginPath(); cctx.moveTo(mapX(g.P.x), padT - 4); cctx.lineTo(mapX(g.P.x), H - padB + 4); cctx.stroke();
+    cctx.restore();
+    cctx.beginPath();
+    cctx.arc(mapX(g.P.x), mapY(g.sum), 4.2, 0, Math.PI * 2);
+    cctx.fillStyle = COL.orange; cctx.fill();
+    cctx.strokeStyle = '#fff'; cctx.lineWidth = 1.6; cctx.stroke();
+
+    cctx.save();
+    cctx.font = '600 10px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    cctx.fillStyle = '#9AAB9B'; cctx.textAlign = 'left'; cctx.textBaseline = 'middle';
+    cctx.fillText('总路程随 P 的变化', padL + 3, padT - 3);
+    cctx.restore();  }
+
+  /* ── 面板更新 ── */
+  function updatePanel(){
+    var g = compute();
+    var hide = !ST.showAnswer;
+
+    var gap = g.sum - g.best;
+    $('vAP').textContent = hide ? '?' : fmt(g.AP);
+    if(g.kind === 'double'){
+      $('lblMid').textContent = 'PQ（河宽）';
+      $('vMid').textContent = hide ? '?' : fmt(g.Mid);
+      $('lblEnd').textContent = 'QB';
+      $('vEnd').textContent = hide ? '?' : fmt(g.End);
+    }else{
+      $('lblMid').textContent = 'PB';
+      $('vMid').textContent = hide ? '?' : fmt(g.Mid);
+      $('lblEnd').textContent = '比最短多';
+      $('vEnd').textContent = hide ? '?' : fmt(gap);
+    }
+
+    $('vSum').textContent = fmt(g.sum);
+    $('vBest').textContent = hide ? '—' : fmt(g.best);
+
+    var gapEl = $('vGap');
+    if(hide){
+      gapEl.textContent = '答案已隐藏：自己把 P 拖到最短的位置试试';
+      gapEl.className = 'gap';
+    }else if(gap < 0.005){
+      gapEl.textContent = '✓ 已经是最短路线了';
+      gapEl.className = 'gap ok';
+    }else{
+      gapEl.textContent = '再拖一拖，还能更省一点 ↓';
+      gapEl.className = 'gap';
+    }
+
+    $('vP').textContent = g.P.x.toFixed(1);
+    $('sP').value = String(g.P.x);
+
+    renderConc(g);
+    $('concBody').classList.toggle('masked', hide);
+    $('maskTip').classList.toggle('on', hide);
+  }
+
+  function renderConc(g){
+    var body = $('concBody');
+    if(g.kind === 'double'){
+      body.innerHTML =
+        '<div class="eq">AP + PQ + QB <span class="tag">双河·两次翻折</span></div>' +
+        '<ol class="steps">' +
+          '<li>作 A 关于 <b>l₁</b> 的对称点 <b>A′</b>，则 AP = A′P；</li>' +
+          '<li>作 B 关于 <b>l₂</b> 的对称点 <b>B′</b>，则 QB = QB′；</li>' +
+          '<li>PQ 是两河之间那一段，只有「垂直于河岸」时才最短，长度固定 = 河宽 <b>' + fmt(g.h) + '</b>；</li>' +
+          '<li>把 B′ 沿河宽平移成 <b>B″</b>，让 A′、P、B″ 落在一条直线上 —— 折线就被「拉直」了；</li>' +
+          '<li>拉直后最短 = A′B″ + 河宽 = <b class="red">' + fmt(g.best) + '</b></li>' +
+        '</ol>' +
+        '<div class="why"><b>一句话记住：</b>遇到折线求最短，就想办法把它翻折、平移成一条直线；' +
+        '只要能用上「两点之间线段最短」，最短值就自己跳出来了。</div>';
+    }else if(g.kind === 'opposite'){
+      body.innerHTML =
+        '<div class="eq">A、B 在河的两侧 <span class="tag">特殊情况</span></div>' +
+        '<ol class="steps">' +
+          '<li>这时 A、B 各在河岸一边，不需要对称；</li>' +
+          '<li>直接连接 AB，它与河岸的交点就是最短位置 <b>P*</b>；</li>' +
+          '<li>因为「两点之间线段最短」：AP + PB 的最小值就是 <b>AB = ' + fmt(g.best) + '</b>。</li>' +
+        '</ol>' +
+        '<div class="why"><b>对比一下：</b>同侧要「先翻过去」，异侧要「直接连」。' +
+        '判断依据只有一句话 —— 看你走的路需不需要跨过河。</div>';
+    }else{
+      body.innerHTML =
+        '<div class="eq">AP + PB 最小 <span class="tag">单河·同侧</span></div>' +
+        '<ol class="steps">' +
+          '<li>作 A 关于河岸 l 的对称点 <b>A′</b>（轴对称 ⇒ AP = A′P）；</li>' +
+          '<li>连接 <b>A′B</b>，它与 l 的交点就是最短位置 <b>P*</b>；</li>' +
+          '<li>因为 AP + PB = A′P + PB ≥ A′B，且当 A′、P、B <b>三点共线</b>时取等号；</li>' +
+          '<li>所以最短路程 = <b>A′B</b> = <b class="red">' + fmt(g.best) + '</b>。</li>' +
+        '</ol>' +
+        '<div class="why"><b>为什么可行？</b>「将军从 A 走到河岸再去 B」这条路，' +
+        '等价于「从河对岸的 A′ 走到 B」。A′ 和 B 在河的同一边了，' +
+        '两点之间线段最短，问题就被拆开了。</div>';
+    }
+  }
+
+  /* ── 交互 ── */
+  var drag = null;
+
+  function hitTest(w){
+    var g = compute();
+    if(dist(w, g.P) < 0.5) return 'P';
+    if(ST.mode === 'double'){
+      if(g.Q && dist(w, g.Q) < 0.45) return 'Q';
+    }
+    if(dist(w, g.A) < 0.55) return 'A';
+    if(dist(w, g.B) < 0.55) return 'B';
+    if(ST.mode === 'single'){
+      if(Math.abs(w.y - ST.single.k) < 0.5) return 'river';
+    }
+    return null;
+  }
+
+  function clampPoint(pt, k, above){
+    pt.x = clamp(pt.x, V.x0 + 1.0, V.x1 - 1.0);
+    if(above) pt.y = clamp(pt.y, k + 0.65, k + 4.6);
+    else pt.y = clamp(pt.y, k - 4.6, k - 0.65);
+  }
+
+  cv.addEventListener('pointerdown', function(e){
+    var rect = cv.getBoundingClientRect();
+    var w = toW(e.clientX - rect.left, e.clientY - rect.top);
+    var hit = hitTest(w);
+    if(!hit) return;
+    drag = { type: hit, startAboveA: ST.mode === 'double' ? true : (ST.single.A.y - ST.single.k > 0),
+             startAboveB: ST.mode === 'double' ? false : (ST.single.B.y - ST.single.k > 0) };
+    cv.setPointerCapture(e.pointerId);
+    cv.classList.add('grabbing');
+    e.preventDefault();
+    onMove(w);
+  });
+
+  cv.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var rect = cv.getBoundingClientRect();
+    onMove(toW(e.clientX - rect.left, e.clientY - rect.top));
+    e.preventDefault();
+  });
+
+  function onMove(w){
+    if(!drag) return;
+    if(ST.mode === 'single'){
+      var s = ST.single;
+      if(drag.type === 'A'){
+        s.A.x = w.x; s.A.y = w.y;
+        clampPoint(s.A, s.k, drag.startAboveA);
+      }else if(drag.type === 'B'){
+        s.B.x = w.x; s.B.y = w.y;
+        clampPoint(s.B, s.k, drag.startAboveB);
+      }else if(drag.type === 'P'){
+        s.p = clamp(w.x, V.x0, V.x1);
+      }else if(drag.type === 'river'){
+        s.k = clamp(w.y, -1.6, 2.6);
+        clampPoint(s.A, s.k, drag.startAboveA);
+        clampPoint(s.B, s.k, drag.startAboveB);
+      }
+    }else{
+      var d = ST.double;
+      if(drag.type === 'A'){
+        d.A.x = w.x; d.A.y = w.y; clampPoint(d.A, d.k1, true);
+      }else if(drag.type === 'B'){
+        d.B.x = w.x; d.B.y = w.y; clampPoint(d.B, d.k2, false);
+      }else if(drag.type === 'P' || drag.type === 'Q'){
+        d.p = clamp(w.x, V.x0, V.x1);
+      }
+    }
+    draw(); updatePanel();
+    checkFound();
+  }
+
+  cv.addEventListener('pointerup', function(e){
+    if(!drag) return;
+    drag = null;
+    cv.classList.remove('grabbing');
+    checkFound();
+  });
+  cv.addEventListener('pointercancel', function(){ drag = null; cv.classList.remove('grabbing'); });
+
+  /* ── 找到最短时给个反馈 ── */
+  var celebrated = false;
+  function checkFound(){
+    if(ST.showAnswer){ celebrated = false; return; }
+    var g = compute();
+    if(g.sum - g.best < 0.06){
+      if(!celebrated){
+        celebrated = true;
+        toast('🎉 就是这里！你已经找到最省路线');
+        ST.showAnswer = true;
+        syncButtons();
+        setTimeout(function(){ draw(); updatePanel(); }, 480);
+      }
+    }else{
+      celebrated = false;
+    }
+  }
+
+  var toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('on'); }, 2400);
+  }
+
+  /* ── 按钮与滑块 ── */
+  function syncButtons(){
+    $('btnHide').textContent = ST.showAnswer ? '🙈 先别看答案' : '👀 揭晓答案';
+    $('btnHide').classList.toggle('on', !ST.showAnswer);
+  }
+
+  $('seg').addEventListener('click', function(e){
+    var btn = e.target.closest('.chip');
+    if(!btn) return;
+    var mode = btn.getAttribute('data-mode');
+    if(mode === ST.mode) return;
+    ST.mode = mode;
+    Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(c){
+      c.classList.toggle('active', c === btn);
+    });
+    ST.showAnswer = true; celebrated = false;
+    syncButtons();
+    hint.textContent = mode === 'double'
+      ? '✋ P、Q 同步沿两条河岸走；A、B 也可以拖'
+      : '✋ 拖动 A、B 换位置，拖动 P 沿河岸走，河岸也能上下拖';
+    draw(); updatePanel();
+  });
+
+  $('sP').addEventListener('input', function(){
+    var v = parseFloat(this.value);
+    if(ST.mode === 'single') ST.single.p = v; else ST.double.p = v;
+    draw(); updatePanel(); checkFound();
+  });
+
+  $('btnBest').addEventListener('click', function(){
+    var g = compute();
+    animateTo(g.pStar);
+  });
+
+  $('btnHide').addEventListener('click', function(){
+    ST.showAnswer = !ST.showAnswer;
+    celebrated = false;
+    syncButtons(); draw(); updatePanel();
+  });
+
+  $('btnReset').addEventListener('click', function(){
+    ST.single = JSON.parse(JSON.stringify(DEF.single));
+    ST.double = JSON.parse(JSON.stringify(DEF.double));
+    ST.showAnswer = true; celebrated = false;
+    syncButtons(); draw(); updatePanel();
+    toast('已复位');
+  });
+
+  var animId = null;
+  function animateTo(target){
+    if(animId) cancelAnimationFrame(animId);
+    var st = ST.mode === 'single' ? ST.single : ST.double;
+    var from = st.p, t0 = 0, dur = 760;
+    ST.showAnswer = true; syncButtons();
+    function step(ts){
+      if(!t0) t0 = ts;
+      var t = Math.min(1, (ts - t0) / dur);
+      var e = 1 - Math.pow(1 - t, 3);
+      st.p = from + (target - from) * e;
+      draw(); updatePanel();
+      if(t < 1) animId = requestAnimationFrame(step);
+      else { animId = null; toast('P 已滑到最省路线的位置 ✓'); }
+    }
+    animId = requestAnimationFrame(step);
+  }
+
+  $('btnDemo').addEventListener('click', function(){
+    var g = compute();
+    var st = ST.mode === 'single' ? ST.single : ST.double;
+    st.p = clamp(g.pStar - 4.2, V.x0, V.x1);
+    ST.showAnswer = false; syncButtons();
+    draw(); updatePanel();
+    setTimeout(function(){ animateTo(g.pStar); }, 320);
+  });
+
+  /* ── 小灯泡 ── */
+  var QS = {
+    single: [
+      '为什么作的是 A 的对称点，而不是 B 的？如果作 B 的对称点，答案会变吗？',
+      'P 往左挪一点点，AP 变短了，那 PB 是变长还是变短？两者之和呢？',
+      '如果 A、B 分别在河的两岸，还需要「对称」这一步吗？',
+      '为什么「A′、P、B 三点共线」的时候，AP + PB 就是最小的？',
+      '如果这条河是斜着的一条直线，这个办法还成立吗？',
+      '最短距离 A′B 和 A、B 两点的位置有关，和河岸在哪有关吗？'
+    ],
+    double: [
+      '为什么双河要「翻折两次」？只翻 A 会怎么样？',
+      '中间那一段 PQ，为什么一定要垂直于两岸？',
+      '如果两条河不平行，还能用这个办法吗？',
+      '把 B′ 平移成 B″，这一步到底在做什么？',
+      '三条河呢？你能猜出做法吗？'
+    ]
+  };
+  var qi = 0, bulbLit = false;
+  function nextQ(){
+    var list = QS[ST.mode] || QS.single;
+    $('qtext').textContent = list[qi % list.length];
+    qi++;
+  }
+  $('bulb').addEventListener('click', function(){
+    var box = $('qbox');
+    bulbLit = !bulbLit;
+    this.classList.toggle('lit', bulbLit);
+    this.classList.remove('glow');
+    if(bulbLit){ nextQ(); box.classList.add('on'); }
+    else box.classList.remove('on');
+  });
+  $('qNext').addEventListener('click', nextQ);
+  $('qClose').addEventListener('click', function(){
+    bulbLit = false;
+    $('bulb').classList.remove('lit');
+    $('qbox').classList.remove('on');
+  });
+
+  /* ── 初始化 ── */
+  window.addEventListener('resize', function(){ fitView(); draw(); });
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){ fitView(); draw(); }, 220);
+  });
+
+  fitView();
+  syncButtons();
+  draw();
+  updatePanel();
+
+  /* 首次绘制后若字体/尺寸变化，再补一次 */
+  setTimeout(function(){ fitView(); draw(); updatePanel(); }, 120);
+})();
+</script>
+</body>
+</html>
