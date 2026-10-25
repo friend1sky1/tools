@@ -200,7 +200,7 @@ canvas#cv.grabbing{cursor:grabbing;}
             <button class="qbtn" id="qnext">下一题</button>
           </div>
         </div>
-        <div class="hint" id="hint">拖金色方块改截距 b，拖紫色方块改斜率 m</div>
+        <div class="hint" id="hint">按住交点 A / B 左右拖，直线自动跟随；金块改 b，紫点改 m</div>
         <div class="toast" id="toast"></div>
       </div>
       <div class="formula" id="formula"></div>
@@ -309,6 +309,12 @@ function fmt(n){
   var r = Math.round(n*10)/10;
   if(Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
   return r.toFixed(1);
+}
+function fmt2(n){
+  if(!isFinite(n)) return '—';
+  var r = Math.round(n*100)/100;
+  if(Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
+  return r.toFixed(2).replace(/0$/,'');
 }
 function co(p){ return '(' + fmt(p.x) + ', ' + fmt(p.y) + ')'; }
 
@@ -454,22 +460,22 @@ function drawLine(){
   ctx.stroke();
   ctx.restore();
 
-  // 直线标签
+  // 直线解析式：固定放右下角（图例式，永不与曲线/交点/手柄重叠）
   ctx.font = '600 12.5px Georgia, serif';
   ctx.fillStyle = th.line;
-  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-  var tx = Math.min(W/2/SC*0.62, 4.2);
-  var ty = ST.m*tx + ST.b;
-  if(Y(ty) > 20 && Y(ty) < H-6) ctx.fillText('y = ' + lineEq(), X(tx)+6, Y(ty)-3);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(255,255,255,.92)';
+  ctx.strokeText('y = ' + lineEq(), W-14, H-44);
+  ctx.fillText('y = ' + lineEq(), W-14, H-44);
 }
 
 function lineEq(){
   var m = ST.m, b = ST.b;
   var ms;
   if(Math.abs(m-1) < 1e-9) ms = 'x';
-  else ms = fmt(m) + 'x';
+  else ms = fmt2(m) + 'x';
   if(Math.abs(b) < 1e-9) return 'y = ' + ms;
-  return 'y = ' + ms + (b > 0 ? ' + ' + fmt(b) : ' − ' + fmt(Math.abs(b)));
+  return 'y = ' + ms + (b > 0 ? ' + ' + fmt2(b) : ' − ' + fmt2(Math.abs(b)));
 }
 
 function dot(x, y, r, fill, stroke){
@@ -530,7 +536,7 @@ function drawModeTri(AB){
   // OC 标注
   if(Math.abs(ST.b) > 0.3){
     var midY = Y(ST.b/2);
-    label('OC = ' + fmt(Math.abs(ST.b)), X(0), midY, 'rgba(45,74,50,.75)', -8, 0, 'right', 'middle', '600', 11.5);
+    label('OC = ' + fmt2(Math.abs(ST.b)), X(0), midY, 'rgba(45,74,50,.75)', -8, 0, 'right', 'middle', '600', 11.5);
   }
 }
 
@@ -589,7 +595,7 @@ function drawModeCod(){
   ctx.restore();
 
   dot(X(C.x), Y(C.y), 5.5, th.line, '#fff');
-  label('C(0, ' + fmt(ST.b) + ')', X(C.x), Y(C.y), th.line, -11, -6, 'right', 'middle', '700', 12);
+  label('C(0, ' + fmt2(ST.b) + ')', X(C.x), Y(C.y), th.line, -11, -6, 'right', 'middle', '700', 12);
   dot(X(D.x), Y(D.y), 5.5, th.line, '#fff');
   label('D(' + fmt(D.x) + ', 0)', X(D.x), Y(D.y), th.line, -9, 16, 'right', 'middle', '700', 12);
   label('△COD', X(D.x*0.62), Y(ST.b*0.55), th.area2s, 0, 0, 'center', 'middle', '700', 12);
@@ -610,6 +616,9 @@ function drawAB(AB){
 
   dot(X(A.x), Y(A.y), 7, th.pt, '#fff');
   dot(X(B.x), Y(B.y), 7, th.pt, '#fff');
+  // 拖拽中的交点高亮
+  if(drag === 'A'){ dot(X(A.x), Y(A.y), 17, 'rgba(209,73,91,.22)', null); dot(X(A.x), Y(A.y), 11, 'rgba(209,73,91,.30)', null); }
+  if(drag === 'B'){ dot(X(B.x), Y(B.y), 17, 'rgba(209,73,91,.22)', null); dot(X(B.x), Y(B.y), 11, 'rgba(209,73,91,.30)', null); }
   label('A' + co(A), X(A.x), Y(A.y), th.pt, 10, -13, 'left', 'middle', '700', 12.5);
   label('B' + co(B), X(B.x), Y(B.y), th.pt, -10, 15, 'right', 'middle', '700', 12.5);
 }
@@ -625,7 +634,7 @@ function mHandleX(){
     var ok = true;
     if(AB){
       for(var j=0;j<AB.length;j++){
-        if(Math.hypot(x-AB[j].x, y-AB[j].y) < 1.4){ ok = false; break; }
+        if(Math.hypot(x-AB[j].x, y-AB[j].y) < 1.9){ ok = false; break; }
       }
     }
     if(ok) return x;
@@ -687,9 +696,9 @@ function updateFormula(AB){
     var w = Math.abs(AB[0].x - AB[1].x);
     html = '<span class="lbl">△AOB 面积</span>'
       + '<div class="fx">S<sub>△AOB</sub> = ½ × OC × |x<sub>A</sub> − x<sub>B</sub>|'
-      + ' = ½ × ' + fmt(Math.abs(ST.b)) + ' × ' + fmt(w)
-      + ' = <b>' + fmt(s) + '</b></div>'
-      + '<div class="mut">OC 是直线在 y 轴上的截距，|x_A − x_B| 是水平宽；A' + co(AB[0]) + '，B' + co(AB[1]) + '</div>';
+      + ' = ½ × ' + fmt2(Math.abs(ST.b)) + ' × ' + fmt2(w)
+      + ' = <b>' + fmt2(s) + '</b></div>'
+      + '<div class="mut">OC 是直线在 y 轴上的截距，|x_A − x_B| 是水平宽；A' + co(AB[0]) + '，B' + co(AB[1]) + '（按住 A 或 B 左右拖，看面积怎么变）</div>';
   } else if(ST.mode === 'rect'){
     var px = Math.max(0.5, Math.min(ST.px, 6.5));
     var py = ST.k/px;
@@ -699,8 +708,8 @@ function updateFormula(AB){
       + '<div class="mut">不管 P 在双曲线上怎么移动，矩形面积永远等于 k = ' + fmt(ST.k) + '，三角形永远是一半。拖动 P 试试。</div>';
   } else {
     html = '<span class="lbl">△COD 面积</span>'
-      + '<div class="fx">C(0, ' + fmt(ST.b) + ')，D(' + fmt(-ST.b/ST.m) + ', 0)'
-      + '　S<sub>△COD</sub> = ½ × |b| × |b/m| = b²/(2m) = <b>' + fmt(sCod(ST.m, ST.b)) + '</b></div>'
+      + '<div class="fx">C(0, ' + fmt2(ST.b) + ')，D(' + fmt2(-ST.b/ST.m) + ', 0)'
+      + '　S<sub>△COD</sub> = ½ × |b| × |b/m| = b²/(2m) = <b>' + fmt2(sCod(ST.m, ST.b)) + '</b></div>'
       + '<div class="mut">这两个点就是直线与两条坐标轴的交点，中考常与 △AOB 一起出现。</div>';
   }
   el.innerHTML = html;
@@ -709,6 +718,35 @@ function updateFormula(AB){
 /* ══════════ 交互 ══════════ */
 var drag = null;
 var dragHX = 1.8;
+var grab = null;      // 拖交点时的锚点：s=±1, ox/oy=另一个交点(固定不动), t=|x|
+var stuckShown = false;
+function updateHint(){
+  document.getElementById('hint').textContent =
+    ST.mode === 'rect' ? '拖动曲线上的 P 点，看矩形面积为什么永远等于 k'
+    : ST.mode === 'cod' ? '拖金色方块改截距 b，看 △COD 怎么变'
+    : '按住交点 A / B 左右拖，直线自动跟随；金块改 b，紫点改 m';
+}
+function syncSliders(){
+  document.getElementById('sk').value = String(ST.k);
+  document.getElementById('sm').value = String(ST.m);
+  document.getElementById('sb').value = String(ST.b);
+  document.getElementById('vk').textContent = fmt(ST.k);
+  document.getElementById('vm').textContent = fmt2(ST.m);
+  document.getElementById('vb').textContent = fmt2(ST.b);
+}
+function curvePoint(s, t){ return { x: s*t, y: s*ST.k/t }; }
+function packAt(t){
+  // 另一交点不动、拖动点 |x| = t 时，反解出 (m, b)；不可行返回 null
+  if(!grab) return null;
+  if(!(t >= 0.45)) return null;
+  if(t > (W/2/SC)*0.92) return null;
+  var P = curvePoint(grab.s, t);
+  var m = (P.y - grab.oy) / (P.x - grab.ox);
+  if(!isFinite(m) || !(m >= 0.3 && m <= 3)) return null;
+  var b = P.y - m*P.x;
+  if(!isFinite(b) || b < -6 || b > 6) return null;
+  return { m:m, b:b, P:P };
+}
 var toastEl = document.getElementById('toast');
 var toastTimer = null;
 function toast(msg){
@@ -723,6 +761,14 @@ function near(px, py, tx, ty, r){
 }
 
 function pickHandle(px, py){
+  // 交点优先：手指点中 A / B 就直接拖它（仅 △AOB 模式）
+  if(ST.mode === 'tri'){
+    var ABh = solveAB(ST.k, ST.m, ST.b);
+    if(ABh){
+      if(near(px, py, X(ABh[0].x), Y(ABh[0].y), 26)) return 'A';
+      if(near(px, py, X(ABh[1].x), Y(ABh[1].y), 26)) return 'B';
+    }
+  }
   // b 手柄
   if(near(px, py, X(0), Y(ST.b), 24)) return 'b';
   // m 手柄
@@ -745,6 +791,14 @@ function onDown(e){
   if(!h) return;
   drag = h;
   dragHX = mHandleX();
+  if(h === 'A' || h === 'B'){
+    var ABd = solveAB(ST.k, ST.m, ST.b);
+    if(!ABd) return;
+    var me = (h === 'A') ? ABd[0] : ABd[1];
+    var other = (h === 'A') ? ABd[1] : ABd[0];
+    grab = { s: (me.x > 0 ? 1 : -1), ox: other.x, oy: other.y, t: Math.abs(me.x) };
+    stuckShown = false;
+  }
   cv.classList.add('grabbing');
   try{ if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId); }catch(err){}
   e.preventDefault();
@@ -761,17 +815,46 @@ function onMove(e){
     ST.b = nb;
     document.getElementById('sb').value = String(nb);
     document.getElementById('vb').textContent = fmt(nb);
-    toast('b = ' + fmt(nb));
+    toast('b = ' + fmt2(nb));
   } else if(drag === 'm'){
     var nm = clamp((my - ST.b)/dragHX, 0.3, 3);
     nm = Math.round(nm*10)/10;
     ST.m = nm;
     document.getElementById('sm').value = String(nm);
     document.getElementById('vm').textContent = fmt(nm);
-    toast('m = ' + fmt(nm));
+    toast('m = ' + fmt2(nm));
   } else if(drag === 'P'){
     ST.px = clamp(mx, 0.5, 6.5);
     toast('P 的横坐标 = ' + fmt(ST.px));
+  } else if(drag === 'A' || drag === 'B'){
+    if(!grab) return;
+    var rawT = invX(px);
+    var targetT = (grab.s > 0) ? rawT : -rawT;   // 带符号：手指拖过 y 轴时停在最近的合法位置
+    var t, stuck = false;
+    if(packAt(targetT)){
+      t = targetT;
+    } else {
+      // 手指超出可行范围：二分找到边界（另一交点与 k 全程不动）
+      var lo = grab.t, hi = targetT;
+      for(var bi = 0; bi < 28; bi++){
+        var mid = (lo + hi) / 2;
+        if(packAt(mid)) lo = mid; else hi = mid;
+      }
+      t = lo;
+      if(Math.abs(t - grab.t) < 1e-6) stuck = true;
+    }
+    var r2 = packAt(t);
+    if(r2){
+      grab.t = t;
+      ST.m = r2.m;
+      ST.b = r2.b;
+      syncSliders();
+      if(stuck){
+        if(!stuckShown){ toast('已到边界，直线不能再转了'); stuckShown = true; }
+      } else {
+        toast((drag === 'A' ? 'A' : 'B') + co(r2.P));
+      }
+    }
   }
   render();
   e.preventDefault();
@@ -780,6 +863,7 @@ function onMove(e){
 function onUp(){
   if(!drag) return;
   drag = null;
+  grab = null;
   cv.classList.remove('grabbing');
 }
 
@@ -793,7 +877,7 @@ function bindSlider(id, key, valId, store){
   var el = document.getElementById(id);
   el.addEventListener('input', function(){
     ST[key] = parseFloat(el.value);
-    document.getElementById(valId).textContent = fmt(ST[key]);
+    document.getElementById(valId).textContent = (key === 'k' ? fmt(ST[key]) : fmt2(ST[key]));
     if(store) localStorage.setItem(store, el.value);
     render();
   });
@@ -812,10 +896,7 @@ modeWrap.addEventListener('click', function(e){
   for(var i=0;i<ms.length;i++) ms[i].classList.remove('active');
   btn.classList.add('active');
   ST.mode = btn.getAttribute('data-mode');
-  document.getElementById('hint').textContent =
-    ST.mode === 'rect' ? '拖动曲线上的 P 点，看矩形面积为什么永远等于 k'
-    : ST.mode === 'cod' ? '拖金色方块改截距 b，看 △COD 怎么变'
-    : '拖金色方块改截距 b，拖紫色方块改斜率 m';
+  updateHint();
   render();
 });
 
@@ -829,8 +910,8 @@ document.querySelectorAll('.pbtn').forEach(function(btn){
     document.getElementById('sm').value = String(ST.m);
     document.getElementById('sb').value = String(ST.b);
     document.getElementById('vk').textContent = fmt(ST.k);
-    document.getElementById('vm').textContent = fmt(ST.m);
-    document.getElementById('vb').textContent = fmt(ST.b);
+    document.getElementById('vm').textContent = fmt2(ST.m);
+    document.getElementById('vb').textContent = fmt2(ST.b);
     render();
   });
 });
@@ -899,8 +980,8 @@ document.getElementById('qnext').addEventListener('click', function(){
   document.getElementById('sm').value = String(ST.m);
   document.getElementById('sb').value = String(ST.b);
   document.getElementById('vk').textContent = fmt(ST.k);
-  document.getElementById('vm').textContent = fmt(ST.m);
-  document.getElementById('vb').textContent = fmt(ST.b);
+  document.getElementById('vm').textContent = fmt2(ST.m);
+  document.getElementById('vb').textContent = fmt2(ST.b);
 
   // 支持 #rect / #cod 直达（也方便截图自检）
   var hm = (location.hash || '').replace('#','');
@@ -913,7 +994,7 @@ document.getElementById('qnext').addEventListener('click', function(){
     document.getElementById('hint').textContent =
       hm === 'rect' ? '拖动曲线上的 P 点，看矩形面积为什么永远等于 k'
       : hm === 'cod' ? '拖金色方块改截距 b，看 △COD 怎么变'
-      : '拖金色方块改截距 b，拖紫色方块改斜率 m';
+      : '按住交点 A / B 左右拖，直线自动跟随；金块改 b，紫点改 m';
   }
 
   buildSwatches();
@@ -932,10 +1013,14 @@ window.__IP = { ST:ST, solveAB:solveAB, sTri:sTri, sCod:sCod, render:render,
   handles:function(){
     var pxr = Math.max(0.5, Math.min(ST.px, 6.5));
     var hx = mHandleX();
+    var ABx = solveAB(ST.k, ST.m, ST.b);
     return {
       b:{ x:X(0), y:Y(ST.b) },
       m:{ x:X(hx), y:Y(ST.m*hx + ST.b) },
-      P:{ x:X(pxr), y:Y(ST.k/pxr) }
+      P:{ x:X(pxr), y:Y(ST.k/pxr) },
+      A: ABx ? { x:X(ABx[0].x), y:Y(ABx[0].y) } : null,
+      B: ABx ? { x:X(ABx[1].x), y:Y(ABx[1].y) } : null,
+      AB: ABx
     };
   }
 };
