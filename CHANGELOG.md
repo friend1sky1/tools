@@ -82,3 +82,9 @@
   - 数学自检：单河同侧 2 万组随机参数，公式解 vs 暴力扫描最大误差 5e-6；异侧 4e-6；双河三分法解 vs 暴力 6e-6，且与「A′B″ + 河宽」公式解一致
 - 新增：jiangjun-yinma-cover.svg（首页卡片封面，640x400）
 - 修改：index.html（工具网格首位新增「将军饮马 · 最短路径」卡片）
+
+### 16:05 - main
+- 修复：三张首页封面的标题被装饰性横线穿过（宝华反馈「红线把文字标题遮上了」）
+  - jiangjun-yinma-cover.svg / one-line-three-angles-cover.svg / handshake-model-cover.svg 各删除一条位于标题行上的装饰横线（线在 y=120~132，正好压在 28~29px 标题的顶部）
+  - 顺带修正 one-line-three-angles-cover.svg 中 D 点标签与副标题同排重叠（D 移到顶点下方）
+  - 线上三张 svg 均 200 且与本地逐字节一致
