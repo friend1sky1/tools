@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>青竹数苑 · 对勾函数与飘带函数</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root{
+  --bamboo:#5B8C5A; --bamboo-dark:#2D4A32; --bamboo-mist:#F0F5EE; --bamboo-light:#D6E5D2;
+  --wood-gold:#C5A96A; --text-secondary:#6B7D6C; --text-muted:#9AAB9B; --white:#FFFFFF;
+  --accent:#D1495B; --accent-deep:#B32D42;
+  --shadow-sm:0 1px 3px rgba(45,74,50,.06); --shadow-md:0 4px 12px rgba(45,74,50,.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bamboo-mist); color:var(--bamboo-dark);
+  -webkit-font-smoothing:antialiased; padding-bottom:24px; overflow-x:hidden;
+}
+.app{max-width:1080px;margin:0 auto;padding:12px 12px 0;display:flex;flex-direction:column;gap:12px;}
+
+/* ── 顶部 ── */
+.topbar{display:flex;align-items:center;gap:10px;}
+.topbar .back{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--white);
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:var(--bamboo-dark);font-size:18px;line-height:1;
+}
+.topbar .back:active{transform:scale(.94);}
+.topbar h1{
+  font-size:17px;font-weight:700;letter-spacing:.5px;
+  font-family:'Songti SC','Source Han Serif SC','Noto Serif SC',serif;
+}
+.topbar p{font-size:12px;color:var(--text-muted);margin-top:1px;}
+
+/* ── 布局 ── */
+.body{display:flex;flex-direction:column;gap:12px;}
+.stage-wrap{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:10px;}
+.stage{
+  position:relative;background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);overflow:hidden;
+  aspect-ratio:1.1/1;max-height:66vh;
+}
+canvas#cv{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+canvas#cv.grabbing{cursor:grabbing;}
+.hint{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  font-size:11.5px;color:var(--text-muted);background:rgba(255,255,255,.9);
+  padding:4px 13px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;
+}
+.toast{
+  position:absolute;left:50%;top:12px;transform:translateX(-50%);
+  font-size:12.5px;font-weight:600;color:var(--accent-deep);
+  background:rgba(255,255,255,.96);border:1px solid rgba(209,73,91,.25);
+  padding:6px 14px;border-radius:999px;pointer-events:none;white-space:nowrap;
+  opacity:0;transition:opacity .3s;
+}
+.toast.on{opacity:1;}
+
+/* ── 算式条 ── */
+.formula{
+  background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  padding:11px 14px;font-size:13px;line-height:1.85;color:var(--bamboo-dark);
+}
+.formula .lbl{
+  font-size:11.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  display:block;margin-bottom:4px;
+}
+.formula .fx{font-family:'Songti SC',Georgia,serif;font-size:15px;}
+.formula b{color:var(--accent-deep);font-weight:700;}
+.formula .mut{color:var(--text-muted);font-size:12px;}
+
+/* ── 小灯泡与提问气泡 ── */
+.bulb{
+  position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(197,169,106,.55);background:rgba(255,255,255,.94);
+  font-size:19px;line-height:1;cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(45,74,50,.13);transition:transform .18s, box-shadow .25s;
+}
+.bulb:active{transform:scale(.92);}
+.bulb.glow{animation:bulbGlow 2.6s ease-in-out infinite;}
+@keyframes bulbGlow{
+  0%,100%{box-shadow:0 2px 8px rgba(45,74,50,.13);}
+  50%{box-shadow:0 0 0 5px rgba(197,169,106,.22),0 2px 10px rgba(45,74,50,.16);}
+}
+.qbox{
+  position:absolute;top:56px;right:10px;max-width:84%;
+  background:rgba(255,255,255,.98);border:1px solid rgba(197,169,106,.5);
+  border-radius:12px;padding:11px 13px 9px;box-shadow:0 8px 24px rgba(45,74,50,.16);
+  opacity:0;transform:translateY(-6px) scale(.97);pointer-events:none;
+  transition:opacity .22s, transform .22s;z-index:5;
+}
+.qbox.on{opacity:1;transform:none;pointer-events:auto;}
+.qtext{font-size:13px;line-height:1.62;text-align:left;}
+.qtext::before{content:'💡 ';}
+.ans{margin-top:7px;font-size:12.5px;color:var(--accent-deep);font-weight:600;display:none;}
+.ans.on{display:block;}
+.qrow{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+.qbtn{
+  font-family:inherit;font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-secondary);
+}
+.qbtn:active{transform:scale(.96);}
+
+/* ── 控制面板 ── */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px;}
+.card h2{
+  font-size:12.5px;font-weight:700;color:var(--bamboo);letter-spacing:1px;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.card h2::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--bamboo);}
+
+.badge{
+  display:inline-block;font-size:13.5px;font-weight:700;letter-spacing:.5px;
+  padding:5px 12px;border-radius:9px;background:var(--bamboo-mist);
+  color:var(--bamboo-dark);margin-bottom:10px;
+}
+.badge.ribbon{background:#F2EFF8;color:#5B4B8A;}
+.badge.plain{background:#F6F4EE;color:#7A6A46;}
+
+.kv{display:flex;gap:8px;font-size:12.5px;line-height:1.7;padding:4px 0;border-bottom:1px dashed rgba(45,74,50,.08);}
+.kv:last-child{border-bottom:none;}
+.kv span{flex:0 0 46px;color:var(--text-muted);}
+.kv b{flex:1;font-weight:600;color:var(--bamboo-dark);font-variant-numeric:tabular-nums;}
+
+.row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.row label{flex:0 0 24px;font-size:13px;font-weight:700;color:var(--text-secondary);font-style:italic;}
+.row input[type=range]{
+  flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:3px;
+  background:var(--bamboo-light);outline:none;
+}
+.row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);box-shadow:0 1px 4px rgba(45,74,50,.25);cursor:pointer;
+}
+.row input[type=range]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--bamboo);cursor:pointer;
+}
+.num{
+  flex:0 0 58px;width:58px;font-family:inherit;font-size:12.5px;padding:4px 6px;text-align:right;
+  border:1px solid var(--bamboo-light);border-radius:8px;background:#FBFDFA;
+  color:var(--bamboo-dark);font-variant-numeric:tabular-nums;
+}
+.num:focus{outline:none;border-color:var(--bamboo);background:#fff;}
+
+.presets{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap;}
+.pbtn{
+  font-family:inherit;font-size:11.5px;padding:6px 10px;border-radius:8px;cursor:pointer;
+  border:1px dashed rgba(91,140,90,.5);background:#FCFDFB;color:var(--bamboo);
+}
+.pbtn:active{transform:scale(.96);}
+
+.togs{display:flex;gap:6px;flex-wrap:wrap;}
+.tog{
+  font-family:inherit;font-size:11.5px;padding:6px 9px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--bamboo-light);background:#FBFDFA;color:var(--text-muted);
+}
+.tog.on{background:var(--bamboo);border-color:var(--bamboo);color:#fff;font-weight:600;}
+.tog:active{transform:scale(.97);}
+
+/* 配色 */
+.swatches{display:flex;gap:9px;}
+.sw{
+  flex:1;height:34px;border-radius:9px;cursor:pointer;position:relative;
+  border:2px solid transparent;transition:all .2s;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.sw span{font-size:10.5px;color:#fff;font-weight:600;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.25);}
+.sw.active{border-color:var(--bamboo-dark);box-shadow:0 0 0 3px rgba(91,140,90,.16);}
+
+/* 小抄 */
+.tips{list-style:none;font-size:12.5px;line-height:1.75;color:var(--text-secondary);}
+.tips li{padding-left:16px;position:relative;margin-bottom:6px;}
+.tips li::before{content:'›';position:absolute;left:2px;color:var(--wood-gold);font-weight:700;}
+.tips li:last-child{margin-bottom:0;}
+.tips b{color:var(--bamboo-dark);}
+.kbd{
+  display:inline-block;padding:0 4px;border-radius:4px;background:var(--bamboo-mist);
+  color:var(--bamboo);font-size:11.5px;font-weight:700;
+}
+
+@media (min-width:900px){
+  .body{flex-direction:row;align-items:flex-start;}
+  .stage-wrap{flex:1 1 auto;}
+  .panel{flex:0 0 320px;position:sticky;top:12px;}
+  .stage{aspect-ratio:1.12/1;max-height:74vh;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <a class="back" href="index.html">‹</a>
+    <div>
+      <h1>对勾函数 · 飘带函数</h1>
+      <p>y = ax + b/x　拖动系数看图象怎么变</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="stage-wrap">
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <button class="bulb glow" id="bulb">💡</button>
+        <div class="qbox" id="qbox">
+          <div class="qtext" id="qtext"></div>
+          <div class="ans" id="qans"></div>
+          <div class="qrow">
+            <button class="qbtn" id="qshow">看答案</button>
+            <button class="qbtn" id="qnext">下一题</button>
+          </div>
+        </div>
+        <div class="hint" id="hint">拖曲线上的 P：看 y 怎样拆成 ax 与 b/x；勾的最低点也能上下拖，改 b</div>
+        <div class="toast" id="toast"></div>
+      </div>
+      <div class="formula" id="formula"></div>
+    </div>
+
+    <div class="panel">
+
+      <div class="card">
+        <h2>当前类型</h2>
+        <div class="badge" id="badge">对勾函数</div>
+        <div class="kv"><span>解析式</span><b id="kEq">y = x + 1/x</b></div>
+        <div class="kv"><span>值域</span><b id="kRange">—</b></div>
+        <div class="kv"><span>极值</span><b id="kExt">—</b></div>
+        <div class="kv"><span>单调性</span><b id="kMono">—</b></div>
+        <div class="kv"><span>渐近线</span><b id="kAsym">—</b></div>
+      </div>
+
+      <div class="card">
+        <h2>系数（拖动或直接输入）</h2>
+        <div class="row">
+          <label>a</label>
+          <input type="range" id="sa" min="-2" max="2" step="0.1" value="1">
+          <input type="number" class="num" id="na" min="-2" max="2" step="0.1" value="1">
+        </div>
+        <div class="row">
+          <label>b</label>
+          <input type="range" id="sb" min="-6" max="6" step="0.1" value="1">
+          <input type="number" class="num" id="nb" min="-6" max="6" step="0.1" value="1">
+        </div>
+        <div class="presets">
+          <button class="pbtn" data-a="1"  data-b="1">经典对勾 x+1/x</button>
+          <button class="pbtn" data-a="1"  data-b="4">高对勾 x+4/x</button>
+          <button class="pbtn" data-a="2"  data-b="2">瘦对勾 2x+2/x</button>
+          <button class="pbtn" data-a="1"  data-b="-1">飘带 x−1/x</button>
+          <button class="pbtn" data-a="1"  data-b="-4">宽飘带 x−4/x</button>
+          <button class="pbtn" data-a="0"  data-b="4">反比例 4/x</button>
+          <button class="pbtn" data-a="1.5" data-b="0">正比例 1.5x</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>显示</h2>
+        <div class="togs" id="togs">
+          <button class="tog on" data-k="showAsym">渐近线 y = ax</button>
+          <button class="tog on" data-k="showKeys">顶点 / 零点</button>
+          <button class="tog on" data-k="showSplit">分解 ax 与 b/x</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>配色</h2>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="card">
+        <h2>结论速记</h2>
+        <ul class="tips">
+          <li><b>对勾</b>：<span class="kbd">ab &gt; 0</span> 时出现两个「勾」，顶点 <span class="kbd">(±√(b/a), ±2√(ab))</span>，最值 <span class="kbd">±2√(ab)</span>。</li>
+          <li><b>飘带</b>：<span class="kbd">ab &lt; 0</span> 时没有极值，两段各自单调，图象像一条斜飘带。</li>
+          <li><b>骨架</b>：<span class="kbd">x = 0</span> 与 <span class="kbd">y = ax</span> 是两条渐近线，曲线永远贴着它们走。</li>
+          <li><b>拆解</b>：<span class="kbd">y = ax + b/x</span>，纵坐标 = 渐近线上的高度 ax 加上偏移 b/x。</li>
+          <li><b>奇函数</b>：<span class="kbd">f(−x) = −f(x)</span>，图象关于原点中心对称。</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ══════════ 配色主题 ══════════ */
+var THEMES = [
+  { name:'竹青', curve:'#2E7D6E', line:'#C0703A', key:'#B8934A', pt:'#D1495B', accent:'#B32D42' },
+  { name:'靛蓝', curve:'#33568C', line:'#D08A2C', key:'#B08430', pt:'#C63A5B', accent:'#9E2C46' },
+  { name:'赭陶', curve:'#A8542F', line:'#3F6B4A', key:'#8A7B3A', pt:'#8C4A8E', accent:'#7A3C7C' },
+  { name:'墨紫', curve:'#5B4B8A', line:'#B08A2E', key:'#96742A', pt:'#C0504D', accent:'#A03A37' }
+];
+
+/* ══════════ 状态 ══════════ */
+var ST = { a:1, b:1, theme:0, px:2, showAsym:true, showKeys:true, showSplit:true };
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = 600, H = 545, SC = 34, CX = 300, CY = 272;
+
+function X(x){ return CX + x*SC; }
+function Y(y){ return CY - y*SC; }
+function invX(px){ return (px - CX)/SC; }
+function invY(py){ return (CY - py)/SC; }
+function clamp(v, lo, hi){ return v < lo ? lo : (v > hi ? hi : v); }
+
+/* ══════════ 数学 ══════════ */
+function fx(x){ return ST.a*x + ST.b/x; }
+
+function clsKey(){
+  var a = ST.a, b = ST.b;
+  if(Math.abs(a) < 1e-9 && Math.abs(b) < 1e-9) return 'zero';
+  if(Math.abs(a) < 1e-9) return 'inv';
+  if(Math.abs(b) < 1e-9) return 'lin';
+  return (a*b > 0) ? 'hook' : 'ribbon';
+}
+
+/* 顶点：ab > 0 时 x = ±√(b/a)，y = ±2a√(b/a) */
+function vertices(){
+  if(clsKey() !== 'hook') return [];
+  var t = Math.sqrt(ST.b/ST.a);
+  return [ { x: t, y: 2*ST.a*t }, { x: -t, y: -2*ST.a*t } ];
+}
+
+/* 零点：ab < 0 时 x = ±√(−b/a) */
+function zeros(){
+  if(clsKey() !== 'ribbon') return [];
+  var t = Math.sqrt(-ST.b/ST.a);
+  return [ { x: t, y: 0 }, { x: -t, y: 0 } ];
+}
+
+function boundVal(){ return 2*Math.sqrt(Math.abs(ST.a*ST.b)); }
+
+/* ══════════ 格式化 ══════════ */
+function fmt2(n){
+  if(!isFinite(n)) return '—';
+  var r = Math.round(n*100)/100;
+  if(Math.abs(r) < 1e-9) return '0';
+  if(Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
+  return r.toFixed(2).replace(/0$/,'');
+}
+function numStr(n){ return fmt2(n).replace('-', '−'); }
+function co(x, y){ return '(' + numStr(x) + ', ' + numStr(y) + ')'; }
+
+function termA(){
+  var a = ST.a;
+  if(Math.abs(a) < 1e-9) return '';
+  if(Math.abs(a - 1) < 1e-9) return 'x';
+  if(Math.abs(a + 1) < 1e-9) return '−x';
+  return numStr(a) + 'x';
+}
+function termB(){
+  var b = ST.b;
+  if(Math.abs(b) < 1e-9) return '';
+  if(Math.abs(b - 1) < 1e-9) return '1/x';
+  if(Math.abs(b + 1) < 1e-9) return '−1/x';
+  return numStr(b) + '/x';
+}
+function eqText(){
+  var t1 = termA(), t2 = termB();
+  if(!t1 && !t2) return 'y = 0';
+  if(!t2) return 'y = ' + t1;
+  if(!t1) return 'y = ' + t2;
+  if(t2.charAt(0) === '−') return 'y = ' + t1 + ' − ' + t2.slice(1);
+  return 'y = ' + t1 + ' + ' + t2;
+}
+
+/* ══════════ 布局 ══════════ */
+function layout(){
+  var r = cv.getBoundingClientRect();
+  W = Math.max(240, Math.round(r.width));
+  H = Math.max(240, Math.round(r.height));
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W*dpr);
+  cv.height = Math.round(H*dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  SC = Math.min(W/17, H/17);
+  CX = W/2;
+  CY = H/2;
+}
+
+/* ══════════ 绘制基础 ══════════ */
+function T(){ return THEMES[ST.theme]; }
+function halfX(){ return W/2/SC; }
+function halfY(){ return H/2/SC; }
+
+function drawGrid(){
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(45,74,50,.075)';
+  ctx.beginPath();
+  var i;
+  for(i = Math.ceil(-halfX()); i <= Math.floor(halfX()); i++){
+    if(i === 0) continue;
+    ctx.moveTo(X(i), 0); ctx.lineTo(X(i), H);
+  }
+  for(i = Math.ceil(-halfY()); i <= Math.floor(halfY()); i++){
+    if(i === 0) continue;
+    ctx.moveTo(0, Y(i)); ctx.lineTo(W, Y(i));
+  }
+  ctx.stroke();
+}
+
+function drawAxes(){
+  ctx.strokeStyle = 'rgba(45,74,50,.55)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(0, Y(0)); ctx.lineTo(W, Y(0));
+  ctx.moveTo(X(0), H); ctx.lineTo(X(0), 0);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(45,74,50,.55)';
+  ctx.beginPath(); ctx.moveTo(W-1, Y(0)); ctx.lineTo(W-9, Y(0)-4.5); ctx.lineTo(W-9, Y(0)+4.5); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(X(0), 1); ctx.lineTo(X(0)-4.5, 9); ctx.lineTo(X(0)+4.5, 9); ctx.closePath(); ctx.fill();
+
+  ctx.font = 'italic 600 13px Georgia, serif';
+  ctx.fillStyle = 'rgba(45,74,50,.7)';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText('x', W-6, Y(0)+6);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('y', X(0)+7, 16);
+
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(45,74,50,.62)';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText('O', X(0)-5, Y(0)+4);
+
+  ctx.font = '10.5px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(45,74,50,.42)';
+  var i;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for(i = -12; i <= 12; i += 2){
+    if(i === 0) continue;
+    if(Math.abs(i) > halfX()-0.7) continue;
+    ctx.beginPath();
+    ctx.moveTo(X(i), Y(0)); ctx.lineTo(X(i), Y(0)+3.5);
+    ctx.strokeStyle = 'rgba(45,74,50,.32)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillText(String(i), X(i), Y(0)+6);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for(i = -12; i <= 12; i += 2){
+    if(i === 0) continue;
+    if(Math.abs(i) > halfY()-0.7) continue;
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(i)); ctx.lineTo(X(0)-3.5, Y(i));
+    ctx.strokeStyle = 'rgba(45,74,50,.32)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillText(String(i), X(0)-6, Y(i));
+  }
+}
+
+function drawAsym(){
+  var th = T();
+  if(!ST.showAsym) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  // 斜渐近线 y = ax
+  if(Math.abs(ST.a) > 1e-9){
+    var hx = halfX() + 0.6;
+    ctx.setLineDash([7,5]);
+    ctx.lineWidth = 1.7;
+    ctx.strokeStyle = th.line;
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(X(-hx), Y(ST.a*(-hx)));
+    ctx.lineTo(X(hx), Y(ST.a*hx));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  // 竖直渐近线（y 轴）加淡色强调
+  ctx.setLineDash([7,5]);
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = 'rgba(45,74,50,.30)';
+  ctx.beginPath();
+  ctx.moveTo(X(0), 0); ctx.lineTo(X(0), H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // 标签：斜渐近线
+  if(Math.abs(ST.a) > 1e-9){
+    var lx = Math.min(halfX()*0.62, 6.2);
+    var ly = ST.a*lx;
+    if(Math.abs(ly) < halfY()*0.78){
+      label('y = ' + (Math.abs(ST.a) < 1e-9 ? '0' : termA()), X(lx), Y(ly), th.line, 8, -8, 'left', 'bottom', '600', 11.5);
+    }
+  }
+}
+
+function drawCurve(){
+  var th = T();
+  var hx = halfX() + 0.6, hy = halfY() + 0.9;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+  ctx.strokeStyle = th.curve;
+  ctx.lineWidth = 2.7;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  [1, -1].forEach(function(sg){
+    var eps = 0.012, steps = 900;
+    var started = false;
+    ctx.beginPath();
+    for(var i = 0; i <= steps; i++){
+      var x = sg*(eps + (hx - eps)*i/steps);
+      var y = fx(x);
+      if(!isFinite(y) || Math.abs(y) > hy){ started = false; continue; }
+      if(!started){ ctx.moveTo(X(x), Y(y)); started = true; }
+      else ctx.lineTo(X(x), Y(y));
+    }
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function dot(x, y, r, fill, stroke){
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = fill; ctx.fill();
+  if(stroke){ ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+
+function label(text, x, y, color, dx, dy, align, baseline, weight, size){
+  var fs = (size||12.5) * fscale();
+  ctx.font = (weight||'700') + ' ' + fs.toFixed(1) + 'px -apple-system, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = baseline || 'middle';
+  var tx = x + (dx||0), ty = y + (dy||0);
+  var tw = ctx.measureText(text).width;
+  var left = tx - (ctx.textAlign === 'right' ? tw : (ctx.textAlign === 'center' ? tw/2 : 0));
+  if(left < 4) tx += 4 - left;
+  else if(left + tw > W - 4) tx -= (left + tw - (W - 4));
+  ctx.lineWidth = 3.2;
+  ctx.strokeStyle = 'rgba(255,255,255,.94)';
+  ctx.strokeText(text, tx, ty);
+  ctx.fillText(text, tx, ty);
+}
+
+/* 小屏时标签整体缩小，避免互相遮盖 */
+function fscale(){ return clamp(SC/38, 0.7, 1); }
+
+/* 顶点 / 零点 */
+function drawKeys(){
+  var th = T();
+  if(!ST.showKeys) return;
+  var vs = vertices();
+  if(vs.length){
+    var B = boundVal();
+    // 值域边界（虚线）
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0,0,W,H); ctx.clip();
+    ctx.setLineDash([2,5]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(184,147,74,.45)';
+    ctx.beginPath();
+    ctx.moveTo(0, Y(B)); ctx.lineTo(W, Y(B));
+    ctx.moveTo(0, Y(-B)); ctx.lineTo(W, Y(-B));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    var shortLbl = SC < 30;   // 小屏只写点名，坐标看右侧结论卡
+    vs.forEach(function(p, i){
+      if(Math.abs(p.y) > halfY()*0.96) return;
+      dot(X(p.x), Y(p.y), 6.5, th.key, '#fff');
+      var nm = (i === 0 ? 'M₁' : 'M₂');
+      var upS = p.y < 0;   // 极大值点在曲线上方留白，极小值点在下方
+      label(shortLbl ? nm : nm + co(p.x, p.y), X(p.x), Y(p.y), th.key, 0, (upS ? -15 : 15),
+        'center', (upS ? 'bottom' : 'top'), '700', 12);
+    });
+    // 值域边界说明
+    var txt = 'y = ' + numStr(B);
+    if(Y(B) > 16) label(txt, 8, Y(B), 'rgba(184,147,74,.9)', 0, -5, 'left', 'bottom', '600', 10.5);
+  }
+  var zs = zeros();
+  var zShort = SC < 30;
+  zs.forEach(function(p, i){
+    if(Math.abs(p.x) > halfX()-0.4) return;
+    dot(X(p.x), Y(0), 5.5, '#fff', th.key);
+    var right = p.x > 0;
+    var zt = 'Z' + (i === 0 ? '₁' : '₂') + (zShort ? '' : '(' + numStr(p.x) + ', 0)');
+    label(zt, X(p.x), Y(0), th.key,
+      right ? 8 : -8, 12, right ? 'left' : 'right', 'top', '700', 11.5);
+  });
+}
+
+/* 曲线上的 P 与分解 */
+function drawP(){
+  var th = T();
+  var px = ST.px, py = fx(px);
+  if(!isFinite(py) || Math.abs(py) > halfY()*1.4) return;
+
+  // 到 x 轴的细虚线
+  ctx.setLineDash([3,4]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(45,74,50,.2)';
+  ctx.beginPath();
+  ctx.moveTo(X(px), Y(py)); ctx.lineTo(X(px), Y(0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 分解：Q(px, a·px) 在渐近线上，QP 长度 = |b/px|
+  if(ST.showSplit && Math.abs(ST.b) > 1e-9){
+    var qy = ST.a*px;
+    if(Math.abs(qy) < halfY()*0.98){
+      ctx.setLineDash([5,4]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = th.line;
+      ctx.beginPath();
+      ctx.moveTo(X(px), Y(qy)); ctx.lineTo(X(px), Y(py));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      dot(X(px), Y(qy), 4.5, '#fff', th.line);
+      var d = ST.b/px;
+      label('b/x = ' + numStr(d), X(px), Y(qy), th.line, (px > 0 ? 10 : -10), 0,
+        (px > 0 ? 'left' : 'right'), 'middle', '700', 11.5);
+    }
+  }
+
+  dot(X(px), Y(py), 7, th.pt, '#fff');
+  if(drag === 'P') dot(X(px), Y(py), 17, 'rgba(209,73,91,.18)', null);
+  var above = (py >= ST.a*px);
+  label('P' + co(px, py), X(px), Y(py), th.pt, (px > 0 ? 10 : -10), (above ? -14 : 15),
+    (px > 0 ? 'left' : 'right'), (above ? 'bottom' : 'top'), '700', 12.5);
+}
+
+/* 极值点：勾的最低（高）点，上下拖动可改 b */
+function minVertex(){
+  var vs = vertices();
+  if(!vs.length) return null;
+  // 极小值点的纵坐标恒为 +B
+  return (vs[0].y > vs[1].y) ? vs[0] : vs[1];
+}
+
+function drawHandles(){
+  var vs = vertices();
+  if(!vs.length) return;
+  var th = T();
+  vs.forEach(function(v){
+    if(Math.abs(v.y) > halfY()*0.94) return;
+    ctx.beginPath();
+    ctx.arc(X(v.x), Y(v.y), 12, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(197,169,106,.5)';
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([3,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+}
+
+/* ══════════ 渲染 ══════════ */
+var drag = null;
+
+function render(){
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  drawGrid();
+  if(ST.showAsym) drawAsym();
+  drawCurve();
+  drawKeys();
+  drawAxes();
+  drawP();
+  drawHandles();
+
+  updateUI();
+}
+
+/* ══════════ 文案 ══════════ */
+function updateUI(){
+  var k = clsKey();
+  var B = boundVal();
+  var eq = eqText();
+
+  document.getElementById('kEq').textContent = eq;
+
+  var badge = document.getElementById('badge');
+  badge.className = 'badge';
+  var rangeTxt = '—', extTxt = '—', monoTxt = '—', asymTxt = '—';
+
+  if(k === 'hook'){
+    var vs = vertices();
+    var t = Math.sqrt(ST.b/ST.a);
+    var up = ST.a > 0;
+    // 极小值恒为 B，极大值恒为 −B；极小点在 x = ±t 中 b > 0 的那个
+    var minX = (ST.b > 0 ? t : -t), maxX = -minX;
+    badge.textContent = '对勾函数（a·b > 0）';
+    rangeTxt = '|y| ≥ ' + numStr(B);
+    extTxt = '极小值 ' + numStr(B) + '（x = ' + numStr(minX) + '），极大值 ' + numStr(-B) + '（x = ' + numStr(maxX) + '）';
+    monoTxt = up
+      ? '增 (−∞, ' + numStr(-t) + ']、[' + numStr(t) + ', +∞)；减 [' + numStr(-t) + ', 0)、(0, ' + numStr(t) + ']'
+      : '减 (−∞, ' + numStr(-t) + ']、[' + numStr(t) + ', +∞)；增 [' + numStr(-t) + ', 0)、(0, ' + numStr(t) + ']';
+    asymTxt = 'x = 0，y = ' + (termA() || '0');
+  } else if(k === 'ribbon'){
+    var z0 = Math.sqrt(-ST.b/ST.a);
+    var inc = ST.a > 0;
+    badge.className = 'badge ribbon';
+    badge.textContent = '飘带函数（a·b < 0）';
+    rangeTxt = 'R（全体实数）';
+    extTxt = '无最大值，无最小值';
+    monoTxt = (inc ? '在 (−∞, 0)、(0, +∞) 上都是增函数' : '在 (−∞, 0)、(0, +∞) 上都是减函数')
+      + '；零点 x = ±' + numStr(z0);
+    asymTxt = 'x = 0，y = ' + (termA() || '0');
+  } else if(k === 'inv'){
+    badge.className = 'badge plain';
+    badge.textContent = '反比例函数（a = 0）';
+    rangeTxt = 'y ≠ 0';
+    extTxt = '无（双曲线，无最值）';
+    monoTxt = (ST.b > 0 ? '在 (−∞, 0)、(0, +∞) 上都是减函数' : '在 (−∞, 0)、(0, +∞) 上都是增函数');
+    asymTxt = 'x = 0，y = 0';
+  } else if(k === 'lin'){
+    badge.className = 'badge plain';
+    badge.textContent = '正比例函数（b = 0）';
+    rangeTxt = 'R（x ≠ 0，原点处缺一点）';
+    extTxt = '无';
+    monoTxt = (ST.a > 0 ? '增函数' : '减函数') + '（斜率 ' + numStr(ST.a) + '）';
+    asymTxt = '无斜渐近线（图象就是直线 y = ' + (termA() || '0') + '）';
+  } else {
+    badge.className = 'badge plain';
+    badge.textContent = '退化：a = b = 0';
+    rangeTxt = 'y = 0（x ≠ 0）';
+    extTxt = '无';
+    monoTxt = '常函数（不含原点）';
+    asymTxt = 'x = 0';
+  }
+
+  document.getElementById('kRange').textContent = rangeTxt;
+  document.getElementById('kExt').textContent = extTxt;
+  document.getElementById('kMono').textContent = monoTxt;
+  document.getElementById('kAsym').textContent = asymTxt;
+
+  // 底部算式条
+  var px = ST.px, py = fx(px);
+  var extra = '';
+  if(k === 'hook'){
+    var vs2 = vertices();
+    extra = '顶点 ' + co(vs2[0].x, vs2[0].y) + ' 与 ' + co(vs2[1].x, vs2[1].y) + '，极值 <b>±' + numStr(B) + '</b>。';
+  } else if(k === 'ribbon'){
+    var z1 = Math.sqrt(-ST.b/ST.a);
+    extra = '两段都单调，零点 x = ±' + numStr(z1) + '，值域是全体实数。';
+  } else if(k === 'inv'){
+    extra = '这是反比例函数 y = b/x 的图象，两条渐近线是坐标轴。';
+  } else if(k === 'lin'){
+    extra = 'b = 0 时「勾」退化成直线 y = ax，注意 x ≠ 0。';
+  } else {
+    extra = 'a 与 b 不能同时为 0，否则函数退化成 y = 0。';
+  }
+
+  var splitTxt = '';
+  if(ST.showSplit && Math.abs(ST.b) > 1e-9){
+    splitTxt = '　P 的纵坐标 y = ax + b/x = ' + numStr(ST.a*px) + ' + ' + numStr(ST.b/px)
+      + ' = <b>' + numStr(py) + '</b>';
+  }
+
+  document.getElementById('formula').innerHTML =
+    '<span class="lbl">解析式</span>'
+    + '<div class="fx">' + eq + '　<span class="mut">' + (k === 'hook' ? '对勾' : k === 'ribbon' ? '飘带' : k === 'inv' ? '反比例' : k === 'lin' ? '正比例' : '退化') + ' · 奇函数</span></div>'
+    + '<div class="mut">' + extra + splitTxt + '</div>';
+}
+
+/* ══════════ 交互 ══════════ */
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('on'); }, 1200);
+}
+
+function pickHandle(px, py){
+  var best = null, bestD = 1e9;
+  function consider(h, tx, ty, r){
+    var d = Math.hypot(px-tx, py-ty);
+    if(d <= r && d < bestD){ bestD = d; best = h; }
+  }
+  var pyy = fx(ST.px);
+  if(isFinite(pyy)) consider('P', X(ST.px), Y(pyy), 26);
+  var vs = vertices();
+  for(var i = 0; i < vs.length; i++) consider('M', X(vs[i].x), Y(vs[i].y), 22);
+  return best;
+}
+
+function round1(v){ return Math.round(v*10)/10; }
+
+function onDown(e){
+  var r = cv.getBoundingClientRect();
+  var px = e.clientX - r.left, py = e.clientY - r.top;
+  var h = pickHandle(px, py);
+  if(!h) return;
+  drag = h;
+  cv.classList.add('grabbing');
+  try{ if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+}
+
+function onMove(e){
+  if(!drag) return;
+  var r = cv.getBoundingClientRect();
+  var px = e.clientX - r.left, py = e.clientY - r.top;
+  var mx = invX(px), my = invY(py);
+
+  if(drag === 'M'){
+    // 勾的最低(高)点纵坐标为 B = 2√|ab|，反解 b = B²/(4a)
+    var Bv = Math.abs(my);
+    var nb = Bv*Bv/(4*ST.a);
+    var lim = (ST.a > 0 ? 1 : -1);
+    nb = clamp(round1(nb), lim > 0 ? 0.2 : -6, lim > 0 ? 6 : -0.2);
+    ST.b = nb;
+    syncInputs();
+    toast('b = ' + numStr(nb) + '，极值 = ±' + numStr(boundVal()));
+  } else if(drag === 'P'){
+    var lim = halfX() - 0.3;
+    var nx = clamp(mx, -lim, lim);
+    if(Math.abs(nx) < 0.16){
+      nx = (ST.px >= 0 ? 1 : -1) * 0.16;
+    }
+    ST.px = Math.round(nx*100)/100;
+    toast('P' + co(ST.px, fx(ST.px)));
+  }
+  render();
+  e.preventDefault();
+}
+
+function onUp(){
+  if(!drag) return;
+  drag = null;
+  cv.classList.remove('grabbing');
+}
+
+cv.addEventListener('pointerdown', onDown);
+cv.addEventListener('pointermove', onMove);
+cv.addEventListener('pointerup', onUp);
+cv.addEventListener('pointercancel', onUp);
+
+/* ══════════ 控件 ══════════ */
+var sa = document.getElementById('sa');
+var sb = document.getElementById('sb');
+var na = document.getElementById('na');
+var nb = document.getElementById('nb');
+
+function syncInputs(){
+  sa.value = String(ST.a); na.value = String(ST.a);
+  sb.value = String(ST.b); nb.value = String(ST.b);
+}
+
+sa.addEventListener('input', function(){
+  ST.a = clamp(round1(parseFloat(sa.value)), -2, 2);
+  syncInputs(); render();
+});
+sb.addEventListener('input', function(){
+  ST.b = clamp(round1(parseFloat(sb.value)), -6, 6);
+  syncInputs(); render();
+});
+function commitNum(el, key, lo, hi){
+  var v = parseFloat(el.value);
+  if(!isFinite(v)){ syncInputs(); return; }
+  v = clamp(round1(v), lo, hi);
+  ST[key] = v;
+  syncInputs(); render();
+}
+na.addEventListener('change', function(){ commitNum(na, 'a', -2, 2); });
+nb.addEventListener('change', function(){ commitNum(nb, 'b', -6, 6); });
+na.addEventListener('blur', function(){ commitNum(na, 'a', -2, 2); });
+nb.addEventListener('blur', function(){ commitNum(nb, 'b', -6, 6); });
+
+/* 预设 */
+Array.prototype.forEach.call(document.querySelectorAll('.pbtn'), function(btn){
+  btn.addEventListener('click', function(){
+    ST.a = parseFloat(btn.getAttribute('data-a'));
+    ST.b = parseFloat(btn.getAttribute('data-b'));
+    syncInputs();
+    persist();
+    render();
+    var k = clsKey();
+    toast(k === 'hook' ? '对勾函数：多了两个「勾」' : k === 'ribbon' ? '飘带函数：勾没了' : '退化情形');
+  });
+});
+
+/* 显示开关 */
+document.getElementById('togs').addEventListener('click', function(e){
+  var btn = e.target.closest('.tog');
+  if(!btn) return;
+  var key = btn.getAttribute('data-k');
+  ST[key] = !ST[key];
+  btn.classList.toggle('on', ST[key]);
+  persist();
+  render();
+});
+
+/* 配色 */
+function buildSwatches(){
+  var wrap = document.getElementById('swatches');
+  wrap.innerHTML = '';
+  THEMES.forEach(function(t, i){
+    var d = document.createElement('div');
+    d.className = 'sw' + (i === ST.theme ? ' active' : '');
+    d.style.background = 'linear-gradient(135deg,' + t.curve + ' 0%,' + t.curve + ' 55%,' + t.line + ' 55%,' + t.line + ' 100%)';
+    d.innerHTML = '<span>' + t.name + '</span>';
+    d.addEventListener('click', function(){
+      ST.theme = i;
+      persist();
+      buildSwatches();
+      render();
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* 引导题 */
+var QUESTIONS = [
+  { q:'y = x + 4/x（x > 0）的最小值是多少？在哪儿取到？', a:'由均值不等式 x + 4/x ≥ 2√4 = 4，当 x = 2 时取最小值 4。' },
+  { q:'y = x + 1/x 的两个单调递增区间是什么？', a:'(−∞, −1] 和 [1, +∞)；顶点为 (−1, −2) 与 (1, 2)。' },
+  { q:'为什么 a·b < 0 时图象变成「飘带」，没有极值？', a:'y′ = a − b/x²，a、b 异号时 a 与 −b/x² 同号，导数恒不为 0，所以两段各自单调，没有极值。' },
+  { q:'y = 2x − 8/x 的零点在哪里？', a:'2x = 8/x → x² = 4 → x = ±2，即 (−2, 0) 与 (2, 0)。' },
+  { q:'y = x + 1/x 的值域是什么？', a:'(−∞, −2] ∪ [2, +∞)，即 |y| ≥ 2。' },
+  { q:'对勾函数 y = ax + b/x 的两条渐近线分别是什么？', a:'竖直渐近线 x = 0（y 轴），斜渐近线 y = ax。' },
+  { q:'y = ax + b/x 的图象关于什么对称？', a:'关于原点中心对称，因为 f(−x) = −a x − b/x = −f(x)，是奇函数。' }
+];
+var qi = 0;
+var bulb = document.getElementById('bulb');
+var qbox = document.getElementById('qbox');
+var qtext = document.getElementById('qtext');
+var qans = document.getElementById('qans');
+
+function showQ(){
+  qtext.textContent = QUESTIONS[qi].q;
+  qans.textContent = '答：' + QUESTIONS[qi].a;
+  qans.classList.remove('on');
+}
+bulb.addEventListener('click', function(){
+  var on = qbox.classList.toggle('on');
+  if(on) showQ();
+});
+document.getElementById('qshow').addEventListener('click', function(){
+  qans.classList.toggle('on');
+});
+document.getElementById('qnext').addEventListener('click', function(){
+  qi = (qi + 1) % QUESTIONS.length;
+  showQ();
+});
+
+/* ══════════ 持久化 ══════════ */
+function persist(){
+  try{
+    localStorage.setItem('hf_a', String(ST.a));
+    localStorage.setItem('hf_b', String(ST.b));
+    localStorage.setItem('hf_theme', String(ST.theme));
+    localStorage.setItem('hf_showAsym', ST.showAsym ? '1' : '0');
+    localStorage.setItem('hf_showKeys', ST.showKeys ? '1' : '0');
+    localStorage.setItem('hf_showSplit', ST.showSplit ? '1' : '0');
+  }catch(err){}
+}
+
+(function init(){
+  try{
+    var a = localStorage.getItem('hf_a'), b = localStorage.getItem('hf_b'),
+        th = localStorage.getItem('hf_theme');
+    if(a !== null && isFinite(parseFloat(a))) ST.a = clamp(round1(parseFloat(a)), -2, 2);
+    if(b !== null && isFinite(parseFloat(b))) ST.b = clamp(round1(parseFloat(b)), -6, 6);
+    if(th !== null) ST.theme = parseInt(th, 10) % THEMES.length || 0;
+    ['showAsym','showKeys','showSplit'].forEach(function(k){
+      var v = localStorage.getItem('hf_' + k);
+      if(v !== null) ST[k] = (v === '1');
+    });
+  }catch(err){}
+
+  Array.prototype.forEach.call(document.querySelectorAll('#togs .tog'), function(btn){
+    btn.classList.toggle('on', !!ST[btn.getAttribute('data-k')]);
+  });
+
+  syncInputs();
+  buildSwatches();
+  layout();
+  render();
+
+  // 支持 #ribbon / #inv 直达（方便演示与截图自检）
+  var hm = (location.hash || '').replace('#', '');
+  if(hm === 'ribbon'){ ST.a = 1; ST.b = -2; }
+  if(hm === 'inv'){ ST.a = 0; ST.b = 4; }
+  if(hm === 'ribbon' || hm === 'inv'){ syncInputs(); render(); }
+})();
+
+var rt = null;
+window.addEventListener('resize', function(){
+  clearTimeout(rt);
+  rt = setTimeout(function(){ layout(); render(); }, 120);
+});
+
+/* 自检接口 */
+window.__HF = {
+  ST: ST,
+  fx: fx,
+  clsKey: clsKey,
+  vertices: vertices,
+  zeros: zeros,
+  bound: boundVal,
+  eq: eqText,
+  ui: function(){
+    return {
+      badge: document.getElementById('badge').textContent,
+      range: document.getElementById('kRange').textContent,
+      ext: document.getElementById('kExt').textContent,
+      mono: document.getElementById('kMono').textContent,
+      asym: document.getElementById('kAsym').textContent
+    };
+  },
+  screen: function(x, y){ return { x: X(x), y: Y(y) }; },
+  minVertex: minVertex,
+  handles: function(){
+    var vs = vertices();
+    return {
+      verts: vs.map(function(v){ return { x: X(v.x), y: Y(v.y) }; }),
+      P: { x: X(ST.px), y: Y(fx(ST.px)) }
+    };
+  },
+  set: function(a, b){ ST.a = a; ST.b = b; syncInputs(); render(); }
+};
+})();
+</script>
+</body>
+</html>
